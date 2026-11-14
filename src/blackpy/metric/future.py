@@ -34,7 +34,7 @@ class StationaryAxisymmetric(Metric):
 
 
 def newman_janis(metric, *args, **kwargs):
-    """Rotating counterpart of a static metric via the Newman-Janis algorithm. **Not implemented.**"""
+    """Rotating metric from a static one (Newman-Janis algorithm). **Not implemented.**"""
     raise NotImplementedError(_ROADMAP.format(what="The Newman-Janis algorithm"))
 
 

@@ -66,7 +66,7 @@ class Parameter:
             )
         if self.default is not None and not (low <= self.default <= high):
             raise ValueError(
-                f"Parameter '{self.name}': default {self.default} lies outside bounds {self.bounds}."
+                f"Parameter '{self.name}': default {self.default} is outside bounds {self.bounds}."
             )
 
     @property
