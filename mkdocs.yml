@@ -1,0 +1,38 @@
+site_name: BlackPy
+site_description: Black hole metric in, observables and Bayesian parameter constraints out.
+repo_name: BlackPy
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Theory and formulas: theory.md
+  - Data registry: data.md
+  - API reference: api.md
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.sections
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: numpy
+            show_source: false
+            show_root_heading: true
+            heading_level: 3
+            members_order: source

@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use BlackPy, please cite it as below, together with the original data papers."
+title: "BlackPy: black hole metric in, observables and Bayesian parameter constraints out"
+type: software
+authors:
+  - family-names: Yovqochev
+    given-names: Pahlavon
+version: 0.1.0
+date-released: "2026-11-14"
+license: MIT
+keywords:
+  - general relativity
+  - black holes
+  - quasi-periodic oscillations
+  - black hole shadow
+  - Bayesian inference
