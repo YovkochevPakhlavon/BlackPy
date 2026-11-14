@@ -1,0 +1,43 @@
+schema_version: 1
+id: eht/sgra
+object: Sgr A*
+data_type: shadow_bound
+dataset_version: "1"
+verified_by_human: false
+description: >
+  Bounds on the shadow radius of Sgr A* in units of its mass, derived by Vagnozzi et al.
+  (2023) from the EHT 2017 image by averaging the Keck- and VLTI-based estimates of the
+  fractional deviation delta from the Schwarzschild shadow size.
+quantity: r_sh/M
+bounds:
+  1sigma:
+    lower: 4.55
+    upper: 5.22
+    location: "Eq. (7)"
+  2sigma:
+    lower: 4.21
+    upper: 5.56
+    location: "Eq. (8)"
+fractional_deviation:
+  value: -0.060
+  err_minus: 0.065
+  err_plus: 0.065
+  unit: ""
+  source: vagnozzi2023
+  location: "Eq. (5): delta ~ -0.060 +- 0.065, with r_sh/M = 3 sqrt(3) (delta + 1)"
+references:
+  vagnozzi2023:
+    citation: "Vagnozzi, Roy, Tsai, Visinelli, et al. (2023), Class. Quantum Grav. 40, 165007"
+    doi: "10.1088/1361-6382/acd97b"
+    arxiv: "2205.07787"
+    role: "shadow-radius bounds"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+notes: >
+  The arXiv text gives 4.55 <~ r_sh/M <~ 5.22 (1 sigma, Eq. 7) and 4.21 <~ r_sh/M <~ 5.56
+  (2 sigma, Eq. 8). These differ in the last digit of the lower limits from the values
+  4.54 and 4.20 that are sometimes quoted (and that appeared in the BlackPy task
+  description). They are consistent with Eq. (6) of the paper: 3 sqrt(3) (1 - 0.125) =
+  4.547 and 3 sqrt(3) (1 - 0.19) = 4.209. The Gaussian likelihood uses Eq. (5).
+bibliography_check: "Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14."
+todo:
+  - "Human check of Eqs. (5)-(8) against the published CQG version (lower limits 4.55/4.21 vs 4.54/4.20)."

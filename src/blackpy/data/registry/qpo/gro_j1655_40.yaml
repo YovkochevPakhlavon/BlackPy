@@ -1,0 +1,61 @@
+schema_version: 1
+id: qpo/gro_j1655_40
+object: GRO J1655-40
+data_type: qpo_triplet
+dataset_version: "1"
+verified_by_human: false
+description: >
+  Three QPOs detected simultaneously with RXTE/PCA: the type-C low-frequency QPO and
+  the lower and upper high-frequency QPOs (Sample B1 of Motta et al. 2014).
+frequencies:
+  upper:
+    value: 441.0
+    err_minus: 2.0
+    err_plus: 2.0
+    unit: Hz
+    source: motta2014
+    location: "Table 2, block 'Sample B1 observations', column 'upper HFQPO', nu [Hz]"
+  lower:
+    value: 298.0
+    err_minus: 4.0
+    err_plus: 4.0
+    unit: Hz
+    source: motta2014
+    location: "Table 2, block 'Sample B1 observations', column 'lower HFQPO', nu [Hz]"
+  low:
+    value: 17.3
+    err_minus: 0.1
+    err_plus: 0.1
+    unit: Hz
+    source: motta2014
+    location: "Table 2, block 'Sample B1 observations', column 'Type-C QPO', nu [Hz]"
+    note: "Nodal-precession QPO; cannot be modelled in spherical symmetry (ignored by the MVP)."
+simultaneous: true
+mass_prior:
+  value: 5.40
+  err_minus: 0.30
+  err_plus: 0.30
+  unit: Msun
+  method: "dynamical: modelling of the quiescent optical/infrared light curve and radial velocities"
+  independent: true
+  source: beer2002
+  location: "Table 4 ('Best-fitting model parameters for Nova Sco'), row M_1; also the abstract"
+intended_models: [RP]
+references:
+  motta2014:
+    citation: "Motta, Belloni, Stella, Munoz-Darias & Fender (2014), MNRAS 437, 2554"
+    doi: "10.1093/mnras/stt2068"
+    arxiv: "1309.3652"
+    role: "QPO frequencies"
+  beer2002:
+    citation: "Beer & Podsiadlowski (2002), MNRAS 331, 351"
+    doi: "10.1046/j.1365-8711.2002.05189.x"
+    arxiv: "astro-ph/0109136"
+    role: "independent (dynamical) black hole mass"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+notes: >
+  In the ar5iv rendering of Table 2 the three observations 10255-01-06-01, 10255-01-07-00
+  and 10255-01-17-00 form Sample B1 and share one set of QPO parameters. The same three
+  values are quoted by Stuchlik & Kolos (2016, A&A 586, A130, Eq. 2). Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
+todo:
+  - "Human check of Table 2 of Motta et al. (2014) against the published MNRAS version."

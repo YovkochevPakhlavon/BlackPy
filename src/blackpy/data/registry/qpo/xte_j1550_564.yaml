@@ -1,0 +1,72 @@
+schema_version: 1
+id: qpo/xte_j1550_564
+object: XTE J1550-564
+data_type: qpo_pair
+dataset_version: "1"
+verified_by_human: false
+description: >
+  Two high-frequency QPOs fitted independently in the sum of the six RXTE/PCA observations
+  of the April-May 2000 outburst that show the higher-frequency QPO (6-60 keV).
+frequencies:
+  upper:
+    value: 268.0
+    err_minus: 3.0
+    err_plus: 3.0
+    unit: Hz
+    source: miller2001
+    location: "Figure 4 caption ('The higher-frequency QPO: 268 +- 3 Hz'); also Section 3"
+  lower:
+    value: 188.0
+    err_minus: 3.0
+    err_plus: 3.0
+    unit: Hz
+    source: miller2001
+    location: "Figure 4 caption ('The lower-frequency QPO: 188 +- 3 Hz'); also Section 3"
+    note: "3.5 sigma single-trial detection."
+simultaneous: true
+mass_prior:
+  value: 9.10
+  err_minus: 0.61
+  err_plus: 0.61
+  unit: Msun
+  method: "dynamical: optical/near-infrared light curves and radial velocities"
+  independent: true
+  source: orosz2011
+  location: "Abstract and Section IV.1 ('The adopted value for the mass of the black hole is 9.10 +- 0.61 Msun (Table 2)')"
+intended_models: [RP, ER]
+alternatives:
+  - description: >
+      Harmonic (3:2-locked) fits to averaged power spectra by Remillard et al. (2002),
+      Table 1: only one frequency is free per fit, so these are not independent pairs.
+      Group '1998-99 A': 281.7 (1.5) Hz with 187.8 Hz; '1998-99 B': 278.0 Hz with
+      185.3 (3.7) Hz; '2000 Apr 30-May 9': 270.3 (3.0) Hz with 180.22 Hz.
+    source: remillard2002
+  - description: >
+      The pair '276 +- 3 Hz, 184 +- 5 Hz' used in many QPO-fitting papers. The text of
+      Remillard et al. (2002) only says 'near 184 and 276 Hz'; the values with these
+      uncertainties were NOT found in any original source accessed, so they are not
+      recorded here.
+    upper: null
+    lower: null
+references:
+  miller2001:
+    citation: "Miller, Wijnands, Homan, Belloni, et al. (2001), ApJ 563, 928"
+    doi: "10.1086/324027"
+    arxiv: "astro-ph/0105371"
+    role: "QPO frequencies"
+  remillard2002:
+    citation: "Remillard, Muno, McClintock & Orosz (2002), ApJ 580, 1030"
+    doi: "10.1086/343791"
+    arxiv: "astro-ph/0202305"
+    role: "alternative (harmonic) fits"
+  orosz2011:
+    citation: "Orosz, Steiner, McClintock, Torres, et al. (2011), ApJ 730, 75"
+    doi: "10.1088/0004-637X/730/2/75"
+    arxiv: "1101.2499"
+    role: "independent (dynamical) black hole mass"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+notes: >
+  Miller et al. (2001) state that the two QPOs are 'likely present simultaneously' but
+  cannot exclude a single feature moving in frequency. Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
+todo:
+  - "Locate the original source of the widely used pair 276 +- 3 Hz / 184 +- 5 Hz (probably Remillard et al. 2002 figures or Remillard & McClintock 2006) and decide which pair should be the default."

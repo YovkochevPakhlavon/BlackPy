@@ -1,0 +1,52 @@
+schema_version: 1
+id: qpo/m82_x1
+object: M82 X-1
+data_type: qpo_pair
+dataset_version: "1"
+verified_by_human: false
+description: >
+  Stable twin-peak (3:2) QPOs in the six-year average RXTE/PCA power spectrum (3-13 keV)
+  of the intermediate-mass black hole candidate M82 X-1.
+frequencies:
+  upper:
+    value: 5.07
+    err_minus: 0.06
+    err_plus: 0.06
+    unit: Hz
+    source: pasham2014
+    location: "Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption"
+  lower:
+    value: 3.32
+    err_minus: 0.06
+    err_plus: 0.06
+    unit: Hz
+    source: pasham2014
+    location: "Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption"
+simultaneous: true
+mass_prior:
+  value: 415.0
+  err_minus: 63.0
+  err_plus: 63.0
+  unit: Msun
+  method: "relativistic precession model (Kerr) applied to the same QPOs; NOT an independent measurement"
+  independent: false
+  source: pasham2014
+  location: "Abstract ('using the relativistic precession model, from which we get a value of 415 +- 63 Msun')"
+  note: >
+    Circular if used as a prior in a QPO fit. The other estimate of the same paper,
+    428 +- 105 Msun, comes from the inverse-mass scaling of stellar-mass black hole QPO
+    frequencies and is not independent of QPO modelling either.
+intended_models: [RP]
+references:
+  pasham2014:
+    citation: "Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74"
+    doi: "10.1038/nature13710"
+    arxiv: "1501.03180"
+    role: "QPO frequencies; QPO-based mass estimates"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+notes: >
+  No mass measurement independent of QPO modelling exists for M82 X-1 in the sources
+  accessed. BlackPy raises a CircularInferenceWarning when this mass prior is used.
+bibliography_check: "Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14."
+todo:
+  - "No independent mass prior. Use a broad uninformative prior instead, or exclude the source from tests of non-Kerr metrics."

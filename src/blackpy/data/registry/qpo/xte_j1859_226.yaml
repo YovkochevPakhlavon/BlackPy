@@ -1,0 +1,63 @@
+schema_version: 1
+id: qpo/xte_j1859_226
+object: XTE J1859+226
+data_type: qpo_triplet
+dataset_version: "1"
+verified_by_human: false
+description: >
+  QPO triplet in RXTE/PCA observation 40124-01-07-00 (1999-2000 outburst): type-C QPO and
+  the lower and upper high-frequency QPOs.
+frequencies:
+  upper:
+    value: 227.5
+    err_minus: 2.4
+    err_plus: 2.1
+    unit: Hz
+    source: motta2022
+    location: "Table 2, block 'Triplet', row 'Upper HFQPO', column 'Frequency [Hz]'"
+  lower:
+    value: 128.6
+    err_minus: 1.8
+    err_plus: 1.6
+    unit: Hz
+    source: motta2022
+    location: "Table 2, block 'Triplet', row 'Lower HFQPO', column 'Frequency [Hz]'"
+  low:
+    value: 3.65
+    err_minus: 0.01
+    err_plus: 0.01
+    unit: Hz
+    source: motta2022
+    location: "Table 2, block 'Triplet', row 'Type-C', column 'Frequency [Hz]'"
+    note: "Nodal-precession QPO; cannot be modelled in spherical symmetry (ignored by the MVP)."
+simultaneous: true
+mass_prior:
+  value: 7.8
+  err_minus: 1.9
+  err_plus: 1.9
+  unit: Msun
+  method: "dynamical: optical spectro-photometry in quiescence (GTC and WHT, 2017)"
+  independent: true
+  source: yanesrizo2022
+  location: "Abstract ('we obtained an updated black hole mass of M_1 = 7.8 +- 1.9 Msun'); the same value is quoted by Motta et al. (2022), Sections 4 and 5"
+  note: "Read from the arXiv abstract (arXiv API) only; the body of the paper was not read."
+intended_models: [RP]
+references:
+  motta2022:
+    citation: "Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469"
+    doi: "10.1093/mnras/stac2142"
+    arxiv: "2209.10376"
+    role: "QPO frequencies; quotes the dynamical mass"
+  yanesrizo2022:
+    citation: "Yanes-Rizo, Torres, Casares, Motta, et al. (2022), MNRAS 517, 1476"
+    doi: "10.1093/mnras/stac2719"
+    arxiv: "2209.10395"
+    role: "independent (dynamical) black hole mass"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+notes: >
+  The RPM mass obtained by Motta et al. (2022) themselves, M = 7.85 +- 0.46 Msun, is a
+  Kerr QPO fit and must NOT be used as a mass prior (circular inference).
+  Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
+todo:
+  - "The dynamical mass was read from the abstract of Yanes-Rizo et al. (2022) only; confirm it in the body of the paper."
+  - "Human check of Table 2 of Motta et al. (2022) against the published MNRAS version."

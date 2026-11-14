@@ -1,0 +1,67 @@
+schema_version: 1
+id: qpo/grs_1915_105
+object: GRS 1915+105
+data_type: qpo_pair
+dataset_version: "1"
+verified_by_human: false
+description: >
+  Simultaneous 41 Hz and 67 Hz QPOs discovered in archival RXTE data (13-27 keV band);
+  Gaussian centroid frequencies.
+frequencies:
+  upper:
+    value: 69.2
+    err_minus: 0.15
+    err_plus: 0.15
+    unit: Hz
+    source: strohmayer2001
+    location: "Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'"
+  lower:
+    value: 41.5
+    err_minus: 0.4
+    err_plus: 0.4
+    unit: Hz
+    source: strohmayer2001
+    location: "Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'"
+simultaneous: true
+mass_prior:
+  value: 12.4
+  err_minus: 1.8
+  err_plus: 2.0
+  unit: Msun
+  method: "dynamical mass revised with the VLBA trigonometric parallax distance"
+  independent: true
+  source: reid2014
+  location: "Abstract ('a revised estimate for the mass of the black hole of 12.4 +2.0 -1.8 Msun')"
+intended_models: [RP, ER]
+alternatives:
+  - description: >
+      A second pair near 113 Hz and 168 Hz (3:2 ratio), attributed to Remillard (2004) by
+      the review of Remillard & McClintock (2006), Section 'High-frequency QPOs'. The
+      review gives the frequencies without uncertainties; the original (Remillard 2004,
+      AIP Conf. Proc. 714, 13) was not accessed, so the uncertainties are null.
+    source: remillard_mcclintock2006
+    upper: {value: 168.0, err_minus: null, err_plus: null, unit: Hz}
+    lower: {value: 113.0, err_minus: null, err_plus: null, unit: Hz}
+references:
+  strohmayer2001:
+    citation: "Strohmayer (2001), ApJ 554, L169"
+    doi: "10.1086/321720"
+    arxiv: "astro-ph/0105338"
+    role: "QPO frequencies"
+  reid2014:
+    citation: "Reid, McClintock, Steiner, Steeghs, et al. (2014), ApJ 796, 2"
+    doi: "10.1088/0004-637X/796/1/2"
+    arxiv: "1409.2453"
+    role: "independent (dynamical) black hole mass"
+  remillard_mcclintock2006:
+    citation: "Remillard & McClintock (2006), ARA&A 44, 49"
+    doi: "10.1146/annurev.astro.44.051905.092532"
+    arxiv: "astro-ph/0606352"
+    role: "secondary source for the 113/168 Hz pair"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+notes: >
+  The 41/67 Hz pair is not in a 3:2 ratio (ratio about 1.67). Many QPO-fitting papers use
+  the 113/168 Hz pair instead; that pair is listed under 'alternatives' with null
+  uncertainties because its original source could not be accessed. Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
+todo:
+  - "Obtain Remillard (2004), AIP Conf. Proc. 714, 13 and record the 113/168 Hz frequencies with their uncertainties."

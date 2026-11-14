@@ -1,0 +1,63 @@
+schema_version: 1
+id: qpo/h1743_322
+object: H1743-322
+data_type: qpo_pair
+dataset_version: "1"
+verified_by_human: false
+description: >
+  Two high-frequency QPOs in the second part of one RXTE/PCA observation of the 2003
+  outburst (5.8-20.9 keV); the lower peak was fitted with its Q value fixed to 6.
+frequencies:
+  upper:
+    value: 241.0
+    err_minus: 3.0
+    err_plus: 3.0
+    unit: Hz
+    source: homan2005
+    location: "Section 3 (high-frequency QPOs): 'A fit to the second part (see Fig. 7) gives nu_max = 241 +- 3'"
+  lower:
+    value: 165.0
+    err_minus: 5.0
+    err_plus: 9.0
+    unit: Hz
+    source: homan2005
+    location: "Section 3 (high-frequency QPOs): 'This gave a frequency of 165 +9 -5 Hz ... (a 3 sigma detection)'"
+    note: "3 sigma detection with the Q value fixed to 6."
+simultaneous: true
+mass_prior:
+  value: null
+  err_minus: null
+  err_plus: null
+  unit: Msun
+  method: "no dynamical mass measurement was found in the sources accessed"
+  independent: null
+  source: null
+  location: ""
+intended_models: [RP, ER]
+alternatives:
+  - description: >
+      Remillard et al. (2006), abstract: 242 +- 3 Hz (average of 24 time intervals at lower
+      X-ray flux, 7-35 keV) and 166 +- 5 Hz (9 intervals at the highest flux, 3-35 keV).
+      The two peaks come from different groups of observations (not simultaneous).
+    source: remillard2006
+    upper: {value: 242.0, err_minus: 3.0, err_plus: 3.0, unit: Hz}
+    lower: {value: 166.0, err_minus: 5.0, err_plus: 5.0, unit: Hz}
+references:
+  homan2005:
+    citation: "Homan, Miller, Wijnands, van der Klis, et al. (2005), ApJ 623, 383"
+    doi: "10.1086/424994"
+    arxiv: "astro-ph/0406334"
+    role: "QPO frequencies"
+  remillard2006:
+    citation: "Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002"
+    doi: "10.1086/498556"
+    arxiv: "astro-ph/0407025"
+    role: "alternative QPO frequencies"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+notes: >
+  H1743-322 has no dynamically measured black hole mass in the sources accessed, so the
+  mass prior is null and the dataset cannot be used in a fit unless the user supplies an
+  explicit mass prior.
+bibliography_check: "Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14."
+todo:
+  - "Mass prior: null. Find an independent mass estimate (and record whether it relies on QPO or jet modelling), or keep the source out of joint fits."
