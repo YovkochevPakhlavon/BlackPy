@@ -36,7 +36,7 @@ dev = ["pytest>=7.4", "ruff>=0.4"]
 docs = ["mkdocs>=1.5", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.24"]
 
 [project.urls]
-Repository = "https://github.com/"
+Repository = "https://github.com/YovkochevPakhlavon/BlackPy"
 
 [tool.hatch.version]
 path = "src/blackpy/_version.py"

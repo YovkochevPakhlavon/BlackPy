@@ -14,4 +14,4 @@ htmlcov/
 examples/output/
 *.npz
 !tests/data/*.npz
-BLACKPY_FABLE_PROMPT.md
+BLACKPY_*_PROMPT.md
