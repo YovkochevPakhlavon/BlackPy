@@ -94,9 +94,10 @@ print("\n" + bp.plot.latex_table({"emcee": emcee_result, "dynesty": dynesty_resu
 fig = bp.plot.corner(
     emcee_result,
     truths={"alpha13": 0.0, "a": kerr_result.summary()["a"]["median"]},
+    title_kwargs={"fontsize": 9},
 )
-fig.suptitle("GRO J1655-40, RP model, Johannsen metric (lines: Kerr fit)", fontsize=11)
-fig.savefig(out / "johannsen_rpm_corner.png", dpi=130)
+fig.suptitle("GRO J1655-40, RP model, Johannsen metric (lines: Kerr fit)", fontsize=11, y=1.03)
+fig.savefig(out / "johannsen_rpm_corner.png", dpi=130, bbox_inches="tight")
 emcee_result.save(out / "johannsen_rpm_emcee")
 dynesty_result.save(out / "johannsen_rpm_dynesty")
 print(f"\nwrote {out / 'johannsen_rpm_corner.png'} and the reproducibility bundles")

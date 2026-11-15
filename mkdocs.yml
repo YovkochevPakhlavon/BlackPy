@@ -3,6 +3,8 @@ site_description: Black hole metric in, observables and Bayesian parameter const
 repo_name: BlackPy
 nav:
   - Home: index.md
+  - How BlackPy works: how_it_works.md
+  - Tutorial: tutorial.md
   - Quickstart: quickstart.md
   - Theory and formulas: theory.md
   - Data registry: data.md
@@ -18,7 +20,11 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.arithmatex:
       generic: true
 extra_javascript:

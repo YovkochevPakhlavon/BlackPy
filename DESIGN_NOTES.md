@@ -11,10 +11,18 @@ src/blackpy/
   constants.py        CODATA / IAU constants, Hz conversion
   _numerics.py        derivatives, root finding, quadrature (the shared toolbox)
   errors.py           exceptions and warning classes
-  metric/             StaticSpherical, catalogue (one file per metric), interpolant, stubs
-  geometry/           horizons, curvature (numeric closed forms), symbolic tensors, energy conditions
-  orbits/             circular orbits, epicyclic frequencies, QPO models
-  light/              photon spheres, shadow, plasma/lensing stubs
+  metric/             base.py (Metric, StaticSpherical), axisymmetric.py
+                      (StationaryAxisymmetric), rotating.py (Azreg-Ainou generator),
+                      catalogue/ (one file per metric), interpolant, stubs
+  geometry/           horizons (both classes), curvature (static closed forms + dispatch),
+                      axisymmetric.py (4D autodiff curvature, source classification),
+                      symbolic.py (static tensors, 4D tensors with time limit),
+                      energy conditions, report
+  orbits/             circular.py (static formulas + dispatch + public API),
+                      axisymmetric.py (general rotating formulas), frequencies, QPO models,
+                      rpm.py (Ingram & Motta analytic solution)
+  light/              photon spheres and shadow (static), rotating.py (separable shadows),
+                      plasma/lensing stubs
   data/               schema, loader, registry/*.yaml
   infer/              priors, likelihood, Fit (emcee/dynesty), results
   plot/               profiles, corner, LaTeX tables
@@ -26,7 +34,16 @@ src/blackpy/
 Public functions call `metric.evaluate(core, params, ...)`, which resolves
 keyword parameters and defaults, checks bounds, broadcasts, and applies
 `jit(vmap(core))`, cached per metric instance. Likelihoods call the cores
-directly, so the shadow radius is solved *inside* the compiled likelihood.
+directly, so the horizon, the ISCO and the shadow are solved *inside* the
+compiled likelihood. `evaluate` and the parameter handling live in the
+`Metric` base class and are shared by both metric classes.
+
+**Static / rotating dispatch (v0.2).** Core functions check
+`metric.is_rotating_class` and forward rotating metrics to the general
+formulas. Static metrics keep the v0.1 code unchanged (same numbers, same
+speed). `StaticSpherical.as_axisymmetric()` realises "static is the special
+case g_tphi = 0" and is used by the tests to check the two paths against
+each other.
 
 ## 2. Non-obvious choices
 
@@ -89,6 +106,69 @@ directly, so the shadow radius is solved *inside* the compiled likelihood.
 15. **Results are JAX arrays**, also for scalar inputs (0-d arrays); wrap in
     `float()` when a Python number is needed.
 
+### Added in v0.2
+
+16. **`CATALOGUE` was not extended.** v0.1 tests iterate over `CATALOGUE`
+    assuming static metrics, so rotating entries live in `ROTATING_CATALOGUE`.
+17. **Orbit directions.** `direction="prograde"` is the `Omega_+` root
+    (positive phi direction), `"retrograde"` the `Omega_-` root. Negative spin
+    with prograde orbits is the same physics as positive spin with retrograde
+    orbits; both are supported. Frequencies are returned as positive numbers;
+    the nodal frequency is signed (`nu_phi - nu_theta`), and QPO models use
+    its absolute value, following Ingram & Motta (2014).
+18. **Pole-free stability functions.** `N_r` and `N_theta` are written so
+    that they stay finite at the photon orbit (derivation in
+    `docs/theory.md`, section 14); the ISCO scan then needs no special
+    handling near it. Kerr ISCO: 0.010 ms per evaluation.
+19. **Horizon classification for rotating metrics uses a sign test**, not a
+    derivative: `g^rr = 1/g_rr` is evaluated through an infinite `g_rr` at
+    an exact root (`Delta = 0` is exactly representable for many spins),
+    where its autodiff derivative is undefined.
+20. **Source classification in an orthonormal frame.** The first version
+    judged "vacuum" from the eigenvalues of `T^mu_nu`; null dust has only
+    zero eigenvalues and was misclassified (caught by a test). The size of
+    `T` is now measured in an orthonormal frame built from the metric.
+21. **Symbolic 4D tensors in `x = cos(theta)`.** Kerr-like metrics become
+    rational functions, `sympy.cancel` replaces `simplify`, and the
+    Kretschmann sum is reduced block by block: Kerr takes 12 s, Kerr-Newman
+    28 s. The time limit is cooperative (checked between components) plus
+    `SIGALRM` where available; a subprocess was rejected because `spawn`
+    re-imports user scripts that lack a `__main__` guard.
+22. **Generic separability instead of metric-specific shadow formulas.** The
+    shadow code only needs `W g^tt`, `W g^tphi`, `W g^phiphi` to split into
+    radial and polar parts (`W = g_thth`); it never sees `Delta` or `a`. This
+    covers Kerr, Kerr-Newman, Johannsen and every Azreg-Ainou metric.
+23. **Photon region anchored at the polar orbit.** The ends of the shadow
+    contour are the roots of `Theta(i) = 0` nearest to the `xi = 0` orbit
+    (`T_r' = 0`). Searching for "the outermost roots" failed at small spin:
+    round-off noise in `Q_r'` at large radii produced spurious roots.
+24. **Slow rotation.** `xi(r_p)` is 0/0 at `a = 0`. Below a frame-dragging
+    measure of 1e-5 (a < 5.6e-7 for Kerr) the shadow is the non-rotating
+    circle; below 2e-4 the shape integrals use the displaced circle. The
+    neglected terms are documented in `docs/theory.md`, section 15.
+25. **Shape integrals by the midpoint rule in the contour parameter**: the
+    contour is a smooth closed curve in `t` (`r_p = mid - half cos t`), so
+    the rule converges exponentially (64 points: 1e-10) and never evaluates
+    the end points, where `d beta/dt` would need `sqrt` at zero.
+26. **Finite-distance shadows use a ZAMO** and the screen coordinates
+    `R_O (-n_phi, n_theta)` with `R_O = sqrt(g_thth)`, chosen because they
+    reduce to v0.1's `sqrt(h) sin(alpha_sh)` for static metrics and to
+    Bardeen's coordinates at infinity. Other observers (e.g. the Carter
+    observer of Grenzebach et al. 2014) are not implemented.
+27. **Spin bounds through a declared domain.** A rotating metric can declare
+    `domain(*params) -> bool` (`|a| <= 1`, `a^2 + Q^2 <= 1`, Johannsen's
+    regularity bounds). Observables do not enforce it (naked singularities
+    remain computable); the likelihood does, together with "an event horizon
+    exists", when `require_black_hole=True` (default for rotating metrics).
+28. **Inclination in degrees, isotropic by default.** The shadow nuisance
+    parameter is named `inclination`; its default prior is `p(i) ~ sin i` on
+    [0, 90] degrees (`Isotropic`).
+29. **`Parameter.role`** (`"spin"`, `"deformation"`, `"charge"`) lets the
+    degeneracy guard find the spin without guessing from names.
+30. **Coverage test draws the truth from the prior.** Only then is "68%
+    interval contains the truth in 68% of cases" an exact property of a
+    correct posterior (for a fixed truth it holds only asymptotically).
+
 ## 3. Deviations from the specification
 
 | # | Specification | What was done | Why |
@@ -102,6 +182,14 @@ directly, so the shadow radius is solved *inside* the compiled likelihood.
 | D7 | Performance test budget | Test asserts < 0.05 ms per ISCO; measured 0.006 ms | A hard 0.01 ms assertion would fail on slow CI runners |
 | D8 | Catalogue entries as classes | Factory functions `Schwarzschild()`, ... returning `StaticSpherical` | Simpler than subclasses; the public call syntax is identical |
 | D9 | Extra integrity warnings | Added `UnverifiedDataWarning` and `IgnoredDataWarning` | Makes unverified registry data and dropped low-frequency QPOs visible |
+
+| D10 (v0.2) | "deviation from circularity as defined by the EHT M87* papers" | `Delta C` of Bambi et al. (2019), Eqs. (4)-(5) | The EHT M87* papers define no `Delta C`; Paper VI uses the fractional spread of the ring diameter and refers to the asymmetry of Johannsen & Psaltis (2010). See `VERIFICATION_v0.2.md`, section 8 |
+| D11 (v0.2) | "StaticSpherical ideally becomes a special case with g_tphi = 0" | Separate class with `as_axisymmetric()`; dispatch in the core functions | Keeps the v0.1 numbers and speed exactly; the special-case relation is tested instead of structural |
+| D12 (v0.2) | Reproduce published RPM values "as validation" (tests) | Example 06, not a test | `CLAUDE.md`: tests must not depend on unverified registry numbers |
+| D13 (v0.2) | Rotating metrics in the built-in catalogue | `ROTATING_CATALOGUE`, not `CATALOGUE` | v0.1 tests iterate over `CATALOGUE` |
+| D14 (v0.2) | Azreg-Ainou procedure for any static metric | Conformal factor `Psi = h + a^2 cos^2(theta)` by default, replaceable | The paper fixes `Psi` only for `g = f`, `h = r^2` |
+| D15 (v0.2) | Shadow "at finite distance" | ZAMO observer | The specification names no observer |
+| D16 (v0.2) | v0.1 test `test_future_metric_stubs_raise` | Rewritten | It asserted that `StationaryAxisymmetric` raises `NotImplementedError` |
 
 ## 4. Things in the specification that deserve a second look
 
@@ -131,20 +219,59 @@ directly, so the shadow radius is solved *inside* the compiled likelihood.
 - Should using a dataset with `verified_by_human: false` be an error unless
   the user opts in, once the registry has been checked?
 - Should metric parameter bounds optionally restrict to the black hole range?
+  (For rotating metrics the likelihood now does this through the declared
+  domain; observables still do not.)
 - Repository URL for `pyproject.toml` and `CITATION.cff` (currently a placeholder).
+- GRO J1655-40 spin: the registry stores 0.290 (abstract and text of Motta et
+  al. 2014) although their Table 3 and the exact solution give 0.286. Keep
+  the text value, or store the table value?
+- Should `Delta C` follow Bambi et al. (2019) as now, or the Johannsen &
+  Psaltis (2010) asymmetry that EHT M87* Paper VI refers to (twice the rms)?
+- Should the rotating entries be merged into `CATALOGUE` in a later major
+  version?
 
 ## 6. Roadmap (interfaces reserved)
 
 | Feature | Reserved interface |
 |---|---|
-| Rotating metrics, Newman-Janis | `blackpy.metric.StationaryAxisymmetric`, `metric.future.newman_janis` |
-| RZ / KRZ / Johannsen parametrisations | `metric.future.rezzolla_zhidenko`, `konoplya_rezzolla_zhidenko`, `johannsen` |
-| Nodal precession, low-frequency QPOs | `orbits.nodal_precession_frequency`, `QPOModel.low_frequency` |
+| RZ / KRZ parametrisations | `metric.future.rezzolla_zhidenko`, `konoplya_rezzolla_zhidenko` |
+| Original Newman-Janis algorithm | `metric.future.newman_janis` (use `rotating_from_static`) |
 | Plasma | `light.PlasmaModel`, `light.shadow_in_plasma` |
 | Weak and strong lensing | `light.deflection_angle` (quadrature already in `_numerics`) |
 | Quasinormal modes (WKB + Pade) | `blackpy.qnm.quasinormal_modes` |
 | Thermodynamics | `blackpy.thermo` |
 | S2 orbit data | new `data_type` in the registry schema; needs ODE integration |
+| Shadows of non-separable metrics | not planned inside BlackPy (ray tracing; Gradus.jl) |
+| Event horizon when `g^rr = 0` depends on theta | solve `g^rr + g^thth (dH/dtheta)^2 = 0`; `horizon_profile` reports the case |
 
 All observable functions take the abstract `Metric` as first argument, so new
 metric classes can be added without changing the public API.
+
+## 7. Status at the end of the v0.2 session (2026-11-15)
+
+**Done** (each part committed separately; see `git log`):
+
+- Part A: constants against `scipy.constants`; exact Bardeen/Hayward
+  critical values; coverage test with noisy data; event-horizon wording.
+- B1: `StationaryAxisymmetric`, Kerr, Kerr-Newman, Johannsen,
+  `rotating_from_static`.
+- B2: horizons, ergosurface, 4D curvature (numeric and symbolic), effective
+  source and energy conditions.
+- B3: equatorial orbits, both epicyclic frequencies, ISCO, nodal precession,
+  11 QPO models with rotation, analytic RPM solution.
+- B4: shadows for separable metrics, observer at infinity and ZAMO at finite
+  distance, shape observables.
+- B5: triplet likelihood, spin bounds, rotating shadow likelihood with
+  inclination, two new warnings, examples 05 to 08.
+- Documentation: `how_it_works.md`, `tutorial.md`, LaTeX theory for
+  rotation, `VERIFICATION_v0.2.md`.
+
+**Left for later sessions:**
+
+- Human verification of every registry value (unchanged from v0.1).
+- CI has still never run (nothing is pushed): Linux and Windows untested.
+  The symbolic time limit has no hard interrupt on Windows.
+- A `plot` helper for shadow contours (example 07 draws them with
+  matplotlib directly).
+- Everything in the roadmap table above (v0.3: plasma, lensing, QNMs,
+  thermodynamics).

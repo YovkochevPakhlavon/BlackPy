@@ -150,6 +150,19 @@ def test_kerr_newman_symbolic_source(kerr_newman):
     sigma = s.r**2 + a**2 * sp.cos(s.theta) ** 2
     assert sp.simplify(t_mixed[1, 1] + q**2 / (8 * sp.pi * sigma**2)) == 0
     assert sp.simplify(t_mixed[2, 2] - q**2 / (8 * sp.pi * sigma**2)) == 0
+    # Kretschmann scalar in the form quoted in docs/theory.md (derived here, not quoted).
+    r, x = s.r, sp.cos(s.theta)
+    closed = (
+        8
+        * (
+            7 * q**4 * (r**4 + a**4 * x**4)
+            - 34 * q**4 * a**2 * r**2 * x**2
+            - 12 * q**2 * r * (r**4 - 10 * a**2 * r**2 * x**2 + 5 * a**4 * x**4)
+            + 6 * (r**2 - a**2 * x**2) * (r**4 - 14 * a**2 * r**2 * x**2 + a**4 * x**4)
+        )
+        / sigma**6
+    )
+    assert sp.simplify(geo.kretschmann_symbolic(kerr_newman) - closed) == 0
 
 
 def test_general_4d_curvature_agrees_with_static_closed_forms(rn, hayward, sds):

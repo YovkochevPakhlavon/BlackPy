@@ -27,7 +27,9 @@ d = bp.data.load("qpo/xte_j1550_564")
 | `id`, `object`, `data_type` | identifier, source name, `qpo_pair` / `qpo_triplet` / `shadow_bound` |
 | `dataset_version` | bumped whenever a value changes; stored in every fit result together with the file hash |
 | `verified_by_human` | see rule 3 |
-| `frequencies.upper/lower/low` | `value`, `err_minus`, `err_plus`, `unit`, `source`, `location` |
+| `frequencies.upper/lower/low` | `value`, `err_minus`, `err_plus`, `unit`, `source`, `location`; `low` is the type-C QPO of a triplet (fitted as nodal precession with rotating metrics) |
+| `spin` (optional) | published spin of the source with `method`, `independent`, `source`, `location`; it marks the source as rotating and is never used as a prior automatically |
+| `published_fit` (optional) | other published results of the same fit (e.g. RPM `mass` and `radius`), for comparison in the examples only |
 | `simultaneous` | whether the peaks come from the same data selection |
 | `mass_prior` | value with uncertainties, `method`, `independent`, `source`, `location` |
 | `intended_models` | QPO models used in the source papers |
@@ -36,11 +38,20 @@ d = bp.data.load("qpo/xte_j1550_564")
 | `references` | citation, DOI, arXiv id, role |
 | `source_access`, `notes`, `todo` | provenance and open issues |
 
-## Status of version 0.1
+## Status of version 0.2
 
 All values below were read from the arXiv versions of the papers (ar5iv HTML
 rendering) on 2026-11-14; bibliographic details were checked against Crossref.
 **None has been verified by a human yet.**
+
+Added in version 0.2 (read on 2026-11-15, dataset version 2), for comparison
+with BlackPy's own fits (example 6); these are Kerr QPO fits and **not**
+independent measurements:
+
+| Dataset | Published RPM result | Source and location |
+|---|---|---|
+| `qpo/gro_j1655_40` | \(a = 0.290 \pm 0.003\), \(M = 5.31 \pm 0.07\,M_\odot\), \(R = 5.68 \pm 0.04\,R_g\) | Motta et al. (2014), abstract and Sec. 4.1; their Table 3 gives the spin as 0.286 ± 0.003 |
+| `qpo/xte_j1859_226` | \(a = 0.149 \pm 0.005\), \(M = 7.85 \pm 0.46\,M_\odot\), \(R = 6.85 \pm 0.18\,R_g\) | Motta et al. (2022), abstract, Sec. 3 and Table 3 |
 
 | Dataset | Values | Source and location | Mass prior |
 |---|---|---|---|

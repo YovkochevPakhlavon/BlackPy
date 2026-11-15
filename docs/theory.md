@@ -1,5 +1,9 @@
 # Theory and formulas
 
+Sections 1 to 11 cover static, spherically symmetric metrics (version 0.1).
+Sections 12 to 17 cover stationary, axisymmetric (rotating) metrics
+(version 0.2). All formulas are written in LaTeX so that they can be reused.
+
 Every formula used by BlackPy is listed here with its source or derivation
 and the test that checks it. Status labels:
 
@@ -212,7 +216,8 @@ Linearising about \(\theta = \pi/2\) on a circular orbit gives
 
 exactly, for every spherically symmetric metric. Consequently the nodal
 (Lense–Thirring) precession frequency \(\nu_\phi - \nu_\theta\) vanishes
-identically, and low-frequency QPOs cannot be modelled in the MVP.
+identically, and low-frequency QPOs cannot be modelled with a static metric.
+With rotation \(\Omega_\theta \ne \Omega_\phi\); see section 14.
 
 ### Checks
 
@@ -232,10 +237,14 @@ identically, and low-frequency QPOs cannot be modelled in the MVP.
 
 where \(\tilde\Omega\) is the dimensionless angular frequency (in units of
 \(1/M\)). BlackPy uses \(c = 299\,792\,458\) m/s (exact),
-\(G = 6.67430\times10^{-11}\) m³ kg⁻¹ s⁻² (CODATA 2018; Tiesinga et al. 2021,
-Rev. Mod. Phys. 93, 025010) and the nominal solar mass parameter
-\(GM_\odot = 1.3271244\times10^{20}\) m³ s⁻² (IAU 2015 Resolution B3; Prša et
-al. 2016, AJ 152, 41). The conversion uses \(GM_\odot\) directly.
+\(G = 6.67430\times10^{-11}\) m³ kg⁻¹ s⁻² (CODATA 2018, Tiesinga et al. 2021,
+Rev. Mod. Phys. 93, 025010; unchanged in CODATA 2022) and the nominal solar
+mass parameter \(GM_\odot = 1.3271244\times10^{20}\) m³ s⁻² (IAU 2015
+Resolution B3, arXiv:1510.07674; Prša et al. 2016, AJ 152, 41, Table 1). The
+conversion uses \(GM_\odot\) directly. **Status: verified.** \(c\) and \(G\)
+are tested against `scipy.constants` (which ships CODATA 2022 since SciPy
+1.15); the nominal \(GM_\odot\) was read from both arXiv texts. This gives
+\(c^3/(2\pi GM_\odot) = 32\,312.5\) Hz.
 
 Check: the Schwarzschild ISCO orbital frequency of a 10 M☉ black hole is
 \(6^{-3/2} c^3/(2\pi\, GM_\odot \cdot 10) = 219.86\) Hz.
@@ -369,3 +378,458 @@ from memory*): \(2\ln B\) of 0–2 "not worth more than a bare mention", 2–6
 **Prior dominance.** A parameter is flagged when the Kolmogorov–Smirnov
 distance between its marginal posterior and its prior is below 0.1; such a
 credible interval reflects the prior and is not a constraint.
+
+## 12. Rotating metrics: conventions and catalogue
+
+**Line element.** Stationary, axisymmetric metrics are written in
+Boyer–Lindquist-like coordinates \((t, r, \theta, \phi)\):
+
+\[
+ds^2 = g_{tt}\,dt^2 + 2g_{t\phi}\,dt\,d\phi + g_{\phi\phi}\,d\phi^2
+       + g_{rr}\,dr^2 + g_{\theta\theta}\,d\theta^2 ,
+\]
+
+with all components functions of \((r, \theta)\). Units \(G = c = M = 1\).
+Shorthand used below:
+
+\[
+A \equiv -g_{tt}, \qquad B \equiv g_{t\phi}, \qquad C \equiv g_{\phi\phi}, \qquad
+\varrho^2 \equiv B^2 + AC = g_{t\phi}^2 - g_{tt}g_{\phi\phi} .
+\]
+
+\(\varrho^2\) is minus the determinant of the \((t, \phi)\) block; the inverse
+metric is \(g^{tt} = -C/\varrho^2\), \(g^{t\phi} = B/\varrho^2\),
+\(g^{\phi\phi} = A/\varrho^2\). The squared lapse of zero-angular-momentum
+observers is \(N^2 = \varrho^2/C\) and their angular velocity
+\(\omega = -B/C\). A static metric is the special case \(B = 0\), \(A = f\),
+\(g_{rr} = 1/g\), \(g_{\theta\theta} = h\), \(C = h\sin^2\theta\)
+(`StaticSpherical.as_axisymmetric()`).
+
+**Reflection symmetry.** Equatorial orbits require invariance under
+\(\theta \to \pi - \theta\). It is checked symbolically (difference of each
+component under the substitution) or numerically on a grid.
+
+**Kerr.** **Status: transcribed** from Eq. (1) of Johannsen (2013), Phys.
+Rev. D 88, 044002 (arXiv:1501.02809), **and verified symbolically** to solve
+\(G^\mu{}_\nu = 0\). With \(\Sigma = r^2 + a^2\cos^2\theta\),
+\(\Delta = r^2 - 2r + a^2\):
+
+\[
+g_{tt} = -\left(1 - \frac{2r}{\Sigma}\right), \quad
+g_{t\phi} = -\frac{2ar\sin^2\theta}{\Sigma}, \quad
+g_{rr} = \frac{\Sigma}{\Delta}, \quad
+g_{\theta\theta} = \Sigma, \quad
+g_{\phi\phi} = \left(r^2 + a^2 + \frac{2a^2r\sin^2\theta}{\Sigma}\right)\sin^2\theta .
+\]
+
+**Kerr–Newman.** **Status: derived / verified.** The Kerr components with
+\(2r \to 2r - Q^2\), \(\Delta = r^2 - 2r + a^2 + Q^2\). Checks: reduces to
+Kerr (\(Q = 0\)) and to Reissner–Nordström (\(a = 0\)); equals the metric
+generated from Reissner–Nordström by the procedure below; its source is
+traceless (\(R = 0\) symbolically) with \(T^r{}_r = -Q^2/(8\pi\Sigma^2)\).
+
+**Johannsen metric.** **Status: transcribed** from Eqs. (51)–(56) of
+Johannsen (2013), at the lowest non-vanishing order of the deviation
+functions:
+
+\[
+\begin{aligned}
+g_{tt} &= -\frac{\tilde\Sigma\,[\Delta - a^2A_2^2\sin^2\theta]}{D^2}, &
+g_{t\phi} &= -\frac{a\,[(r^2 + a^2)A_1A_2 - \Delta]\,\tilde\Sigma\sin^2\theta}{D^2}, \\
+g_{rr} &= \frac{\tilde\Sigma}{\Delta A_5}, \qquad g_{\theta\theta} = \tilde\Sigma, &
+g_{\phi\phi} &= \frac{\tilde\Sigma\sin^2\theta\,[(r^2 + a^2)^2A_1^2 - a^2\Delta\sin^2\theta]}{D^2},
+\end{aligned}
+\]
+
+\[
+D = (r^2 + a^2)A_1 - a^2A_2\sin^2\theta, \quad
+A_1 = 1 + \frac{\alpha_{13}}{r^3}, \quad A_2 = 1 + \frac{\alpha_{22}}{r^2}, \quad
+A_5 = 1 + \frac{\alpha_{52}}{r^2}, \quad
+\tilde\Sigma = r^2 + a^2\cos^2\theta + \frac{\epsilon_3}{r} .
+\]
+
+The exterior is regular for (their Eqs. (74), (75), (77), (78))
+
+\[
+\alpha_{13},\ \epsilon_3 > -\left(1 + \sqrt{1 - a^2}\right)^3, \qquad
+\alpha_{22},\ \alpha_{52} > -\left(1 + \sqrt{1 - a^2}\right)^2 ,
+\]
+
+which, with \(|a| \le 1\), is the metric's declared black hole domain. The
+event horizon is the Kerr horizon (their Sec. III.1). The metric does not
+solve the Einstein equations; BlackPy reports its effective source instead
+of assuming one (for \(\alpha_{13} = 0.5\), \(a = 0.5\) it violates all four
+energy conditions and is not of Hawking–Ellis type I everywhere).
+
+**Rotating generator.** **Status: transcribed** from Azreg-Aïnou (2014),
+Phys. Rev. D 90, 064041 (arXiv:1405.2569), Eqs. (16) and (18). For a static
+seed \(ds^2 = -f\,dt^2 + dr^2/g + h\,d\Omega^2\) (their \(G = f\), \(F = g\),
+\(H = h\)):
+
+\[
+ds^2 = \frac{\Psi}{\rho^2}\left[-\left(1 - \frac{2\tilde f}{\rho^2}\right)dt^2
+       + \frac{\rho^2}{\Delta}dr^2 - \frac{4a\tilde f\sin^2\theta}{\rho^2}dt\,d\phi
+       + \rho^2d\theta^2 + \frac{\Sigma\sin^2\theta}{\rho^2}d\phi^2\right],
+\]
+
+\[
+K = \sqrt{g/f}\,h, \quad \rho^2 = K + a^2\cos^2\theta, \quad 2\tilde f = K - gh, \quad
+\Delta = gh + a^2, \quad \Sigma = (K + a^2)^2 - a^2\Delta\sin^2\theta .
+\]
+
+The conformal factor \(\Psi\) is not fixed by the algorithm. For \(g = f\),
+\(h = r^2\) the paper takes \(\Psi = r^2 + a^2\cos^2\theta\) (its Eq. (23)).
+BlackPy's default \(\Psi = h + a^2\cos^2\theta\) reproduces this and satisfies
+\(\lim_{a\to0}\Psi = h\) in general; for other seeds it is a choice of
+BlackPy, not of the paper, and can be replaced. **The result is a model**:
+neither field equations nor a physical source are guaranteed. Checks:
+Schwarzschild gives Kerr and Reissner–Nordström gives Kerr–Newman (symbolic
+identities); for the rotating Hayward metric the energy density and
+pressures agree with the paper's Eq. (31),
+\(\epsilon = -p_r = 2(r\tilde f' - \tilde f)/\rho^4\),
+\(p_\theta = p_\phi = -p_r - \tilde f''/\rho^2\) (in units
+\(G_{\mu\nu} = T_{\mu\nu}\)).
+
+## 13. Geometry of rotating metrics
+
+**Horizons.** BlackPy finds the roots of \(g^{rr} = 1/g_{rr}\) at a given
+polar angle and classifies them as in section 2, with \(N^2\) in the role of
+\(f\) (a root where \(N^2 \ne 0\) is not a horizon). For Kerr-like metrics
+\(g^{rr} = \Delta/\Sigma\). The direction of the sign change is read from the
+sign of \(g^{rr}\) on both sides of the root, because \(g_{rr}\) is infinite at
+the root. In general the horizon \(r = H(\theta)\) solves
+
+\[ g^{rr} + g^{\theta\theta}\left(\frac{dH}{d\theta}\right)^2 = 0 \]
+
+(Johannsen 2013, Eq. (58)), so the surface \(g^{rr} = 0\) is the event horizon
+only if it is \(\theta\)-independent; `horizon_profile` reports this, and the
+general equation is not solved. Checks: Kerr
+\(r_\pm = 1 \pm \sqrt{1 - a^2}\) to \(10^{-12}\); Kerr–Newman
+\(r_\pm = 1 \pm \sqrt{1 - a^2 - Q^2}\).
+
+**Ergosurface.** The outermost root of \(g_{tt} = 0\). Kerr: \(g_{tt} = 0
+\Leftrightarrow r^2 - 2r + a^2\cos^2\theta = 0\), i.e.
+\(r_E = 1 + \sqrt{1 - a^2\cos^2\theta}\) (derived).
+
+**Curvature.** Christoffel symbols, Riemann, Ricci and Einstein tensors from
+the definitions of section 1, with the derivatives in \(r\) and \(\theta\) by
+automatic differentiation; \(K = R_{abcd}R^{abcd}\). The symbolic path does
+the same computation with sympy in the variable \(x = \cos\theta\), in which
+Kerr-like metrics are rational functions, under a time limit.
+
+**Kerr Kretschmann scalar.** **Status: derived** with the symbolic path
+(test `test_kerr_is_vacuum_and_kretschmann_closed_form`), not quoted:
+
+\[
+K = \frac{48\,(r^2 - a^2x^2)\left[(r^2 + a^2x^2)^2 - 16a^2r^2x^2\right]}{(r^2 + a^2x^2)^6},
+\qquad x = \cos\theta .
+\]
+
+The numerical (autodiff) value agrees with it to \(10^{-10}\). For
+Kerr–Newman the same computation gives
+\(K = 8\,[\,7Q^4(r^4 + a^4x^4) - 34Q^4a^2r^2x^2 - 12Q^2r(r^4 - 10a^2r^2x^2 + 5a^4x^4)
++ 6(r^2 - a^2x^2)(r^4 - 14a^2r^2x^2 + a^4x^4)\,]/\Sigma^6\).
+
+**Effective source.** \(T^\mu{}_\nu = G^\mu{}_\nu/8\pi\) is classified at
+each grid point by its eigenvalue structure in an orthonormal frame
+(Hawking & Ellis 1973, section 4.3; *cited from memory*):
+
+| Result | Condition |
+|---|---|
+| vacuum | all frame components below \(10^{-7}\sqrt{K}/8\pi\) |
+| perfect fluid | real eigenvalues, complete eigenvectors, one timelike eigenvector, three equal pressures |
+| anisotropic fluid | the same with unequal pressures (type I) |
+| neither | complex eigenvalues, a defective matrix, or no timelike eigenvector (types II–IV) |
+
+For type I, \(\rho = -\lambda_{\rm timelike}\) and the principal pressures
+\(p_i\) are the other eigenvalues; a degenerate eigenvalue is assigned by the
+signature of the metric restricted to its eigenspace. Energy conditions:
+NEC \(\rho + p_i \ge 0\); WEC adds \(\rho \ge 0\); SEC adds
+\(\rho + \sum_i p_i \ge 0\); DEC \(\rho \ge |p_i|\). Checks: Kerr vacuum;
+Kerr–Newman \(\rho = -p_1 = p_2 = p_3 = Q^2/(8\pi\Sigma^2)\); a cosmological
+constant is a perfect fluid violating only the SEC; null dust and a tensor
+with complex eigenvalues are "neither".
+
+## 14. Equatorial circular orbits and epicyclic frequencies (rotating)
+
+**Status: derived**; checked against the Kerr closed forms, against the
+static formulas of sections 5–6, and against the direct effective-potential
+definition evaluated symbolically for the Johannsen metric.
+
+**Angular velocity.** For a circular equatorial orbit the radial geodesic
+equation is \(\partial_r g_{\mu\nu}u^\mu u^\nu = 0\), i.e.
+\(A' - 2B'\Omega - C'\Omega^2 = 0\) with \(\Omega = d\phi/dt\):
+
+\[ \boxed{\;\Omega_\pm = \frac{-B' \pm \sqrt{B'^2 + A'C'}}{C'}\;} \]
+
+(the same expression as Eq. (83) of Johannsen 2013). The upper sign is
+called *prograde* (positive \(\phi\) direction), the lower *retrograde*; a
+retrograde orbit for spin \(a\) is a prograde orbit for spin \(-a\).
+
+**Energy and angular momentum.** From \(u^\mu u_\mu = -1\),
+
+\[
+(u^t)^{-2} = D \equiv A - 2B\Omega - C\Omega^2, \qquad
+E = -u_t = \frac{e}{\sqrt D}, \quad L = u_\phi = \frac{\ell}{\sqrt D}, \qquad
+e \equiv A - B\Omega, \quad \ell \equiv B + C\Omega .
+\]
+
+An orbit exists where \(\varrho^2 > 0\), \(g_{rr} > 0\), \(C' > 0\),
+\(B'^2 + A'C' \ge 0\) and \(D > 0\); \(D = 0\) is the equatorial circular
+photon orbit.
+
+**Epicyclic frequencies.** With conserved \(E\), \(L\) the normalisation of
+the four-velocity reads
+
+\[
+g_{rr}\dot r^2 + g_{\theta\theta}\dot\theta^2 = -\,\mathcal U(r, \theta), \qquad
+\mathcal U \equiv g^{tt}E^2 - 2g^{t\phi}EL + g^{\phi\phi}L^2 + 1
+= 1 - \frac{CE^2 + 2BEL - AL^2}{\varrho^2} .
+\]
+
+On the circular orbit \(\mathcal U = \partial_r\mathcal U =
+\partial_\theta\mathcal U = 0\) (the last by reflection symmetry).
+Differentiating along the orbit and linearising,
+\(\ddot{\delta r} = -\frac{\partial_r^2\mathcal U}{2g_{rr}}\delta r\) and
+\(\ddot{\delta\theta} = -\frac{\partial_\theta^2\mathcal U}{2g_{\theta\theta}}\delta\theta\)
+in proper time; dividing by \((u^t)^2 = 1/D\) gives the frequencies seen from
+infinity (the definition of Johannsen 2013, Eqs. (92)–(97)):
+
+\[
+\Omega_r^2 = \frac{D\,\partial_r^2\mathcal U}{2g_{rr}}, \qquad
+\Omega_\theta^2 = \frac{D\,\partial_\theta^2\mathcal U}{2g_{\theta\theta}} .
+\]
+
+Write \(\mathcal U = 1 - n/(\varrho^2 D)\) with
+\(n \equiv Ce^2 + 2Be\ell - A\ell^2\) (at fixed \(e\), \(\ell\)). The orbit
+conditions are \(n = \varrho^2D\) and \(n' = D(\varrho^2)'\), hence
+\(\partial_r^2\mathcal U = [D(\varrho^2)'' - n'']/(\varrho^2D)\) and
+
+\[
+\boxed{\;\Omega_r^2 = \frac{N_r}{2g_{rr}\varrho^2}, \qquad
+N_r = D(\varrho^2)'' - C''e^2 - 2B''e\ell + A''\ell^2\;}
+\]
+
+\[
+\boxed{\;\Omega_\theta^2 = \frac{N_\theta}{2g_{\theta\theta}\varrho^2}, \qquad
+N_\theta = D(\varrho^2)_{\theta\theta} - C_{\theta\theta}e^2
+           - 2B_{\theta\theta}e\ell + A_{\theta\theta}\ell^2\;}
+\]
+
+where a subscript \(\theta\theta\) is a second polar derivative at
+\(\theta = \pi/2\). These forms have no pole at the photon orbit. For a static
+metric \(N_r = N/h'\) with \(N\) of section 6, and
+\(N_\theta = 2fh^2\Omega^2\) gives \(\Omega_\theta = \Omega_\phi\).
+
+**ISCO, marginally bound orbit.** The ISCO is the outermost root of \(N_r\)
+with \(N_r\) increasing outward at which an orbit exists; the marginally
+bound orbit is \(E = 1\), i.e. \(e^2 - D = 0\).
+
+**Kerr closed forms** (\(M = 1\); prograde for \(a > 0\)). **Status:
+verified against a published source**: Ingram & Motta (2014), MNRAS 444,
+2065 (arXiv:1408.0884), Eqs. (1)–(3), and Motta et al. (2014), MNRAS 437,
+2554 (arXiv:1309.3652), Eqs. (1)–(3), both read from the arXiv versions:
+
+\[
+\nu_\phi = \frac{1}{2\pi}\,\frac{1}{r^{3/2} + a}, \qquad
+\nu_r^2 = \nu_\phi^2\left(1 - \frac{6}{r} + \frac{8a}{r^{3/2}} - \frac{3a^2}{r^2}\right), \qquad
+\nu_\theta^2 = \nu_\phi^2\left(1 - \frac{4a}{r^{3/2}} + \frac{3a^2}{r^2}\right) .
+\]
+
+BlackPy's general formulas reproduce them to \(10^{-13}\) (\(\nu_\phi\)) and
+\(10^{-10}\) (squared epicyclic frequencies).
+
+**Kerr ISCO** (Bardeen, Press & Teukolsky 1972, ApJ 178, 347; *the original
+was not accessible*; formula read from Motta et al. 2014, Eq. (6), and
+checked to solve \(1 - 6/r + 8a/r^{3/2} - 3a^2/r^2 = 0\)):
+
+\[
+r_{\rm ISCO} = 3 + Z_2 \mp \sqrt{(3 - Z_1)(3 + Z_1 + 2Z_2)}, \quad
+Z_1 = 1 + (1 - a^2)^{1/3}\left[(1 + a)^{1/3} + (1 - a)^{1/3}\right], \quad
+Z_2 = \sqrt{3a^2 + Z_1^2} .
+\]
+
+Reproduced to \(3\times10^{-13}\) for \(a \in [-0.999, 0.999]\). *Quoted from
+memory of the same paper and reproduced numerically:*
+\(r_{\rm mb} = 2 \mp a + 2\sqrt{1 \mp a}\),
+\(r_{\rm ph} = 2\{1 + \cos[\tfrac23\arccos(\mp a)]\}\),
+\(E = (r^{3/2} - 2r^{1/2} \pm a)/[r^{3/4}(r^{3/2} - 3r^{1/2} \pm 2a)^{1/2}]\).
+
+**Nodal precession.** \(\nu_{\rm nod} = \nu_\phi - \nu_\theta\), with
+\(\nu_\phi > 0\); positive for co-rotating orbits. QPO models compare
+\(|\nu_{\rm nod}|\) with the low-frequency QPO. For `StaticSpherical` metrics
+the request is refused, because it vanishes identically.
+
+**Relativistic precession model, analytic solution.** **Status:
+transcribed** from Ingram & Motta (2014), Eqs. (4)–(9). With
+\(\Gamma = (1 - \nu_{\rm per}/\nu_\phi)^2\),
+\(\Delta = (1 - \nu_{\rm nod}/\nu_\phi)^2\):
+
+\[
+r = \frac23\,\frac{6 - \Delta - 5\Gamma + 2\sqrt{2(\Delta - \Gamma)(3 - \Delta - 2\Gamma)}}{(\Delta + \Gamma - 2)^2},
+\qquad
+a = \frac{r^{3/2}}{4}\left[\Delta + \Gamma - 2 + \frac6r\right],
+\qquad
+M = \frac{c^3}{2\pi GM_\odot}\,\frac{1}{\nu_\phi\,(r^{3/2} + a)} .
+\]
+
+Check: it inverts the Kerr frequencies computed by the general code to
+\(10^{-9}\).
+
+## 15. Separable null geodesics and the shadow of rotating black holes
+
+**Status: derived**; checked against Bardeen's Kerr formulas and against the
+radial potential of the Johannsen metric.
+
+**Separability.** Let \(W = g_{\theta\theta}\). Null geodesics are
+conformally invariant, so the Hamilton–Jacobi equation
+\(g^{\mu\nu}p_\mu p_\nu = 0\) may be multiplied by \(W\). With
+\(p_t = -E\), \(p_\phi = L\):
+
+\[
+(Wg^{rr})\,p_r^2 + p_\theta^2 + (Wg^{tt})E^2 - 2(Wg^{t\phi})EL + (Wg^{\phi\phi})L^2 = 0 .
+\]
+
+It separates if
+
+\[
+Wg^{tt} = T_r(r) + T_\theta(\theta), \quad
+Wg^{t\phi} = P_r(r) + P_\theta(\theta), \quad
+Wg^{\phi\phi} = Q_r(r) + Q_\theta(\theta), \quad
+Wg^{rr} = \Delta_r(r),
+\]
+
+a sufficient condition that BlackPy tests numerically (vanishing mixed
+derivatives \(\partial_r\partial_\theta\) of the first three and
+\(\partial_\theta\) of the last, by automatic differentiation). The split is
+fixed by \(T_\theta = P_\theta = Q_\theta = 0\) at \(\theta = \pi/2\). With
+\(\xi = L/E\) and the separation constant \(\eta = \mathcal K/E^2\):
+
+\[
+\Delta_r\frac{p_r^2}{E^2} = \mathcal R(r) \equiv -T_r + 2P_r\xi - Q_r\xi^2 - \eta, \qquad
+\frac{p_\theta^2}{E^2} = \Theta(\theta) \equiv \eta - T_\theta + 2P_\theta\xi - Q_\theta\xi^2 .
+\]
+
+For Kerr \(T_r = a^2 - (r^2 + a^2)^2/\Delta\),
+\(P_r = a - a(r^2 + a^2)/\Delta\), \(Q_r = 1 - a^2/\Delta\),
+\(T_\theta = -a^2\cos^2\theta\), \(P_\theta = 0\), \(Q_\theta = \cot^2\theta\),
+which gives the familiar
+\(\mathcal R = [(r^2 + a^2 - a\xi)^2 - \Delta((\xi - a)^2 + \eta)]/\Delta\) and
+\(\Theta = \eta + a^2\cos^2\theta - \xi^2\cot^2\theta\), with \(\eta\) Carter's
+constant. Metrics that fail the test are refused: they need numerical ray
+tracing, which is out of scope (an external option is Gradus.jl).
+
+**Spherical photon orbits.** \(\mathcal R = \mathcal R' = 0\) at \(r_p\):
+\(Q_r'\xi^2 - 2P_r'\xi + T_r' = 0\). The physical root is the one of smaller
+magnitude, written in the numerically stable form
+
+\[
+\boxed{\;\xi(r_p) = \frac{T_r'}{P_r' + \mathrm{sgn}(P_r')\sqrt{P_r'^2 - Q_r'T_r'}}, \qquad
+\eta(r_p) = -T_r + 2P_r\xi - Q_r\xi^2\;}
+\]
+
+(the other root is \(\xi = (r^2 + a^2)/a\) in Kerr, for which \(\Theta < 0\)).
+For Kerr this reproduces Bardeen's result, in the form given by Perlick &
+Tsupko (2022), Phys. Rep. 947, 1 (arXiv:2105.07101), Eq. (56):
+
+\[
+\xi = \frac{-r_p^2(r_p - 3) - a^2(r_p + 1)}{a(r_p - 1)}, \qquad
+\eta = \frac{r_p^3\left[4a^2 - r_p(r_p - 3)^2\right]}{a^2(r_p - 1)^2} .
+\]
+
+*Bardeen (1973) itself (Les Houches lectures) was not accessible; the
+formulas were read from the review.*
+
+**Observer at infinity.** For inclination \(i\) (their Eq. (55)):
+
+\[ \alpha = -\frac{\xi}{\sin i}, \qquad \beta = \pm\sqrt{\Theta(i)} . \]
+
+The contour is traced by \(r_p \in [r_{\min}, r_{\max}]\), the two roots of
+\(\Theta(i) = 0\) nearest to the polar orbit \(T_r' = 0\) (which has
+\(\xi = 0\) and exists for every spin). Edge-on, \(r_{\min}\) and
+\(r_{\max}\) are the prograde and retrograde equatorial photon orbits.
+
+**Slow rotation.** At \(a = 0\) every \(\xi\) belongs to the same radius and
+\(\xi(r_p)\) is \(0/0\). With \(m \equiv |P_r'|\,r_s^2\) at the polar orbit
+\(r_s\) (\(m = 18a\) for Kerr): for \(m < 10^{-5}\) the shadow is the circle
+of radius \(\sqrt{-T_r(r_s)}\), neglecting a shift \(2a\sin i < 1.2\times10^{-6}\);
+for \(m < 2\times10^{-4}\) the contour is traced but the shape integrals use
+the displaced circle (neglected terms \(O(a^2) < 2\times10^{-10}\)).
+
+**Observer at finite distance.** For a zero-angular-momentum observer at
+\((r_O, i)\) the locally measured photon energy is
+\(E_{\rm loc} = E(1 - \omega\xi)/N\) and the direction cosines are
+\(n_{\hat\phi} = \xi/(\sqrt{C}\,E_{\rm loc}/E)\),
+\(n_{\hat\theta} = \pm\sqrt{\Theta(i)}/(\sqrt{g_{\theta\theta}}\,E_{\rm loc}/E)\).
+BlackPy returns \(\alpha = -R_On_{\hat\phi}\), \(\beta = R_On_{\hat\theta}\)
+with \(R_O = \sqrt{g_{\theta\theta}(r_O, i)}\). These tend to Bardeen's
+coordinates as \(r_O \to \infty\) and reduce to
+\(\sqrt{h(r_O)}\sin\alpha_{\rm sh}\) of section 9 for a static metric. The
+observer must be outside the photon region.
+
+**Shape observables.** With \(\ell(\varphi)\) the distance of the contour
+from its geometric centre \((\alpha_G, 0)\),
+\(\alpha_G = \int\alpha\,dA/\int dA\):
+
+\[
+R_A = \sqrt{A/\pi}, \qquad
+\langle\ell\rangle = \frac{1}{2\pi}\oint\ell\,d\varphi, \qquad
+\Delta C = \frac{1}{\bar R}\sqrt{\frac{1}{2\pi}\oint(\ell - \bar R)^2d\varphi}, \quad
+\bar R^2 = \frac{1}{2\pi}\oint\ell^2d\varphi .
+\]
+
+\(\Delta C\) is **transcribed** from Bambi, Freese, Vagnozzi & Visinelli
+(2019), Phys. Rev. D 100, 044057 (arXiv:1904.12983), Eqs. (4)–(5). Since
+\(\tfrac12\oint\ell^2d\varphi\) is the enclosed area, \(\bar R = R_A\)
+exactly and \(\Delta C = \sqrt{2(1 - \langle\ell\rangle/R_A)}\) (derived;
+tested). The integrals use the midpoint rule in the contour parameter
+\(t\), \(r_p = \tfrac12(r_{\max} + r_{\min}) - \tfrac12(r_{\max} - r_{\min})\cos t\),
+which converges exponentially (64 points give \(10^{-10}\)).
+
+*Note on the EHT definition.* The EHT M87\* papers do not define a quantity
+called \(\Delta C\). Paper VI (ApJL 875, L6, section 7.4) measures the
+"fractional spread" of the ring diameter over orientations and states that
+Kerr shadows have "a maximum asymmetry of 10%, as defined in Johannsen &
+Psaltis (2010)", whose asymmetry is \(A = 2\sqrt{\langle(R - \langle
+R\rangle)^2\rangle}\). With the definition above the largest Kerr value is
+\(\Delta C = 0.050\) (\(a = 0.998\), edge-on); twice that, 0.10, matches the
+EHT statement.
+
+Checks: \(a = 0\) gives the circle of radius \(3\sqrt3\); the Kerr contour
+agrees with the formulas above to \(10^{-10}\); the horizontal width shrinks
+from \(10.39\) to \(9.11\) between \(a = 0\) and \(0.998\) edge-on while the
+height stays \(2\cdot3\sqrt3\) to \(10^{-5}\); the Kerr mean radius ranges
+from 4.830 to 5.196 (7.0%) over all spins up to 0.998 and all inclinations,
+consistent with "the radius ranges from ∼4.8 to ∼5.2 \(GM/c^2\)" and the
+"∼8% range" of EHT Collaboration (2022), Sgr A\* Paper VI (arXiv:2311.09484).
+
+## 16. Statistics for rotating metrics
+
+**Triplet likelihood.** For a rotating metric and a QPO triplet a third
+split-normal term is added for the low-frequency QPO, with model value
+\(|\nu_\phi - \nu_\theta|\) at the same radius. With the RP model this is the
+relativistic-precession-model likelihood.
+
+**Spin bounds.** The likelihood is zero outside the metric's declared black
+hole domain and where no event horizon exists, so the allowed spin range
+depends on the metric and on its other parameters (\(|a| \le 1\) for Kerr,
+\(a^2 + Q^2 \le 1\) for Kerr–Newman, the regularity bounds of section 12 for
+Johannsen).
+
+**Shadow likelihood.** The model value is the mean radius
+\(\langle\ell\rangle\) (optionally \(R_A\)) for an observer at infinity at
+inclination \(i\), a nuisance parameter in degrees with default prior
+\(p(i) \propto \sin i\) on \([0°, 90°]\).
+
+**Degeneracy guard.** After sampling, the Pearson and Spearman correlation
+between the spin and every other sampled metric parameter is recorded; if
+either exceeds 0.9 in absolute value a `DegeneracyWarning` is raised.
+
+**Static metric for a rotating source.** Fitting a `StaticSpherical` metric
+to a source with a published spin or a nodal-precession QPO raises a
+`SpinIgnoredWarning`.
+
+**Coverage.** With true parameters drawn from the priors and Gaussian noise
+on the data, the central 68% credible interval contains the truth in 68% of
+the cases. A slow test checks this on 100 noisy datasets (observed 73, the
+binomial standard deviation being 4.7).

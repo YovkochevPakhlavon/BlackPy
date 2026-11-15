@@ -21,24 +21,30 @@ bp.light.shadow_radius(rn, Q=0.5)            # 4.968...
 bp.geometry.horizons(rn, Q=0.5).radii        # (0.134, 1.866)
 ```
 
-## What the MVP (version 0.1) covers
+New here? Read [How BlackPy works](how_it_works.md), then follow the
+[tutorial](tutorial.md).
+
+## What version 0.2 covers
 
 Static, spherically symmetric metrics
-\( ds^2 = -f(r)\,dt^2 + dr^2/g(r) + h(r)\,d\Omega^2 \) in units \(G = c = 1\):
+\( ds^2 = -f(r)\,dt^2 + dr^2/g(r) + h(r)\,d\Omega^2 \) and stationary,
+axisymmetric (rotating) metrics
+\( ds^2 = g_{tt}dt^2 + 2g_{t\phi}dt\,d\phi + g_{\phi\phi}d\phi^2 + g_{rr}dr^2 + g_{\theta\theta}d\theta^2 \),
+in units \(G = c = 1\):
 
 | Module | Content |
 |---|---|
-| `blackpy.metric` | `StaticSpherical` from sympy expressions or JAX callables; catalogue: Schwarzschild, Reissner–Nordström, Schwarzschild–de Sitter, Bardeen, Hayward |
-| `blackpy.geometry` | all horizons with classification, Kretschmann scalar, effective stress-energy, energy conditions |
-| `blackpy.orbits` | circular orbits, ISCO, marginally bound orbit, epicyclic frequencies, QPO models (RP, ER, TD, WD and variants) |
-| `blackpy.light` | photon spheres, critical impact parameter, shadow for observers at infinity and at finite radius |
+| `blackpy.metric` | `StaticSpherical` and `StationaryAxisymmetric` from sympy expressions or JAX callables; catalogue: Schwarzschild, Reissner–Nordström, Schwarzschild–de Sitter, Bardeen, Hayward, Kerr, Kerr–Newman, Johannsen; rotating generator `rotating_from_static` |
+| `blackpy.geometry` | all horizons with classification, ergosurface, Kretschmann scalar, effective stress-energy and its type (vacuum, perfect fluid, anisotropic fluid, neither), energy conditions |
+| `blackpy.orbits` | circular orbits (prograde and retrograde), ISCO, marginally bound orbit, radial and vertical epicyclic frequencies, nodal precession, QPO models (RP, ER, TD, WD and variants) |
+| `blackpy.light` | photon spheres, critical impact parameters, shadows: circles for static metrics, contours and shape observables for rotating metrics with separable null geodesics |
 | `blackpy.data` | registry of QPO and shadow data with sources and verification status |
-| `blackpy.infer` | priors, likelihoods, emcee and dynesty, Bayes factors, integrity warnings, reproducibility bundles |
+| `blackpy.infer` | priors, likelihoods (QPO pairs and triplets, shadow size), emcee and dynesty, Bayes factors, integrity warnings, reproducibility bundles |
 | `blackpy.plot` | profile plots, corner plots, LaTeX tables |
 
-Not in the MVP (interfaces reserved, they raise `NotImplementedError`):
-rotating metrics, parametrised metrics (RZ, KRZ, Johannsen), plasma, lensing,
-quasinormal modes, thermodynamics, S2 orbit data, nodal precession.
+Not in version 0.2 (interfaces reserved, they raise `NotImplementedError`):
+ray tracing for non-separable metrics, the RZ and KRZ parametrisations,
+plasma, lensing, quasinormal modes, thermodynamics, S2 orbit data.
 
 ## Design principle: symbolic in, numeric core
 

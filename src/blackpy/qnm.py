@@ -1,4 +1,4 @@
-"""Quasinormal modes. **Not implemented in the MVP; interface only.**
+"""Quasinormal modes. **Not implemented (planned for v0.3); interface only.**
 
 Planned: WKB approximation with Pade resummation for static, spherically
 symmetric metrics (Konoplya, Zhidenko & Zinhailo 2019, Class. Quantum Grav.
@@ -23,6 +23,6 @@ def quasinormal_modes(metric, *, spin: int = 2, ell: int = 2, overtone: int = 0,
         Overtone number ``n``.
     """
     raise NotImplementedError(
-        "Quasinormal modes (WKB + Pade) are not part of the BlackPy MVP. The interface is "
-        "reserved; see DESIGN_NOTES.md (roadmap)."
+        "Quasinormal modes (WKB + Pade) are not part of the BlackPy MVP or of v0.2 (planned "
+        "for v0.3). The interface is reserved; see DESIGN_NOTES.md (roadmap)."
     )

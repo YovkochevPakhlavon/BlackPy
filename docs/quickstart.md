@@ -67,11 +67,44 @@ bp.light.shadow_angular_radius(bp.metric.SchwarzschildDeSitter(), r_obs=10.0, La
 
 !!! note "Low-frequency QPOs"
     In a spherically symmetric spacetime \(\nu_\theta = \nu_\phi\), so the
-    nodal precession frequency vanishes. `bp.orbits.nodal_precession_frequency`
-    raises an explicit error, and fits ignore the low-frequency QPO of
-    triplet datasets with a warning.
+    nodal precession frequency vanishes. For a static metric
+    `bp.orbits.nodal_precession_frequency` raises an explicit error, and fits
+    ignore the low-frequency QPO of triplet datasets with a warning. Use a
+    rotating metric (next section).
 
-## 4. Data
+## 4. Rotating metrics
+
+```python
+import math
+
+kerr = bp.metric.Kerr()                     # also KerrNewman(), Johannsen()
+rot = bp.metric.rotating_from_static(bp.metric.Hayward())   # parameters: a, l (a model!)
+
+bp.geometry.horizons(kerr, a=0.9)           # also reports theta-independence
+bp.geometry.ergosurface(kerr, theta=1.0, a=0.9)
+bp.geometry.kretschmann(kerr, r=3.0, theta=1.0, a=0.9)
+print(bp.geometry.effective_source(rot, a=0.5, l=0.5).summary())   # source type, energy conditions
+
+a = np.linspace(-0.99, 0.99, 10_000)
+bp.orbits.isco(kerr, a=a)                               # ~0.01 ms per value
+bp.orbits.isco(kerr, direction="retrograde", a=0.9)     # = isco(kerr, a=-0.9)
+bp.orbits.frequencies_hz(kerr, r=6.0, mass=5.4, a=0.3)  # nu_theta != nu_phi now
+bp.orbits.nodal_precession_frequency(kerr, r=6.0, mass=5.4, a=0.3)
+bp.orbits.rpm_kerr_solution(17.3, 298.0, 441.0)         # analytic (r, a, M) of a QPO triplet
+
+contour = bp.light.shadow_contour(kerr, math.radians(60), a=0.9)       # alpha, beta arrays
+obs = bp.light.shadow_observables(kerr, math.radians(60), a=a)         # vectorised
+obs.mean_radius, obs.area_radius, obs.delta_c
+bp.light.shadow_contour(kerr, math.radians(60), r_obs=50.0, a=0.9)     # observer at finite distance
+```
+
+Equatorial orbits need a metric that is symmetric under
+\(\theta \to \pi - \theta\) (`metric.is_reflection_symmetric`); the shadow
+needs separable null geodesics (`metric.is_separable`). Otherwise the
+functions raise `ReflectionSymmetryError` or `NotSeparableError` (ray tracing
+is out of scope; see Gradus.jl).
+
+## 5. Data
 
 ```python
 bp.data.list()                                # registry with verification status
@@ -80,7 +113,7 @@ gro.upper, gro.lower, gro.mass_prior          # values, uncertainties, sources, 
 sgra = bp.data.load("eht/sgra")
 ```
 
-## 5. Inference
+## 6. Inference
 
 ```python
 from blackpy.infer import Fit, Uniform
@@ -104,7 +137,28 @@ mass measurement from the registry) and orbital radius `r_<source>`; metric
 parameters are shared. BlackPy warns about circular mass priors, about
 parameters whose posterior equals the prior, and about unconverged chains.
 
-## 6. Plots
+With a rotating metric the low-frequency QPO of a triplet is fitted as the
+nodal precession frequency, the spin is bounded by the metric's black hole
+domain, and shadow data add the inclination (degrees) as a nuisance
+parameter:
+
+```python
+from blackpy.infer import Isotropic
+
+fit = Fit(kerr, "qpo/gro_j1655_40", qpo_model="RP",
+          priors={"a": Uniform(0, 0.998), "M": Uniform(2, 20), "r": Uniform(2, 20)})
+fit.run(seed=1)                   # a = 0.286 +- 0.003, M = 5.30 +- 0.06
+
+Fit(bp.metric.KerrNewman(), "eht/sgra",
+    priors={"a": Uniform(0, 0.998), "Q": Uniform(0, 1), "inclination": Isotropic(0, 90)})
+```
+
+Two more warnings exist for rotation: `SpinIgnoredWarning` (a static metric
+fitted to a source that rotates) and `DegeneracyWarning` (spin strongly
+correlated with another metric parameter; the correlation is in
+`result.diagnostics["spin_correlations"]`).
+
+## 7. Plots
 
 ```python
 bp.plot.profile(rn, "isco", Q=np.linspace(0, 1, 200))
@@ -113,4 +167,5 @@ bp.plot.corner(result)
 print(bp.plot.latex_table(result))
 ```
 
-Complete scripts are in the `examples/` folder.
+Complete scripts are in the `examples/` folder; the [tutorial](tutorial.md)
+walks through one of them.

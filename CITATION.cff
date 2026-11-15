@@ -5,8 +5,8 @@ type: software
 authors:
   - family-names: Yovqochev
     given-names: Pahlavon
-version: 0.1.0
-date-released: "2026-11-14"
+version: 0.2.0
+date-released: "2026-11-15"
 license: MIT
 keywords:
   - general relativity
