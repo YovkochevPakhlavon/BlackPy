@@ -941,3 +941,101 @@ Johannsen–Psaltis quantity against a direct polygon computation
 (\(2\times10^{-5}\)) and against their fit formula; the published curve of
 Bambi et al. (angles within 1.5°, edge-on spin within 0.01); the three other
 normalisations shown *not* to reproduce it.
+
+## 18. Goodness of fit and posterior predictive checks
+
+A Bayes factor (section 11) ranks models. It does not say whether the better
+model describes the data. Two tools answer that; both work on any fit
+result, for every data type and for both samplers, because they only need
+the model value \(m_k(\theta)\) of every fitted datum \(y_k\).
+
+**Pulls and \(\chi^2\). Status: standard; discrepancy transcribed.** The
+pull of datum \(k\) is \((m_k - y_k)/\sigma_k\) with the split-normal
+\(\sigma_k\) of the likelihood (\(\sigma_{k,+}\) if \(m_k \ge y_k\), else
+\(\sigma_{k,-}\)). Their sum of squares is the \(\chi^2\) discrepancy of
+Gelman, Meng & Stern (1996), Statistica Sinica 6, 733, Eq. (8),
+
+\[ X^2(y;\theta) = \sum_k \frac{(y_k - m_k(\theta))^2}{\sigma_k^2}, \]
+
+and \(-2\ln\mathcal{L} = X^2 + \text{const}\) for the likelihood of
+section 11. An informative Gaussian prior
+\(\mathcal{N}(\mu, s)\) on a parameter \(\theta_i\) (for example an
+independent mass measurement) is a measurement of that parameter and is
+included as one more term, \((\theta_i - \mu)^2/s^2\). The best-fit point
+minimises \(X^2\) inside the prior support (Nelder–Mead, started from the
+best posterior sample).
+
+**Degrees of freedom. Status: convention, derived.**
+
+\[ N_{\rm dof} = N_{\rm data} + N_{\rm Gaussian\ priors} - N_{\rm free\ parameters} . \]
+
+Justification: if the model is linear in its parameters and all terms are
+Gaussian with the stated widths, then, with the mean of each Gaussian prior
+regarded as a noisy measurement of the true parameter value, the vector of
+\(N = N_{\rm data} + N_{\rm Gaussian\ priors}\) pulls at the true parameters
+is a standard normal vector and minimising over \(P\) parameters removes
+\(P\) of its components: \(X^2_{\min} \sim \chi^2_{N-P}\). Uniform and other
+non-Gaussian priors are not counted as data (they carry no measurement) but
+their parameters are counted as free. Limits of the convention, stated in
+the docstrings: it is exact only in the linear Gaussian case; a parameter
+that the data do not constrain, or that sits on a prior boundary, uses less
+than one degree of freedom, so the count is then a lower bound; a datum with
+an interval (top-hat) likelihood has no pull and is not counted.
+
+\(N_{\rm dof}\) **can be zero or negative.** Each QPO source brings its own
+mass and orbital radius, so a two-frequency fit with a mass prior and one
+metric parameter has \(2 + 1 - 3 = 0\). Then \(X^2_{\min} = 0\) whatever the
+data: the fit is exact and says nothing. BlackPy reports "no degrees of
+freedom: goodness of fit is undefined", gives no p-value, and never divides
+by \(N_{\rm dof}\). For \(N_{\rm dof} > 0\) the classical p-value
+\(P(\chi^2_{N_{\rm dof}} \ge X^2_{\min})\) is reported as an approximation.
+
+**Posterior predictive check. Status: transcribed** from Gelman, Meng &
+Stern (1996), sections 2.2 to 2.4 (read in full). For posterior draws
+\(\theta_j\): (1) draw replicated data \(y^{\rm rep}_j\) from the sampling
+distribution at \(\theta_j\) (model values plus split-normal noise with the
+stated widths; a replicated measurement \(\mathcal{N}(\theta_{i,j}, s)\) for
+each Gaussian prior); (2) compute \(X^2(y;\theta_j)\) and
+\(X^2(y^{\rm rep}_j;\theta_j)\). The posterior predictive p-value of the
+realized discrepancy (their Eq. (7)) is the fraction of draws with
+\(X^2(y^{\rm rep}_j;\theta_j) \ge X^2(y;\theta_j)\). Because
+\(X^2(y^{\rm rep};\theta) \sim \chi^2_N\) exactly given \(\theta\), the same
+number follows without simulation noise from their Eq. (9),
+
+\[ p_b = \int P\!\left(\chi^2_N \ge X^2(y;\theta)\right) p(\theta \mid y)\,d\theta
+       \simeq \frac1J\sum_j P\!\left(\chi^2_N \ge X^2(y;\theta_j)\right), \]
+
+which BlackPy uses for the decision; the simulated estimate is returned as
+well and agrees within \(\sqrt{p(1-p)/J}\). The p-value of datum \(k\) is
+\(P(y^{\rm rep}_k \ge y_k \mid y)\).
+
+**The p-value is not uniform under the true model.** The data are used
+twice. In the discussion printed with Gelman et al. (1996), Rubin (p. 790)
+shows that \(p_b\) is "centered at .5 but less variable than a uniform
+random variable, and thus will have conservative operating characteristics".
+Meng (1994), Ann. Stat. 22, 1142 (abstract read; the body was not
+accessible) states that the Type I error of an \(\alpha\)-level posterior
+predictive test "is often close to but less than \(\alpha\) and will never
+exceed \(2\alpha\)". Two consequences are built in:
+
+- a value near 0.5 is *not* evidence of a good fit (with few degrees of
+  freedom it is what one always gets; with none, the check is undefined);
+- the warning threshold is \(p_b < 0.05\) (`POOR_FIT_P_VALUE`). For a
+  conservative p-value a stricter threshold would almost never fire, and at
+  0.05 the false-alarm rate stays below the nominal value: 1 of 100
+  simulated true-model fits triggered the warning (posterior predictive
+  p-values between 0.19 and 0.63 for 98 of them).
+
+**`PoorFitWarning`** is raised by `Fit.run` and by
+`FitResult.posterior_predictive` when \(p_b < 0.05\) and \(N_{\rm dof} > 0\).
+`Fit.bayes_factor` checks the model that the Bayes factor favours and raises
+the warning if it fails; for the Savage–Dickey ratio the null model is not
+sampled, so its \(X^2_{\min}\) is found by optimisation and the classical
+p-value is used (stated in the result's notes).
+
+Tests (`tests/test_fit_quality.py`, `tests/test_infer.py`): pulls and
+\(\chi^2\) at a fixed point against a hand computation; "undefined" for zero
+degrees of freedom; a Schwarzschild fit of data simulated from Kerr with
+\(a = 0.9\) gives \(X^2_{\min} > 100\) for one degree of freedom and the
+warning; false-alarm rate over 60 simulated fits; identical results from
+emcee and dynesty; the Bayes-factor path; the bundle round trip.

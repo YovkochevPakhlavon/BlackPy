@@ -334,6 +334,27 @@ def test_samplers_agree(emcee_fit, dynesty_fit):
 
 
 @pytest.mark.slow
+def test_fit_quality_is_the_same_for_both_samplers(emcee_fit, dynesty_fit):
+    """Goodness of fit and posterior predictive check from emcee and dynesty samples."""
+    first, second = emcee_fit.result.goodness_of_fit(), dynesty_fit.result.goodness_of_fit()
+    # 4 frequencies + 2 Gaussian mass priors - 5 parameters = 1 degree of freedom.
+    assert first.dof == second.dof == 1 and first.labels == second.labels
+    assert (first.n_data, first.n_gaussian_priors, first.n_parameters) == (4, 2, 5)
+    # Noise-free data: the best fit reproduces them exactly, from either set of samples.
+    assert first.chi2 < 1e-6 and second.chi2 < 1e-6
+    for name in first.point:
+        assert first.point[name] == pytest.approx(second.point[name], rel=1e-3), name
+    assert first.point["Q"] == pytest.approx(Q_TRUE, abs=1e-3)
+    a = emcee_fit.result.posterior_predictive(4000, seed=1)
+    b = dynesty_fit.result.posterior_predictive(4000, seed=2)
+    # Sampling error of each p-value is at most 0.5 / sqrt(4000) = 0.008; allow 5 sigma
+    # of the difference plus the sampler-to-sampler difference of the posteriors.
+    assert abs(a.p_value - b.p_value) < 0.06 and abs(a.p_value - a.p_value_simulated) < 0.04
+    np.testing.assert_allclose(a.datum_p_values, b.datum_p_values, atol=0.06)
+    assert not a.poor_fit and not b.poor_fit and 0.35 < a.p_value < 0.75
+
+
+@pytest.mark.slow
 def test_bayes_factor_prefers_true_model_dynesty(dynesty_fit):
     """Validation item 7: evidence ratio, null model fitted automatically."""
     with warnings.catch_warnings():
@@ -342,6 +363,8 @@ def test_bayes_factor_prefers_true_model_dynesty(dynesty_fit):
     assert isinstance(bf, BayesFactor) and bf.method == "evidence ratio"
     assert bf.log_bf > 5.0 and bf.log_bf_err < 1.0
     assert "full model" in bf.interpretation
+    # The favoured (full) model passes the fit-quality check, and the result says so.
+    assert bf.favoured_fit_is_poor is False and "fit quality of the favoured" in str(bf)
     with pytest.raises(ValueError, match="sampled metric parameters"):
         dynesty_fit.bayes_factor(null={"M_src_a": 6.0})
 

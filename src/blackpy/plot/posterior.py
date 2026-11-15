@@ -124,3 +124,67 @@ def latex_table(
         text += r" $^\dagger$Posterior indistinguishable from the prior: not a constraint."
     lines += [rf"\caption{{{text}}}", r"\end{table}"]
     return "\n".join(lines)
+
+
+def residuals(result: FitResult, *, n: int = 2000, seed: int | None = 0, ax=None):
+    r"""Residual and posterior predictive plot of a fit.
+
+    For every fitted datum, and for every informative Gaussian prior (which
+    acts as a datum), the plot shows in units of the datum's uncertainty:
+
+    * the pull at the best-fit point, ``(model - data) / sigma`` (black dot);
+    * the central 68% and 95% ranges of posterior predictive replications of
+      the datum, relative to the observed value (bars), i.e. where a new
+      measurement would fall if the model were true;
+    * the bands :math:`\pm 1` and :math:`\pm 2`.
+
+    A datum whose observed value (the zero line) lies outside its 95% bar is
+    one the model cannot reproduce. The title gives :math:`\chi^2`, the
+    degrees of freedom and the posterior predictive p-value, or states that
+    the goodness of fit is undefined.
+
+    Parameters
+    ----------
+    result : FitResult
+        A result produced by BlackPy 0.3 or later.
+    n : int
+        Number of posterior predictive draws.
+    seed : int, optional
+    ax : matplotlib axes, optional
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    quality = result.goodness_of_fit()
+    check = result.posterior_predictive(n, seed, warn=False)
+    count = len(quality.labels)
+    if ax is None:
+        _, ax = plt.subplots(figsize=(max(4.5, 1.1 * count + 2.0), 4.0))
+    x = np.arange(count)
+    sigma = np.asarray(quality.sigma)
+    scaled = (check.replicated - check.observed) / sigma
+    lo95, lo68, hi68, hi95 = np.percentile(scaled, [2.275, 15.865, 84.135, 97.725], axis=0)
+    ax.axhspan(-2, 2, color="0.92", lw=0)
+    ax.axhspan(-1, 1, color="0.84", lw=0)
+    ax.axhline(0.0, color="k", lw=0.8)
+    ax.vlines(x, lo95, hi95, color="C0", lw=2, label="replicated data, 95%")
+    ax.vlines(x, lo68, hi68, color="C0", lw=6, alpha=0.6, label="replicated data, 68%")
+    ax.plot(x, quality.pulls, "ko", label="best-fit pull (model - data)")
+    ax.set_xticks(x)
+    ax.set_xticklabels(quality.labels, rotation=30, ha="right")
+    ax.set_xlim(-0.6, count - 0.4)
+    ax.set_ylabel(r"(value $-$ data) / $\sigma$")
+    if check.defined:
+        title = (
+            rf"$\chi^2 = {quality.chi2:.3g}$ for {quality.dof} dof; "
+            f"posterior predictive p = {check.p_value:.3g}"
+        )
+    else:
+        title = "no degrees of freedom: goodness of fit is undefined"
+    ax.set_title(title, fontsize="medium")
+    ax.legend(fontsize="small")
+    return ax
