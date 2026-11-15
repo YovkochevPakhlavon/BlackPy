@@ -86,7 +86,7 @@ by `find_roots`:
 
 The result always has a fixed length, padded with NaN. That makes the whole
 computation compilable (`jax.jit`) and vectorisable (`jax.vmap`): the ISCO of
-10 000 Kerr spins is one call and takes about 0.01 ms per spin. "No root" is
+10 000 Kerr spins is one call and takes about 0.02 ms per spin. "No root" is
 a result (NaN, or `horizonless=True`), not an error: a naked singularity is a
 legitimate configuration to study.
 

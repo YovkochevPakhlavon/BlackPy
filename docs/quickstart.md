@@ -86,7 +86,7 @@ bp.geometry.kretschmann(kerr, r=3.0, theta=1.0, a=0.9)
 print(bp.geometry.effective_source(rot, a=0.5, l=0.5).summary())   # source type, energy conditions
 
 a = np.linspace(-0.99, 0.99, 10_000)
-bp.orbits.isco(kerr, a=a)                               # ~0.01 ms per value
+bp.orbits.isco(kerr, a=a)                               # ~0.02 ms per value
 bp.orbits.isco(kerr, direction="retrograde", a=0.9)     # = isco(kerr, a=-0.9)
 bp.orbits.frequencies_hz(kerr, r=6.0, mass=5.4, a=0.3)  # nu_theta != nu_phi now
 bp.orbits.nodal_precession_frequency(kerr, r=6.0, mass=5.4, a=0.3)

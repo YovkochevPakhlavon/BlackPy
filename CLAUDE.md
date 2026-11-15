@@ -147,8 +147,8 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
 ```bash
 python3 -m venv .venv                      # once
 .venv/bin/python -m pip install -e ".[dev,docs]"
-.venv/bin/python -m pytest                 # full suite (includes slow tests, about 12 min)
-.venv/bin/python -m pytest -m "not slow"   # quick suite (about 6 min)
+.venv/bin/python -m pytest                 # full suite (includes slow tests, about 9 min)
+.venv/bin/python -m pytest -m "not slow"   # quick suite (about 4.5 min)
 .venv/bin/ruff check src tests examples && .venv/bin/ruff format --check src tests examples
 .venv/bin/python -m mkdocs build --strict  # documentation
 ```

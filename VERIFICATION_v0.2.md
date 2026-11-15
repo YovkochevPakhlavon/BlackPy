@@ -1,0 +1,442 @@
+# Verification report: BlackPy 0.2.0
+
+Date: 2026-11-15. Machine: Apple M2, macOS 27.2 (arm64), Python 3.13.5,
+JAX 0.12.0.1, NumPy 2.5.4, SciPy 1.18.1, sympy 1.14.0, emcee 3.1.6,
+dynesty 3.2.0. Same format as `VERIFICATION.md` (version 0.1.0), which
+remains valid for everything not mentioned here.
+
+## 1. Summary
+
+| Check | Result |
+|---|---|
+| Full test-suite (`pytest`, including slow tests) | **208 passed, 0 failed**, 520 s (8 min 40 s); quick subset (`-m "not slow"`): 191 passed, 262 s |
+| of which v0.1 tests (unchanged files, plus the Part A changes) | all pass; one v0.1 test was rewritten (see 2.1) |
+| `ruff check` and `ruff format --check` on `src`, `tests`, `examples` | passed |
+| `mkdocs build --strict` | passed |
+| Examples 01 to 08 | all ran to completion |
+| Kerr ISCO = Bardeen-Press-Teukolsky, a in [-0.999, 0.999] | max deviation 2.6e-13 (required 1e-10) |
+| Kerr ISCO benchmark | 0.017 ms per evaluation (10^4 spins, vectorised) |
+| Kerr shadow benchmark | 0.027 ms per set of observables, 0.33 ms per 510-point contour |
+| Coverage of the 68% credible interval, 100 noisy datasets | 73 / 100 (expected 68 +- 4.7) |
+| Registry values verified by a human | **none** (all `verified_by_human: false`) |
+
+Everything reported here was run in the project's `.venv` on this machine.
+CI has **not** been run (nothing was pushed): Linux and Windows are untested.
+
+Commits of this session (`git log --oneline`): Part A, B1, B2, B3, B4, B5,
+documentation. Nothing was pushed and no remote was created.
+
+## 2. Tests
+
+Tolerances are relative unless stated otherwise. "Mandatory" marks the
+validation items of the specification.
+
+### 2.1 Part A and changes to v0.1 tests
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_constants_match_scipy_codata` (new) | `C == scipy.constants.c`, `G == scipy.constants.G`; G identical in SciPy's CODATA 2018 and 2022 tables; uncertainty 1.5e-15; SciPy's current set is CODATA 2022 | exact | pass |
+| `test_gm_sun_is_the_iau_2015_b3_nominal_value` (new) | GM_sun = 1.3271244e20 m^3 s^-2; derived G M_sun / c^2 = 1476.6250 m and G M_sun / c^3 = 4.925490947e-6 s (computed from the constants, as consistency checks) | exact; 1e-7; 1e-9 | pass |
+| `test_regular_black_holes_lose_horizon_at_exact_critical_value` (replaces the "within 1%" test; Bardeen, Hayward) | critical value 4/(3 sqrt 3) and extremal radius (4 sqrt 6 / 9; 4/3) derived with sympy from g = g' = 0; extremal horizon found at that radius; bisection on "an event horizon exists" reproduces the critical value | symbolic identity; 1e-10; **absolute 1e-10** | pass |
+| `test_credible_interval_coverage_with_noisy_data` (new, slow) | 100 noisy RN datasets, truth drawn from the priors, emcee with convergence required for every chain; hits of the central 68% interval of Q | binomial, 3 sigma (54 to 82) | pass, **73 / 100** |
+| `test_future_metric_stubs_raise` (v0.1, **rewritten**) | v0.1 asserted that `StationaryAxisymmetric()` raises `NotImplementedError`; it is now implemented. The test keeps the `newman_janis` stub check | – | pass |
+
+No constant changed. All other v0.1 tests are unchanged and pass, including
+`test_nodal_precession_is_refused_explicitly` (static metrics).
+
+Test counts by file (208 in total, 17 of them slow): `test_constants` 7,
+`test_numerics` 10, `test_metric` 18, `test_geometry` 20, `test_orbits` 17,
+`test_light` 7, `test_data` 14, `test_infer` 23, `test_plot` 4 (v0.1 files:
+120); `test_metric_rotating` 15, `test_geometry_rotating` 17,
+`test_orbits_rotating` 14, `test_light_rotating` 30, `test_infer_rotating` 12
+(new: 88).
+
+### 2.2 Rotating metrics (`tests/test_metric_rotating.py`, B1)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_callable_constructor_matches_catalogue_kerr` | Kerr from JAX callables equals the sympy version; parameters from the signature; numerical symmetry and separability checks | 1e-14 | pass |
+| `test_constructor_errors` | five misuse cases give clear errors | – | pass |
+| `test_from_sympy_latex_and_parameter_handling` | LaTeX, broadcasting, unknown parameters | – | pass |
+| `test_kerr_matches_independent_form` | Kerr components against the "Delta/Sigma" form of the line element, written independently | 1e-13 | pass |
+| `test_kerr_newman_limits` (**mandatory**) | Kerr-Newman -> Kerr (Q = 0, numeric and symbolic) and -> Reissner-Nordstrom (a = 0) | 1e-14; symbolic identity | pass |
+| `test_johannsen_reduces_to_kerr_and_has_documented_domain` | Kerr limit; parameter names and roles; regularity bounds of Eqs. (74), (75), (77), (78); g_rr ratio = A_5 | 1e-13 | pass |
+| `test_rotating_catalogue_entries` (3) | reference, spin parameter, flatness; declared reflection symmetry and separability agree with the symbolic and numerical checks; Schwarzschild limit | 1e-14 | pass |
+| `test_reflection_symmetry_is_detected_symbolically_and_numerically` | a metric with a cos(theta) term is rejected (sympy and callables) | – | pass |
+| `test_separability_check_rejects_non_separable_metric` | theta-dependent deformation of g_tt is not separable; Kerr at a = 0.99 is | – | pass |
+| `test_static_metric_as_axisymmetric` | components of the g_tphi = 0 special case | 1e-15 | pass |
+| `test_rotating_from_static_gives_kerr_and_kerr_newman` (**mandatory**) | Azreg-Ainou procedure: Schwarzschild -> Kerr and RN -> Kerr-Newman | **symbolic identity**; 1e-13 | pass |
+| `test_rotating_from_static_general_seeds` | a = 0 gives back the seed (Bardeen; f != g seed); numeric seed; user conformal factor; errors | 1e-13 | pass |
+| `test_remaining_metric_stubs_raise` | `newman_janis`, RZ, KRZ stubs | – | pass |
+
+### 2.3 Geometry (`tests/test_geometry_rotating.py`, B2)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_kerr_horizons` | r_+ = 1 + sqrt(1 - a^2) for 401 spins up to 0.999999; inner/event classification; extremal a = 1; naked a = 1.05 reported as horizonless; same radius at 7 polar angles | 1e-12; extremal 1e-7; 1e-13 | pass |
+| `test_kerr_newman_horizons` | r_+- = 1 +- sqrt(1 - a^2 - Q^2); extremal; horizonless | 1e-12 | pass |
+| `test_johannsen_horizon_is_the_kerr_horizon` | horizon unchanged by all four deformations; a root of A_5 is "not a horizon" | 1e-12 | pass |
+| `test_ergosurface` | Kerr 1 + sqrt(1 - a^2 cos^2 theta) (derived), Kerr-Newman, static limit | 1e-12 | pass |
+| `test_theta_dependent_root_is_reported` | a metric with theta-dependent "Delta": reported as not being the event horizon | – | pass |
+| `test_kerr_kretschmann_numeric_against_closed_form` | autodiff K on a 25 x 9 grid for a = 0, 0.5, 0.998; R = 0; G = 0 | **1e-10**; 1e-11; 1e-12 (absolute) | pass |
+| `test_kerr_is_vacuum_and_kretschmann_closed_form` (slow) | full 4D symbolic computation: G^mu_nu = 0 exactly; the closed form of K is **derived**, not quoted | symbolic identity | pass (12 s) |
+| `test_kerr_newman_symbolic_source` (slow) | R = 0; T^r_r = -Q^2/(8 pi Sigma^2), T^theta_theta = +Q^2/(8 pi Sigma^2); closed form of K quoted in `docs/theory.md` | symbolic identity | pass (29 s) |
+| `test_general_4d_curvature_agrees_with_static_closed_forms` | 4D autodiff K, R, T for RN, Hayward, SdS equal the v0.1 closed forms | 1e-9; 1e-8 | pass |
+| `test_symbolic_path_time_limit_and_availability` | time limit raises `SymbolicTimeoutError` with a remedy; numeric metric raises `SymbolicUnavailableError` | – | pass |
+| `test_classify_stress_energy_types` | perfect fluid, anisotropic fluid, electromagnetic type (degenerate eigenvalue), boosted fluid, null dust (type II), complex eigenvalues (type IV), vacuum, NaN | 1e-12 | pass |
+| `test_kerr_and_schwarzschild_are_vacuum` | source type on the grid; all energy conditions | – | pass |
+| `test_kerr_newman_source_is_an_electromagnetic_anisotropic_fluid` | rho = -p_1 = p_2 = p_3 = Q^2/(8 pi Sigma^2) on a 24 x 7 grid | 1e-8 | pass |
+| `test_static_sources_through_the_general_classifier` | RN anisotropic; Lambda: perfect fluid, only SEC violated; Hayward: WEC holds, DEC violated | 1e-7 | pass |
+| `test_rotating_hayward_source_matches_azreg_ainou` | density and pressures of the generated rotating Hayward metric against Azreg-Ainou (2014), Eq. (31) | 1e-7; 1e-6 | pass |
+| `test_johannsen_source_is_not_assumed_physical` | deformed metric: WEC violated; Kerr limit vacuum | – | pass |
+| `test_report_for_rotating_metrics` | report content; time-limit message; numeric metric | – | pass |
+
+### 2.4 Orbits and QPOs (`tests/test_orbits_rotating.py`, B3)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_kerr_frequencies_against_closed_forms` (**mandatory**) | nu_phi, nu_r^2, nu_theta^2 against the Kerr closed forms for 7 spins (incl. negative), 80 radii from 1.3 to 60 | **1e-13**; 1e-10; 1e-10 | pass |
+| `test_retrograde_orbits_equal_prograde_orbits_of_opposite_spin` | direction option vs a -> -a for Omega, E, L, both epicyclic frequencies, ISCO | 1e-12 | pass |
+| `test_kerr_isco_equals_bardeen_press_teukolsky` (**mandatory**) | 1999 spins in [-0.999, 0.999], prograde and retrograde; the transcribed formula is itself checked to solve the marginal-stability condition (residual < 1e-13) | **absolute 1e-10** (measured 2.6e-13) | pass |
+| `test_kerr_energy_and_angular_momentum` | E, L satisfy U = dU/dr = 0 from the inverse metric (independent of the Omega formula); dE/dr = dL/dr = 0 at the ISCO; BPT closed forms | 1e-12; 1e-9; 1e-12 | pass |
+| `test_kerr_marginally_bound_and_photon_orbits` | E(r_mb) = 1; r_mb and photon-orbit closed forms; ordering; orbit region | 1e-12 | pass |
+| `test_nodal_precession` | nu_phi - nu_theta against the closed forms; sign for counter-rotation; zero at a = 0; `QPOModel.low_frequency`; refusal for static metrics | 1e-9 | pass |
+| `test_kerr_newman_reduces_to_rn_and_kerr` (**mandatory**) | ISCO, r_mb, Omega, Omega_r^2, E vs the static RN code at a = 0; Omega_theta = Omega_phi there; vs Kerr at Q = 0 | 1e-11; 1e-12 | pass |
+| `test_general_formulas_reproduce_the_static_code` (slow) | general path through `as_axisymmetric()` vs v0.1 formulas for RN, Hayward, SdS (ISCO and OSCO), isotropic Schwarzschild (f != g, h != r^2) | 1e-10 to 1e-11 | pass |
+| `test_epicyclic_frequencies_against_the_direct_definition` | Omega_r^2, Omega_theta^2 from second derivatives of the effective potential, done symbolically for a Johannsen metric with four non-zero deformations, both directions | 1e-9 | pass |
+| `test_johannsen_orbits` | Kerr limit; nu_theta independent of alpha52; ISCO independent of alpha22 at a = 0 (statements of the paper) | 1e-12; 1e-13; 1e-10 | pass |
+| `test_all_qpo_models_work_with_rotation` (**mandatory**) | all 11 models against Table 1 of Stuchlik & Kolos (2016) built from the Kerr closed forms; low-frequency QPO; models distinct with rotation; 3:2 resonance radii | 1e-9; 1e-10 | pass |
+| `test_ingram_motta_analytic_rpm_solution` (**mandatory**) | the analytic solution inverts BlackPy's Kerr frequencies for four (r, a, M) | 1e-9 (spin 1e-8) | pass |
+| `test_reflection_symmetry_is_required` | five entry points refuse a non-symmetric metric | – | pass |
+| `test_kerr_isco_performance` (slow) | 10^4 ISCO values; budget 0.1 ms | measured 0.017 ms | pass |
+
+### 2.5 Shadows (`tests/test_light_rotating.py`, B4)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_zero_spin_gives_the_circle_of_radius_3_sqrt_3` (**mandatory**) | Kerr, Kerr-Newman, Johannsen, Schwarzschild at a = 0, three inclinations: every contour point, mean and area radius, area 27 pi; continuity for a from 1e-9 to 1e-4 | 1e-13; 2e-8 / 2e-9 | pass |
+| `test_kerr_contour_agrees_with_bardeen` (**mandatory**; 5 spins x 4 inclinations) | alpha, beta^2, xi, eta against an independent implementation of Bardeen's formulas (as given by Perlick & Tsupko 2022, Eqs. (55)-(56)); closed, symmetric contour; photon region | 1e-10; 1e-9; 1e-11 | pass |
+| `test_contour_flattens_with_spin_for_an_edge_on_observer` (**mandatory**) | width decreases monotonically with spin (10.39 to 9.11) while the height stays 2 x 3 sqrt 3; Delta C and centroid increase; contour ends = equatorial photon orbits; pole-on circle | 1e-5 (height); 1e-11 | pass |
+| `test_kerr_mean_radius_depends_weakly_on_spin_and_inclination` (**mandatory**) | mean radius on a 41 x 37 grid, a <= 0.998, all inclinations | range 4.830 to 5.196, **7.0%** | pass |
+| `test_observables_against_direct_polygon_computation` | area radius, mean radius, Delta C, centroid against a numpy polygon computation with 8000 points; identity Delta C = sqrt(2 (1 - <l>/R_A)); convergence with 64 points | 1e-6; 1e-4; 1e-7; 1e-10 | pass |
+| `test_shadow_radius_dispatches_on_the_metric_class` | `shadow_radius` for rotating metrics; static-only functions refuse rotating metrics | 1e-13 | pass |
+| `test_kerr_newman_and_generated_metrics` | Kerr and RN limits; generated rotating RN = Kerr-Newman; rotating Hayward; conformal factor does not change the shadow | 1e-11; 1e-10 | pass |
+| `test_johannsen_spherical_photon_orbits_solve_the_radial_equation` | R = dR/dr = 0 with the radial potential printed in Johannsen (2013), Eq. (23); eta = 0 at the ends; shadow independent of alpha52 and epsilon3 | 1e-11; 1e-9; 1e-10 | pass |
+| `test_observer_at_finite_distance` | static metrics reproduce Synge's formula through the ZAMO code; Kerr converges to Bardeen like 1/r_obs; errors for an observer inside the photon region and for non-flat metrics without r_obs | 1e-12; factor 10 +- 5% | pass |
+| `test_non_separable_metric_is_refused` | five entry points raise `NotSeparableError` mentioning Gradus.jl; naked singularity reported | – | pass |
+| `test_shadow_performance` (slow) | budgets 0.5 ms and 50 ms | measured 0.027 ms, 0.33 ms | pass |
+
+### 2.6 Inference (`tests/test_infer_rotating.py`, B5)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_isotropic_prior` | normalisation, cdf(ppf(u)) = u, median 60 deg, uniform in cos i, round trip | 1e-8; 1e-12 | pass |
+| `test_simulated_triplet` | synthetic triplets; refusal for a static metric | 1e-13 | pass |
+| `test_registry_triplets_carry_published_spin` | schema only: spin and published fit documented, not independent | – | pass |
+| `test_triplet_likelihood_matches_hand_computation` | three-term log-likelihood at the truth and away from it, from the Kerr closed forms; two-term version with a warning; retrograde = opposite spin | 1e-9 | pass |
+| `test_spin_is_bounded_by_the_black_hole_domain` | zero likelihood for abs(a) > 1, a^2 + Q^2 > 1, Johannsen's alpha13 bound; `require_black_hole=False` | – | pass |
+| `test_static_metric_for_a_rotating_source_warns` | `SpinIgnoredWarning` for a nodal QPO and for a published spin; no warning otherwise | – | pass |
+| `test_rotating_shadow_likelihood` | mean-radius and area-radius likelihood by hand; inclination sampled (isotropic default) or fixed; a = 0 equals the static likelihood; errors | 1e-9; 1e-12 | pass |
+| `test_unsuitable_rotating_metrics_are_refused` | reflection asymmetry (QPO) and non-separability (shadow) | – | pass |
+| `test_samplers_recover_spin_mass_and_radius_from_a_triplet` (slow) | emcee and dynesty on a noise-free Kerr triplet with flat priors: medians within 0.35 sigma, sigma(a) < 0.01, samplers agree | 0.35 sigma; ratio 0.75 to 1.35 | pass |
+| `test_spin_deformation_degeneracy_is_reported` (slow) | Johannsen fit of a Kerr triplet: `DegeneracyWarning`, correlation above 0.9 recorded, truth inside the band, bundle round trip | – | pass |
+| `test_shadow_fit_with_inclination_nuisance` (slow) | Sgr A* bound with Kerr: spin prior-dominated, isotropic inclination recovered | – | pass |
+| `test_gaussian_spin_prior_and_fixed_spin` | fixed spin; Gaussian spin prior | – | pass |
+
+### 2.7 Published results reproduced (example 06; not tests)
+
+Project rule: tests must not depend on unverified registry numbers, so the
+reproduction of published values is an example
+(`examples/06_rpm_published_results.py`). Output of this session:
+
+| Source | Method | M [M_sun] | a | r [GM/c^2] |
+|---|---|---|---|---|
+| **GRO J1655-40** (17.3 +- 0.1, 298 +- 4, 441 +- 2 Hz) | analytic (Ingram & Motta), central values | 5.300 | 0.2861 | 5.680 |
+| | Monte Carlo, 2e5 draws | 5.300 +- 0.063 | 0.2861 +- 0.0029 | 5.681 +- 0.035 |
+| | BlackPy fit (general metric code, emcee, flat priors) | 5.298 +- 0.063 | 0.2863 +- 0.0029 | 5.683 +- 0.035 |
+| | Motta et al. (2014), abstract and Sec. 4.1 | 5.31 +- 0.07 | **0.290 +- 0.003** | 5.68 +- 0.04 |
+| | Motta et al. (2014), Table 3 | 5.307 +- 0.066 | 0.286 +- 0.003 | 5.677 +- 0.035 |
+| | Ingram & Motta (2014), Table 1 | 5.31 +- 0.07 | 0.285 +- 0.003 | 5.68 +- 0.04 |
+| | Stuchlik & Kolos (2016), RP model | 5.3 +- 0.1 | 0.286 +- 0.004 | – |
+| **XTE J1859+226** (3.65 +- 0.01, 128.6 +1.6/-1.8, 227.5 +2.1/-2.4 Hz) | analytic, central values | 7.859 | 0.1490 | 6.849 |
+| | Monte Carlo (split normal) | 7.864 +- 0.175 | 0.1491 +- 0.0018 | 6.850 +- 0.067 |
+| | BlackPy fit | 7.868 +- 0.175 | 0.1493 +- 0.0017 | 6.851 +- 0.067 |
+| | Motta et al. (2022), abstract, Sec. 3, Table 3 | 7.85 +- 0.46 | 0.149 +- 0.005 | 6.85 +- 0.18 |
+
+Findings:
+
+1. **GRO J1655-40 is reproduced**: BlackPy's mass, spin, radius and their
+   uncertainties equal Table 3 of Motta et al. (2014) (5.307 +- 0.066,
+   0.286 +- 0.003, 5.677 +- 0.035) except for a 0.13% offset in the mass
+   (item 3). The ISCO for this spin, 5.028, agrees with their 5.031 +- 0.009.
+2. **The spin 0.290 in the abstract and text of Motta et al. (2014) is not
+   reproduced.** It disagrees with their own Table 3 (0.286) and with the
+   exact solution of the RPM equations for the central frequencies
+   (0.2861). I do not know the origin of 0.290; it cannot be a rounding of
+   0.286. The registry stores the text value with a note.
+3. **Mass offset.** Ingram & Motta quote c^3/(2 pi G M_sun) = 3.237e4 Hz;
+   BlackPy's constants give 32 312.5 Hz, a factor 1.00178 smaller. With
+   their constant the GRO J1655-40 mass becomes 5.310, i.e. the published
+   5.31. The constant only rescales the mass; spin and radius are unaffected.
+4. **XTE J1859+226: central values reproduced, uncertainties not.** The
+   published uncertainties (0.46, 0.005, 0.18) are 2.6 to 2.8 times larger
+   than the propagated frequency uncertainties (0.175, 0.0018, 0.067), for
+   all three quantities by nearly the same factor. The paper says it follows
+   Motta et al. (2014) "at every step"; I could not identify the reason for
+   the larger errors. The ISCO for the central spin, 5.504, agrees with
+   their 5.50.
+
+**Stuchlik & Kolos (2016) versus Motta et al. (2014)**, as the
+specification asks. Both use the same three frequencies (Sample B1) and the
+same Kerr formulas, so the central values must agree, and they do once the
+right number is compared: Stuchlik & Kolos' a = 0.286 is the exact solution
+(0.2861), equal to Table 3 of Motta et al.; the apparent difference "0.286
+versus 0.290" comes from the value printed in the abstract and text of
+Motta et al., not from the method. The masses agree (5.3 versus 5.31; the
+exact value with BlackPy's constants is 5.300). The uncertainties differ
+because of the method: Motta et al. propagate Gaussian frequency errors by
+Monte Carlo and quote standard deviations (0.07, 0.003), whereas Stuchlik &
+Kolos use the "frequency ratio" technique and take the edges of the
+frequency intervals, which they describe as maximum errors, "slightly
+larger than those obtained in Motta et al." (0.1, 0.004).
+
+Other reproduced statements (examples 05 and 07):
+
+- Johannsen fit of the GRO J1655-40 triplet with alpha13 free and the
+  dynamical mass prior: a = 0.284 (+0.028, -0.025), alpha13 = -0.05
+  (+0.72, -0.61), posterior correlation +0.994 (emcee; dynesty agrees);
+  ln B(Johannsen vs Kerr) = -1.5 (Savage-Dickey) and -1.3 +- 0.25
+  (evidence ratio). The spin uncertainty is nine times the Kerr value.
+- EHT Collaboration (2022), Sgr A* Paper VI: "the radius ranges from ~4.8 to
+  ~5.2 GM/c^2", "~8% range". BlackPy: mean radius 4.830 (a = 0.998, pole-on)
+  to 5.196 (a = 0), a 7.0% range; the area-equivalent radius differs from
+  the mean radius by less than 0.2%.
+
+## 3. Formulas and their sources
+
+Full statements and derivations are in `docs/theory.md`, sections 12 to 16.
+"Read" means: read in this session (2026-11-15) from the arXiv version
+(ar5iv HTML with the LaTeX of every formula), not from the journal version.
+
+| Formula | Source | How it was checked |
+|---|---|---|
+| c, G | CODATA; **verified** against `scipy.constants` (CODATA 2022 in SciPy 1.18.1; G equal in 2018 and 2022) | test |
+| GM_sun nominal | IAU 2015 Resolution B3 (arXiv:1510.07674) and Prsa et al. (2016, arXiv:1605.09788, Table 1). **Read** | test of the stored value |
+| Bardeen / Hayward critical values 4/(3 sqrt 3) | **derived** (g = g' = 0, sympy) | root finder to 1e-10 |
+| Kerr metric | Johannsen (2013), Eq. (1). **Read**; original (Kerr 1963) not read | vacuum, symbolically |
+| Kerr-Newman metric | **not transcribed**: Kerr with 2r -> 2r - Q^2. Original (Newman et al. 1965) not read | Kerr and RN limits; equals Azreg-Ainou applied to RN; R = 0 and T^r_r symbolically |
+| Johannsen metric, parameter names, regularity bounds, horizon | Johannsen (2013), Eqs. (51)-(56), (74)-(78), Sec. III.1. **Read** | Kerr limit; horizon; statements of Sec. IV |
+| Rotating generator | Azreg-Ainou (2014), Eqs. (1), (16), (18), (23). **Read**. Default conformal factor for general seeds is BlackPy's choice | Schwarzschild -> Kerr, RN -> Kerr-Newman (symbolic); Eq. (31) for rotating Hayward |
+| Horizon equation g^rr + g^thth (dH/dtheta)^2 = 0 | Johannsen (2013), Eq. (58). **Read**. Not solved, only reported | – |
+| Kerr ergosurface | **derived** | test |
+| Kerr and Kerr-Newman Kretschmann scalars | **derived** with the symbolic 4D path | numeric autodiff to 1e-10 |
+| Classification of T^mu_nu, energy conditions | Hawking & Ellis (1973), sec. 4.3. **Cited from memory**, as in v0.1 | hand-made tensors of each type; known sources |
+| Omega_+-, E, L for rotating metrics | **derived**; Omega equals Johannsen (2013), Eq. (83) (**read**) | Kerr; U = dU/dr = 0 independently |
+| N_r, N_theta (epicyclic frequencies) | **derived**; definition as in Johannsen (2013), Eqs. (92)-(97) (**read**) | Kerr closed forms; static formulas; direct symbolic definition |
+| Kerr nu_phi, nu_r, nu_theta | given in the specification; **verified against** Ingram & Motta (2014), Eqs. (1)-(3), and Motta et al. (2014), Eqs. (1)-(3). **Read** | 1e-13 / 1e-10 against the general code |
+| Kerr ISCO (BPT) | Bardeen, Press & Teukolsky (1972): **original not accessible**. Read from Motta et al. (2014), Eq. (6), where "a/r_g" is read as the dimensionless spin and "a^2/r_g" as a^2 | solves the marginal-stability condition to 1e-13 |
+| Kerr r_mb, r_ph, E, L closed forms | BPT (1972). **Quoted from memory** | reproduced by the general code to 1e-12; E(r_mb) = 1 independently |
+| Analytic RPM solution | Ingram & Motta (2014), Eqs. (4)-(9). **Read** | inverts BlackPy's frequencies |
+| QPO models, low-frequency QPO = nodal precession | Stuchlik & Kolos (2016), Table 1 (read for v0.1) | Kerr closed forms |
+| Separability conditions, xi(r_p), eta(r_p) | **derived** | Bardeen's formulas; Johannsen radial potential (Eq. (23), **read**) |
+| Bardeen's Kerr shadow: alpha, beta, xi, eta | Bardeen (1973): **not accessible** (Les Houches book). Read from Perlick & Tsupko (2022), Eqs. (55)-(56) | independent implementation in the tests |
+| ZAMO screen coordinates at finite distance | **derived**; the tetrad is the standard ZAMO frame (Bardeen, Press & Teukolsky 1972; **from memory**) | static limit (Synge), limit r_obs -> infinity |
+| Delta C | Bambi et al. (2019), Eqs. (4)-(5). **Read** | polygon computation; identity with the area radius |
+| Statement on the EHT definition of circularity | EHT M87* Paper VI (ApJL 875, L6), Sec. 7.4 and Sec. 9. **Read** (text extracted from the arXiv PDF) | – |
+| Johannsen & Psaltis asymmetry A = 2 rms | Johannsen & Psaltis (2010), Eqs. (3)-(8). **Read**; not implemented | – |
+| Kerr shadow size range | EHT Sgr A* Paper VI (arXiv:2311.09484), Sec. 1 and caption of Fig. 12. **Read** | 7.0% vs "~8%" |
+| Isotropic inclination prior p(i) ~ sin i | standard | normalisation, uniformity in cos i |
+| Coverage of credible intervals when the truth is drawn from the prior | standard property of Bayesian posteriors | 73/100 |
+
+Bibliographic data (title, journal, volume, pages, year) of the following
+references were confirmed with Crossref on 2026-11-15: Kerr (1963); Newman
+et al. (1965); Johannsen (2013); Azreg-Ainou (2014); Ingram & Motta (2014);
+Bambi et al. (2019); Bardeen, Press & Teukolsky (1972); Perlick & Tsupko
+(2022); EHT M87* Paper VI (2019); EHT Sgr A* Paper VI (2022, ApJL 930, L17);
+Johannsen & Psaltis (2010). Bardeen (1973) has no DOI and was not checked.
+
+Papers the specification asked to read and what happened:
+
+| Paper | Read? |
+|---|---|
+| Johannsen (2013) | yes (arXiv:1501.02809) |
+| Azreg-Ainou (2014) | yes (arXiv:1405.2569) |
+| Bardeen (1973) | **no**: not available online; its formulas were taken from Perlick & Tsupko (2022) |
+| Motta et al. (2014), Motta et al. (2022) | yes (arXiv:1309.3652, 2209.10376) |
+| Ingram & Motta (2014) | yes (arXiv:1408.0884) |
+| EHT Delta C definition | EHT M87* Paper VI read: it contains no Delta C. The formula was read from Bambi et al. (2019, arXiv:1904.12983) |
+| Stuchlik & Kolos (2016) | yes (arXiv:1603.07366) |
+| Bardeen, Press & Teukolsky (1972) | **no**: not accessible |
+
+## 4. Registry values (new or changed)
+
+Read by Claude on 2026-11-15 from the ar5iv HTML renderings. **Every entry
+still needs a human check**; `verified_by_human` is `false` everywhere.
+
+| Dataset | Field | Value | Read from | Status |
+|---|---|---|---|---|
+| `qpo/gro_j1655_40` (version 1 -> 2) | `spin` | 0.290 +- 0.003 | Motta et al. (2014), abstract and Sec. 4.1 | read; **conflicts with their Table 3 (0.286 +- 0.003)**; note in the file |
+| | `published_fit.mass` | 5.31 +- 0.07 M_sun | same; Table 3: 5.307 +- 0.066 | read; RPM fit, not independent |
+| | `published_fit.radius` | 5.68 +- 0.04 R_g | Sec. 4.1; Table 3: 5.677 +- 0.035; Sec. 5 quotes +- 0.03 | read |
+| `qpo/xte_j1859_226` (version 1 -> 2) | `spin` | 0.149 +- 0.005 | Motta et al. (2022), abstract, Sec. 3, Table 3 | read |
+| | `published_fit.mass` | 7.85 +- 0.46 M_sun | same | read; RPM fit, not independent |
+| | `published_fit.radius` | 6.85 +- 0.18 R_g | Sec. 3, Table 3 | read |
+| both | `frequencies.low.note` | text only | – | now says the nodal QPO is fitted with rotating metrics |
+
+No frequency, mass prior or shadow bound was changed. The new fields are
+used only to mark a source as rotating (warning for static metrics) and for
+comparison in example 06; they are never used as priors.
+
+Values quoted in tests or examples that are *not* in the registry: Motta et
+al. (2014) Table 3, Ingram & Motta (2014) Table 1 and Stuchlik & Kolos
+(2016) abstract values appear as text in example 06 (all read in this
+session).
+
+## 5. Benchmarks
+
+Single process on the Apple M2, best of 5 runs after compilation.
+
+| Metric | Quantity | ms per evaluation | Compile time |
+|---|---|---|---|
+| Kerr | ISCO, 10^4 spins in [-0.99, 0.99] (includes the horizon search) | **0.017** | about 2 s |
+| Kerr | shadow observables (mean radius, area radius, Delta C, ...), 10^4 spins, n = 256 | **0.027** | about 2 s |
+| Kerr | one shadow contour, 510 points (Python call included) | **0.33** | about 2 s |
+| Kerr | Kretschmann scalar by 4D autodiff, 270 grid points | 0.36 s for the first call (mostly compilation) | – |
+| Kerr | effective source on a 24 x 7 grid, with classification | 0.5 to 0.8 s per call | – |
+| Kerr | symbolic 4D tensors (vacuum test, K) | 12 s | – |
+| Kerr-Newman | symbolic 4D tensors | 28 s | – |
+| Johannsen | symbolic 4D tensors | not completed within the default limit (120 s); numerical path used | – |
+| Reissner-Nordstrom | ISCO (v0.1 path, for comparison) | 0.0058 (v0.1: 0.0057) | about 1 s |
+
+Accuracy: Kerr ISCO vs BPT 2.6e-13 (absolute) over 1999 spins; Kerr horizon
+4.8e-14 over 2001 spins up to 0.999999; shadow contour vs Bardeen 1e-13;
+shape integrals converge exponentially (n = 64: 1e-10).
+
+Inference timings: Kerr RPM triplet fit (3 parameters, emcee, 32 walkers x
+4000 steps) 3.5 s; Johannsen fit (4 parameters, 8000 steps) 7 s; example 05
+in total (three emcee fits, two dynesty fits, Bayes factors) 32 s; coverage
+test (100 fits) 87 s.
+
+## 6. Known limitations
+
+1. **No human verification of the data** (unchanged). Treat every registry
+   number as provisional.
+2. **Shadows need separable null geodesics.** There is no ray tracing; a
+   non-separable metric is refused. The separability test is a sufficient
+   condition in the given coordinates and is numerical (grid of 16 points,
+   three parameter sets, tolerance 1e-8).
+3. **The event horizon is found only when `g^rr = 0` is theta-independent.**
+   Otherwise the roots are reported with a statement that they are not the
+   horizon; the equation for H(theta) is not solved.
+4. **`is_reflection_symmetric` and `is_separable` are properties without
+   parameters.** For numeric metrics they are tested at representative
+   parameter values chosen by a heuristic; `check_reflection_symmetry(**p)`
+   and `check_separability(**p)` test specific values.
+5. **Near-extremal and very slow rotation.** An extremal double horizon is
+   located to about 1e-8. For a < 5.6e-7 (Kerr) the shadow is the centred
+   non-rotating circle (neglected shift below 1.2e-6 M); for a < 1.1e-5 the
+   shape observables are those of a displaced circle (neglected terms below
+   2e-10). The mean radius has a relative noise of up to 4e-8 for a between
+   1e-5 and 1e-4.
+6. **Inclination is clamped** to [1e-4, pi - 1e-4] rad (error of order 1e-8).
+7. **Finite-distance shadows are for a ZAMO** with the screen coordinates of
+   `docs/theory.md`; other observers and projections are not implemented.
+   The observer must be outside the photon region.
+8. **Shadow root selection assumes a Kerr-like photon region**: one unstable
+   polar orbit and one pair of roots of Theta around it. Metrics with
+   several photon regions are not handled; naked singularities are reported
+   as "no shadow".
+9. **The physical root of the xi quadratic is taken to be the one of smaller
+   magnitude.** Proven here for Kerr and for the Johannsen class; assumed for
+   other separable metrics.
+10. **Effective-source classification is numerical**: tolerance 1e-7 relative
+    to sqrt(K); a source that is of type I only approximately can be labelled
+    "neither". The classification of Hawking & Ellis was implemented from
+    memory.
+11. **Symbolic 4D tensors are slow for deformed metrics** (Johannsen does
+    not finish in two minutes). On Windows the time limit is only checked
+    between tensor components, so a single long simplification is not
+    interrupted.
+12. **The degeneracy guard uses correlation coefficients** (Pearson and
+    Spearman, threshold 0.9); a non-monotonic degeneracy would be missed.
+13. **Sense of rotation.** The low-frequency QPO is compared with the
+    absolute value of the nodal frequency, so a triplet alone does not fix
+    the sense of rotation, as noted by Ingram & Motta (2014).
+14. **Generated metrics with g != f or h != r^2** use a conformal factor
+    chosen by BlackPy; the paper does not fix it for these seeds.
+15. **Windows and Linux are untested**; CI has not run.
+16. Full suite duration grew from 100 s to 520 s (compilation of many
+    metric/observable combinations, symbolic 4D tensors and sampler runs).
+
+## 7. Points in the specification that I think are wrong or need a decision
+
+1. **"Deviation from circularity Delta C, as defined by the EHT M87*
+   papers."** The EHT M87* papers do not define Delta C. Paper VI (Sec. 7.4)
+   measures the fractional spread of the ring diameter over orientations
+   and, in its discussion, quotes "a maximum asymmetry of 10%, as defined in
+   Johannsen & Psaltis (2010)". The formula usually called Delta C is Eq. (5)
+   of Bambi et al. (2019), who attribute it to the EHT. BlackPy implements
+   that equation as printed. With it the largest Kerr value is 0.050
+   (a = 0.998, edge-on), not 0.10; twice that, 0.10, corresponds to the
+   Johannsen-Psaltis asymmetry (A = 2 x rms). So "Delta C < 0.1" as printed
+   never excludes any Kerr black hole with a <= 0.998, which is at odds with
+   the conclusion of Bambi et al. that high spins at high inclinations are
+   excluded. I could not resolve this from the text; a human should decide
+   which definition BlackPy should carry (it is one line to change).
+2. **GRO J1655-40 spin "0.290" (Motta et al.) versus "0.286" (Stuchlik &
+   Kolos).** The specification asks to explain the difference between the
+   two papers. The difference is inside Motta et al. (2014): their text says
+   0.290, their Table 3 says 0.286, and the exact solution is 0.2861. See
+   section 2.7.
+3. **"Reproduce the published RPM mass and spin ... (mandatory validation)."**
+   Done, but as an example and not as a test, because `CLAUDE.md` forbids
+   tests that depend on unverified registry numbers. For XTE J1859+226 the
+   central values are reproduced and the published uncertainties are not
+   (they are 2.7 times larger than propagation gives).
+4. **"StaticSpherical ideally becomes a special case with g_tphi = 0."** I
+   kept two classes and added `as_axisymmetric()`, because making the static
+   class a subclass would route v0.1 computations through the general
+   formulas (slower, and numbers could change in the last digits). The
+   special-case relation is tested instead.
+5. **Catalogue.** Rotating metrics are in `ROTATING_CATALOGUE`; adding them
+   to `CATALOGUE` breaks v0.1 tests that iterate over it.
+6. **"Horizons: roots of g^rr = 0 ... as a function of theta."** For a
+   metric where these roots depend on theta they are not the horizon. The
+   code reports this instead of calling them a horizon.
+7. **Kerr-Newman "with a reference".** The file cites Newman et al. (1965),
+   which was not read; the components were not copied from any paper but
+   verified (section 3).
+8. **Azreg-Ainou for arbitrary static metrics.** The paper fixes the
+   conformal factor only for g = f, h = r^2; for other seeds the result
+   depends on a choice that the specification does not mention.
+9. **Constants: "If any value differs, fix it."** None differs. Note that
+   published RPM masses use a rounded constant that is 0.18% larger than the
+   CODATA/IAU value.
+10. **Coverage test with a fixed truth** (as one might read the
+    specification) is only approximately calibrated; I drew the truth from
+    the prior, for which 68% is exact.
+
+## 8. Commands
+
+```bash
+cd /Users/pahlavon/Desktop/BlackPy
+source .venv/bin/activate
+
+python -m pytest                              # full suite, about 9 minutes
+python -m pytest -m "not slow"                # quick subset, about 4.5 minutes
+python -m pytest -s -m slow -k "performance"  # prints the ISCO and shadow timings
+python -m pytest -s -k coverage               # prints the observed coverage
+python -m pytest -s -k weakly                 # prints the Kerr shadow size range
+
+python examples/01_new_metric.py
+python examples/02_profile_plots.py
+python examples/03_rn_fit.py
+python examples/04_sgra_shadow_constraints.py
+python examples/05_johannsen_rpm_fit.py       # Johannsen fit, emcee + dynesty, corner plot
+python examples/06_rpm_published_results.py   # published RPM masses and spins
+python examples/07_rotating_shadows.py        # Kerr shadows, Sgr A*
+python examples/08_tutorial_new_metric.py     # the tutorial as one script
+
+ruff check src tests examples && ruff format --check src tests examples
+python -m mkdocs build --strict
+```

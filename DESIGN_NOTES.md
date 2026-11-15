@@ -119,7 +119,7 @@ each other.
 18. **Pole-free stability functions.** `N_r` and `N_theta` are written so
     that they stay finite at the photon orbit (derivation in
     `docs/theory.md`, section 14); the ISCO scan then needs no special
-    handling near it. Kerr ISCO: 0.010 ms per evaluation.
+    handling near it. Kerr ISCO: 0.017 ms per evaluation.
 19. **Horizon classification for rotating metrics uses a sign test**, not a
     derivative: `g^rr = 1/g_rr` is evaluated through an infinite `g_rr` at
     an exact root (`Delta = 0` is exactly representable for many spins),
