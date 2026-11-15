@@ -1,6 +1,6 @@
-"""Metric classes.
+"""Metric base class and static, spherically symmetric spacetimes
 
-The MVP implements static, spherically symmetric spacetimes
+(rotating metrics: :mod:`blackpy.metric.axisymmetric`). This module implements
 
     ds^2 = -f(r) dt^2 + dr^2 / g(r) + h(r) (dtheta^2 + sin^2(theta) dphi^2)
 
@@ -50,6 +50,10 @@ class Parameter:
         LaTeX symbol used in plots and tables.
     description : str
         Human-readable description, including units.
+    role : str
+        Physical role, used by the inference guards: ``"spin"`` for the
+        rotation parameter, ``"deformation"`` for a parameter that deforms
+        the metric away from a reference solution, ``"charge"``, or ``""``.
     """
 
     name: str
@@ -57,6 +61,7 @@ class Parameter:
     bounds: tuple[float, float] = (-math.inf, math.inf)
     latex: str | None = None
     description: str = ""
+    role: str = ""
 
     def __post_init__(self):
         low, high = self.bounds
@@ -99,9 +104,9 @@ class SymbolicForm:
 class Metric(ABC):
     """Abstract base class of every spacetime in BlackPy.
 
-    Concrete subclasses: :class:`StaticSpherical` (implemented). Rotating
-    metrics will subclass this without changing the public API of the
-    observable modules.
+    Concrete subclasses: :class:`StaticSpherical` and
+    :class:`blackpy.metric.StationaryAxisymmetric`. Parameter handling and the
+    evaluation engine (:meth:`evaluate`) are shared.
     """
 
     name: str
@@ -121,6 +126,123 @@ class Metric(ABC):
     @abstractmethod
     def is_spherically_symmetric(self) -> bool:
         """Whether the spacetime is spherically symmetric."""
+
+    @property
+    def is_rotating_class(self) -> bool:
+        """True for :class:`StationaryAxisymmetric` metrics (general code path)."""
+        return False
+
+    def _init_common(self, name, reference, parameters, r_range, reserved=("r",)):
+        """Shared part of the constructors: names, parameters, scan range, caches."""
+        self.name = name
+        self.reference = reference
+        self.parameters = parameters
+        if len(set(self.param_names)) != len(self.param_names):
+            raise ValueError(f"Duplicate parameter names: {self.param_names}.")
+        for word in reserved:
+            if word in self.param_names:
+                raise ValueError(
+                    f"'{word}' is reserved for a coordinate and cannot be a parameter name."
+                )
+        r_min, r_max = float(r_range[0]), float(r_range[1])
+        if not 0.0 < r_min < r_max:
+            raise ValueError(f"r_range must satisfy 0 < r_min < r_max, got {r_range}.")
+        self.r_range = (r_min, r_max)
+        self._compiled: dict = {}
+        self._symbolic_cache: dict = {}
+
+    # ------------------------------------------------------------------ parameters
+
+    def resolve(self, params: Mapping[str, Any], *, check_bounds: bool = True) -> list:
+        """Return parameter values in positional order, filling in defaults.
+
+        Parameters
+        ----------
+        params : mapping
+            ``name -> value`` (scalars or arrays).
+        check_bounds : bool
+            Validate concrete values against the parameter bounds.
+
+        Returns
+        -------
+        list
+            One value per metric parameter.
+        """
+        unknown = set(params) - set(self.param_names)
+        if unknown:
+            raise TypeError(
+                f"Metric '{self.name}' has no parameter(s) {sorted(unknown)}. "
+                f"Available parameters: {list(self.param_names) or 'none'}."
+            )
+        values = []
+        for par in self.parameters:
+            value = params.get(par.name, par.default)
+            if value is None:
+                raise TypeError(
+                    f"Parameter '{par.name}' of metric '{self.name}' has no default value; "
+                    f"pass {par.name}=<value>."
+                )
+            if check_bounds and not isinstance(value, jax.core.Tracer):
+                arr = np.asarray(value, dtype=float)
+                low, high = par.bounds
+                if arr.size and (np.nanmin(arr) < low or np.nanmax(arr) > high):
+                    raise ValueError(
+                        f"Parameter '{par.name}' of metric '{self.name}' must lie in "
+                        f"[{low}, {high}]; got values in [{np.nanmin(arr)}, {np.nanmax(arr)}]."
+                    )
+            values.append(value)
+        return values
+
+    def pack(self, **params) -> jnp.ndarray:
+        """Pack keyword parameters into an array of shape ``(..., n_params)``."""
+        values = [jnp.asarray(v, dtype=jnp.float64) for v in self.resolve(params)]
+        if not values:
+            return jnp.zeros((0,), dtype=jnp.float64)
+        return jnp.stack(jnp.broadcast_arrays(*values), axis=-1)
+
+    # ------------------------------------------------------------------ evaluation engine
+
+    def evaluate(self, core: Callable, params: Mapping[str, Any], *args, **options):
+        """Evaluate a scalar core function with broadcasting, ``vmap`` and ``jit``.
+
+        This is the single entry point through which every public observable
+        is computed. ``core(metric, p, *args, **options)`` must be a pure,
+        JAX-traceable function of a 1-D parameter array ``p`` and scalar
+        ``args``. The compiled function is cached on the metric instance.
+
+        Parameters
+        ----------
+        core : callable
+            Scalar core function.
+        params : mapping
+            Metric parameters by name (scalars or arrays).
+        *args
+            Extra array arguments (e.g. radii) broadcast against the parameters.
+        **options
+            Hashable static options, baked into the compiled function.
+
+        Returns
+        -------
+        Output of ``core`` with the broadcast shape of the inputs prepended.
+        """
+        values = self.resolve(params)
+        arrays = [jnp.asarray(a, dtype=jnp.float64) for a in (*args, *values)]
+        arrays = jnp.broadcast_arrays(*arrays) if arrays else []
+        shape = arrays[0].shape if arrays else ()
+        size = int(np.prod(shape)) if shape else 1
+        flat_args = [a.reshape(size) for a in arrays[: len(args)]]
+        if self.n_params:
+            p = jnp.stack([a.reshape(size) for a in arrays[len(args) :]], axis=-1)
+        else:
+            p = jnp.zeros((size, 0), dtype=jnp.float64)
+
+        key = (core, len(args), tuple(sorted(options.items())))
+        fn = self._compiled.get(key)
+        if fn is None:
+            fn = jax.jit(jax.vmap(lambda p_, *a_: core(self, p_, *a_, **options)))
+            self._compiled[key] = fn
+        out = fn(p, *flat_args)
+        return jax.tree_util.tree_map(lambda x: x.reshape(shape + x.shape[1:]), out)
 
 
 def _as_parameters(parameters) -> tuple[Parameter, ...]:
@@ -146,10 +268,10 @@ def _as_parameters(parameters) -> tuple[Parameter, ...]:
     return tuple(out)
 
 
-def _parameters_from_signature(fn: Callable) -> tuple[Parameter, ...]:
-    """Infer parameters from the signature ``fn(r, *params)``."""
+def _parameters_from_signature(fn: Callable, n_coordinates: int = 1) -> tuple[Parameter, ...]:
+    """Infer parameters from the signature ``fn(r, *params)`` or ``fn(r, theta, *params)``."""
     sig = inspect.signature(fn)
-    names = list(sig.parameters.values())[1:]
+    names = list(sig.parameters.values())[n_coordinates:]
     out = []
     for p in names:
         if p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD):
@@ -237,21 +359,12 @@ class StaticSpherical(Metric):
                 "f must be a callable f(r, *params). For sympy expressions use "
                 "StaticSpherical.from_sympy(...)."
             )
-        self.name = name
-        self.reference = reference
-        self.parameters = (
-            _parameters_from_signature(f) if parameters is None else _as_parameters(parameters)
+        self._init_common(
+            name,
+            reference,
+            _parameters_from_signature(f) if parameters is None else _as_parameters(parameters),
+            r_range,
         )
-        if len(set(self.param_names)) != len(self.param_names):
-            raise ValueError(f"Duplicate parameter names: {self.param_names}.")
-        if "r" in self.param_names:
-            raise ValueError(
-                "'r' is reserved for the radial coordinate and cannot be a parameter name."
-            )
-        r_min, r_max = float(r_range[0]), float(r_range[1])
-        if not 0.0 < r_min < r_max:
-            raise ValueError(f"r_range must satisfy 0 < r_min < r_max, got {r_range}.")
-        self.r_range = (r_min, r_max)
         self.asymptotically_flat = asymptotically_flat
         self.g_equals_f = g is None
         self.h_is_r_squared = h is None
@@ -263,8 +376,6 @@ class StaticSpherical(Metric):
         self._g = self._f if g is None else _wrap(self._g_user)
         self._h = _wrap(self._h_user)
         self._symbolic: SymbolicForm | None = None
-        self._compiled: dict = {}
-        self._symbolic_cache: dict = {}
 
     # ------------------------------------------------------------------ construction
 
@@ -401,55 +512,6 @@ class StaticSpherical(Metric):
         kind = "symbolic" if self.is_symbolic else "numeric"
         return f"StaticSpherical(name='{self.name}', parameters=[{pars}], {kind})"
 
-    # ------------------------------------------------------------------ parameters
-
-    def resolve(self, params: Mapping[str, Any], *, check_bounds: bool = True) -> list:
-        """Return parameter values in positional order, filling in defaults.
-
-        Parameters
-        ----------
-        params : mapping
-            ``name -> value`` (scalars or arrays).
-        check_bounds : bool
-            Validate concrete values against the parameter bounds.
-
-        Returns
-        -------
-        list
-            One value per metric parameter.
-        """
-        unknown = set(params) - set(self.param_names)
-        if unknown:
-            raise TypeError(
-                f"Metric '{self.name}' has no parameter(s) {sorted(unknown)}. "
-                f"Available parameters: {list(self.param_names) or 'none'}."
-            )
-        values = []
-        for par in self.parameters:
-            value = params.get(par.name, par.default)
-            if value is None:
-                raise TypeError(
-                    f"Parameter '{par.name}' of metric '{self.name}' has no default value; "
-                    f"pass {par.name}=<value>."
-                )
-            if check_bounds and not isinstance(value, jax.core.Tracer):
-                arr = np.asarray(value, dtype=float)
-                low, high = par.bounds
-                if arr.size and (np.nanmin(arr) < low or np.nanmax(arr) > high):
-                    raise ValueError(
-                        f"Parameter '{par.name}' of metric '{self.name}' must lie in "
-                        f"[{low}, {high}]; got values in [{np.nanmin(arr)}, {np.nanmax(arr)}]."
-                    )
-            values.append(value)
-        return values
-
-    def pack(self, **params) -> jnp.ndarray:
-        """Pack keyword parameters into an array of shape ``(..., n_params)``."""
-        values = [jnp.asarray(v, dtype=jnp.float64) for v in self.resolve(params)]
-        if not values:
-            return jnp.zeros((0,), dtype=jnp.float64)
-        return jnp.stack(jnp.broadcast_arrays(*values), axis=-1)
-
     # ------------------------------------------------------------------ metric functions
 
     def f_array(self, r, p):
@@ -476,49 +538,59 @@ class StaticSpherical(Metric):
         """Metric function ``h(r) = g_theta_theta``; broadcasts over ``r`` and parameters."""
         return self.evaluate(_h_core, params, r)
 
-    # ------------------------------------------------------------------ evaluation engine
+    # ------------------------------------------------------------------ conversion
 
-    def evaluate(self, core: Callable, params: Mapping[str, Any], *args, **options):
-        """Evaluate a scalar core function with broadcasting, ``vmap`` and ``jit``.
+    def as_axisymmetric(self):
+        r"""The same spacetime as a :class:`blackpy.metric.StationaryAxisymmetric`.
 
-        This is the single entry point through which every public observable
-        is computed. ``core(metric, p, *args, **options)`` must be a pure,
-        JAX-traceable function of a 1-D parameter array ``p`` and scalar
-        ``args``. The compiled function is cached on the metric instance.
-
-        Parameters
-        ----------
-        core : callable
-            Scalar core function.
-        params : mapping
-            Metric parameters by name (scalars or arrays).
-        *args
-            Extra array arguments (e.g. radii) broadcast against the parameters.
-        **options
-            Hashable static options, baked into the compiled function.
+        The components are :math:`g_{tt} = -f`, :math:`g_{t\phi} = 0`,
+        :math:`g_{rr} = 1/g`, :math:`g_{\theta\theta} = h`,
+        :math:`g_{\phi\phi} = h\sin^2\theta`. The static metric is thus the
+        special case :math:`g_{t\phi} = 0` of the rotating class. The result
+        goes through the general (rotating) code path, which makes it an
+        independent check of the specialised static formulas.
 
         Returns
         -------
-        Output of ``core`` with the broadcast shape of the inputs prepended.
+        StationaryAxisymmetric
+            With the same parameters, name, scan range and reference.
         """
-        values = self.resolve(params)
-        arrays = [jnp.asarray(a, dtype=jnp.float64) for a in (*args, *values)]
-        arrays = jnp.broadcast_arrays(*arrays) if arrays else []
-        shape = arrays[0].shape if arrays else ()
-        size = int(np.prod(shape)) if shape else 1
-        flat_args = [a.reshape(size) for a in arrays[: len(args)]]
-        if self.n_params:
-            p = jnp.stack([a.reshape(size) for a in arrays[len(args) :]], axis=-1)
-        else:
-            p = jnp.zeros((size, 0), dtype=jnp.float64)
+        from blackpy.metric.axisymmetric import StationaryAxisymmetric
 
-        key = (core, len(args), tuple(sorted(options.items())))
-        fn = self._compiled.get(key)
-        if fn is None:
-            fn = jax.jit(jax.vmap(lambda p_, *a_: core(self, p_, *a_, **options)))
-            self._compiled[key] = fn
-        out = fn(p, *flat_args)
-        return jax.tree_util.tree_map(lambda x: x.reshape(shape + x.shape[1:]), out)
+        options = {
+            "parameters": self.parameters,
+            "name": self.name,
+            "asymptotically_flat": self.asymptotically_flat,
+            "r_range": self.r_range,
+            "reference": self.reference,
+        }
+        if self.is_symbolic:
+            import sympy as sp
+
+            s = self.symbolic
+            theta = sp.Symbol("theta", real=True)
+            metric = StationaryAxisymmetric.from_sympy(
+                -s.f,
+                sp.S.Zero,
+                s.h * sp.sin(theta) ** 2,
+                1 / s.g,
+                s.h,
+                r=s.r,
+                theta=theta,
+                **options,
+            )
+        else:
+            f, g, h = self._f_user, self._g_user, self._h_user
+            metric = StationaryAxisymmetric(
+                lambda r, theta, *p: -f(r, *p),
+                lambda r, theta, *p: 0.0 * r,
+                lambda r, theta, *p: h(r, *p) * jnp.sin(theta) ** 2,
+                lambda r, theta, *p: 1.0 / g(r, *p),
+                lambda r, theta, *p: h(r, *p),
+                **options,
+            )
+        metric._declared.update(reflection=True, separable=True)
+        return metric
 
     # ------------------------------------------------------------------ asymptotics
 

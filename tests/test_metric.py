@@ -120,7 +120,8 @@ def test_interpolated_metric_matches_closed_form():
 
 
 def test_future_metric_stubs_raise():
-    with pytest.raises(NotImplementedError, match="MVP"):
-        bp.metric.StationaryAxisymmetric()
+    """v0.1 checked that rotating metrics were stubs; since v0.2 they are implemented
+    (tests/test_metric_rotating.py). The original Newman-Janis stub remains."""
+    assert bp.metric.StationaryAxisymmetric is bp.StationaryAxisymmetric
     with pytest.raises(NotImplementedError):
         bp.metric.future.newman_janis(None)

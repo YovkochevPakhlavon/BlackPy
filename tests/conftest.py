@@ -28,3 +28,18 @@ def bardeen():
 @pytest.fixture(scope="session")
 def hayward():
     return bp.metric.Hayward()
+
+
+@pytest.fixture(scope="session")
+def kerr():
+    return bp.metric.Kerr()
+
+
+@pytest.fixture(scope="session")
+def kerr_newman():
+    return bp.metric.KerrNewman()
+
+
+@pytest.fixture(scope="session")
+def johannsen():
+    return bp.metric.Johannsen()

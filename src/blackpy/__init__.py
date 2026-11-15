@@ -12,11 +12,19 @@ _jax.config.update("jax_enable_x64", True)
 
 from blackpy import constants, errors, metric  # noqa: E402
 from blackpy._version import __version__  # noqa: E402
-from blackpy.metric import StaticSpherical  # noqa: E402
+from blackpy.metric import StaticSpherical, StationaryAxisymmetric  # noqa: E402
 
 _LAZY = ("geometry", "orbits", "light", "data", "infer", "plot", "qnm", "thermo")
 
-__all__ = ["StaticSpherical", "__version__", "constants", "errors", "metric", *_LAZY]
+__all__ = [
+    "StaticSpherical",
+    "StationaryAxisymmetric",
+    "__version__",
+    "constants",
+    "errors",
+    "metric",
+    *_LAZY,
+]
 
 
 def __getattr__(name):
