@@ -98,9 +98,14 @@ def test_future_light_stubs_raise():
         lt.deflection_angle(None, 5.0)
     with pytest.raises(NotImplementedError):
         lt.shadow_in_plasma(None, None)
-    with pytest.raises(NotImplementedError):
+    # Out of scope on purpose (v0.3 roadmap): the messages must not promise a release.
+    with pytest.raises(NotImplementedError, match="not scheduled") as info:
         bp.qnm.quasinormal_modes(None)
-    with pytest.raises(NotImplementedError):
-        bp.thermo.hawking_temperature(None)
+    assert "roadmap" in str(info.value) and "v0.3" not in str(info.value)
+    for stub in (bp.thermo.hawking_temperature, bp.thermo.entropy, bp.thermo.heat_capacity):
+        with pytest.raises(NotImplementedError, match="not scheduled") as info:
+            stub(None)
+        assert "roadmap" in str(info.value) and "v0.3" not in str(info.value)
+    assert "not scheduled" in bp.qnm.__doc__ and "not scheduled" in bp.thermo.__doc__
     with pytest.raises(TypeError):
         lt.PlasmaModel()

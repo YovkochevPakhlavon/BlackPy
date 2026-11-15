@@ -1,16 +1,18 @@
-"""Quasinormal modes. **Not implemented (planned for v0.3); interface only.**
+"""Quasinormal modes. **Not implemented and not scheduled; interface only.**
 
-Planned: WKB approximation with Pade resummation for static, spherically
-symmetric metrics (Konoplya, Zhidenko & Zinhailo 2019, Class. Quantum Grav.
-36, 155002), with the effective potential built by automatic
-differentiation.
+Quasinormal modes were removed from the roadmap of version 0.3 on purpose.
+Within BlackPy's scope (a metric without field equations) only test-field
+modes could be computed, and those cannot be compared with ringdown
+observations for non-vacuum metrics, so the feature would not feed a
+likelihood. The function below reserves the name and raises
+``NotImplementedError``. See the roadmap in ``DESIGN_NOTES.md``, section 6.
 """
 
 from __future__ import annotations
 
 
 def quasinormal_modes(metric, *, spin: int = 2, ell: int = 2, overtone: int = 0, **params):
-    """Quasinormal frequency ``omega`` in units of 1/M. **Not implemented.**
+    """Quasinormal frequency ``omega`` in units of 1/M. **Not implemented, not scheduled.**
 
     Parameters
     ----------
@@ -23,6 +25,8 @@ def quasinormal_modes(metric, *, spin: int = 2, ell: int = 2, overtone: int = 0,
         Overtone number ``n``.
     """
     raise NotImplementedError(
-        "Quasinormal modes (WKB + Pade) are not part of the BlackPy MVP or of v0.2 (planned "
-        "for v0.3). The interface is reserved; see DESIGN_NOTES.md (roadmap)."
+        "Quasinormal modes are not implemented in BlackPy and are not scheduled for a release: "
+        "without field equations only test-field modes could be computed, and these cannot be "
+        "compared with ringdown observations for non-vacuum metrics. The interface is "
+        "reserved; see the roadmap in DESIGN_NOTES.md (section 6)."
     )

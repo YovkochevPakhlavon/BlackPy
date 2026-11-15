@@ -232,17 +232,22 @@ each other.
 
 ## 6. Roadmap (interfaces reserved)
 
-| Feature | Reserved interface |
-|---|---|
-| RZ / KRZ parametrisations | `metric.future.rezzolla_zhidenko`, `konoplya_rezzolla_zhidenko` |
-| Original Newman-Janis algorithm | `metric.future.newman_janis` (use `rotating_from_static`) |
-| Plasma | `light.PlasmaModel`, `light.shadow_in_plasma` |
-| Weak and strong lensing | `light.deflection_angle` (quadrature already in `_numerics`) |
-| Quasinormal modes (WKB + Pade) | `blackpy.qnm.quasinormal_modes` |
-| Thermodynamics | `blackpy.thermo` |
-| S2 orbit data | new `data_type` in the registry schema; needs ODE integration |
-| Shadows of non-separable metrics | not planned inside BlackPy (ray tracing; Gradus.jl) |
-| Event horizon when `g^rr = 0` depends on theta | solve `g^rr + g^thth (dH/dtheta)^2 = 0`; `horizon_profile` reports the case |
+**Guiding principle (since v0.3).** BlackPy is "metric in, constraints out".
+A feature is scheduled if it feeds a likelihood, makes a fit more
+trustworthy, or widens the set of metrics that can be fitted.
+
+| Feature | Reserved interface | Status |
+|---|---|---|
+| Original Newman-Janis algorithm | `metric.future.newman_janis` (use `rotating_from_static`) | not planned: the Azreg-Ainou version covers it |
+| Thermodynamics | `blackpy.thermo` (stubs) | **not scheduled**: there are no thermodynamic data, so nothing would feed a likelihood |
+| Quasinormal modes | `blackpy.qnm.quasinormal_modes` (stub) | **not scheduled**: without field equations only test-field modes can be computed, and these cannot be compared with ringdown observations for non-vacuum metrics |
+| S2 orbit data | new `data_type` in the registry schema; needs ODE integration | later |
+| Shadows of non-separable metrics | not planned inside BlackPy (ray tracing; Gradus.jl) | out of scope |
+| Continuum-fitting and iron-line likelihoods | none | out of scope: they need ray tracing of the disk image |
+| Event horizon when `g^rr = 0` depends on theta | solve `g^rr + g^thth (dH/dtheta)^2 = 0`; `horizon_profile` reports the case | later |
+
+The v0.2 version of this table also listed plasma, lensing and the RZ/KRZ
+parametrisations; what happened to them in v0.3 is recorded in section 8.
 
 All observable functions take the abstract `Metric` as first argument, so new
 metric classes can be added without changing the public API.
@@ -271,7 +276,7 @@ metric classes can be added without changing the public API.
 - Human verification of every registry value (unchanged from v0.1).
 - CI has still never run (nothing is pushed): Linux and Windows untested.
   The symbolic time limit has no hard interrupt on Windows.
-- A `plot` helper for shadow contours (example 07 draws them with
-  matplotlib directly).
-- Everything in the roadmap table above (v0.3: plasma, lensing, QNMs,
-  thermodynamics).
+- A `plot` helper for shadow contours (done in v0.3: `blackpy.plot.shadow`).
+- The roadmap of the time listed "v0.3: plasma, lensing, QNMs,
+  thermodynamics". QNMs and thermodynamics were later removed from v0.3 on
+  purpose (section 6); see section 8 for the v0.3 status.
