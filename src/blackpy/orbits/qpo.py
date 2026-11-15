@@ -39,9 +39,16 @@ Spherical symmetry
 ------------------
 In a spherically symmetric spacetime :math:`\nu_\theta = \nu_\phi`, so
 several models coincide (RP = RP1 = RP2 = ER1, ER3 = TD) and the nodal
-precession frequency vanishes: low-frequency QPOs cannot be modelled in the
-MVP (:func:`blackpy.orbits.nodal_precession_frequency` raises an explicit
-error).
+precession frequency vanishes: low-frequency QPOs cannot be modelled with a
+static metric (:func:`blackpy.orbits.nodal_precession_frequency` raises an
+explicit error).
+
+Rotating metrics
+----------------
+All eleven models work with any reflection-symmetric
+:class:`blackpy.metric.StationaryAxisymmetric` metric: there
+:math:`\nu_\theta \ne \nu_\phi`, the models are distinct, and
+:meth:`QPOModel.low_frequency` returns the nodal precession frequency.
 """
 
 from __future__ import annotations
@@ -53,8 +60,8 @@ import jax.numpy as jnp
 
 from blackpy._numerics import find_roots, nanmax_or_nan
 from blackpy.geometry.horizons import static_domain_core
-from blackpy.orbits.circular import isco_core
-from blackpy.orbits.frequencies import frequencies_hz_core
+from blackpy.orbits.circular import _options, isco_core
+from blackpy.orbits.frequencies import frequencies_hz_core, nodal_precession_hz_core
 
 _SOURCE = "Stuchlik & Kolos (2016), A&A 586, A130, Table 1 (arXiv:1603.07366)"
 
@@ -85,21 +92,27 @@ class QPOModel:
     formula: str
     reference: str = _SOURCE
 
-    def frequencies_core(self, metric, p, r, mass_msun):
+    def frequencies_core(self, metric, p, r, mass_msun, direction=1):
         """``(nu_U, nu_L)`` in Hz (jit/vmap-compatible)."""
-        nu_phi, nu_r, nu_theta = frequencies_hz_core(metric, p, r, mass_msun)
+        nu_phi, nu_r, nu_theta = frequencies_hz_core(metric, p, r, mass_msun, direction)
         return self.upper(nu_phi, nu_r, nu_theta), self.lower(nu_phi, nu_r, nu_theta)
 
-    def frequencies(self, metric, r, mass, **params):
+    def low_frequency_core(self, metric, p, r, mass_msun, direction=1):
+        """``|nu_phi - nu_theta|`` in Hz: the low-frequency QPO of the model."""
+        return jnp.abs(nodal_precession_hz_core(metric, p, r, mass_msun, direction))
+
+    def frequencies(self, metric, r, mass, *, direction="prograde", **params):
         """Upper and lower QPO frequency in Hz.
 
         Parameters
         ----------
-        metric : StaticSpherical
+        metric : StaticSpherical or StationaryAxisymmetric
         r : float or array
             Orbit radius in units of M.
         mass : float or array
             Black hole mass in solar masses.
+        direction : {"prograde", "retrograde"}
+            Rotating metrics only.
         **params
             Metric parameters.
 
@@ -109,13 +122,21 @@ class QPOModel:
             ``(nu_U, nu_L)`` in Hz; NaN where the model is undefined (inside
             the ISCO).
         """
-        return metric.evaluate(self.frequencies_core, params, r, mass)
+        return metric.evaluate(
+            self.frequencies_core, params, r, mass, **_options(metric, direction)
+        )
 
-    def low_frequency(self, metric, r, mass, **params):
-        """Low-frequency (nodal precession) QPO: unavailable in spherical symmetry."""
+    def low_frequency(self, metric, r, mass, *, direction="prograde", **params):
+        r"""Low-frequency QPO of the model, :math:`|\nu_\phi - \nu_\theta|` in Hz.
+
+        Stuchlik & Kolos (2016) assign the low-frequency QPO to the nodal
+        precession in all eleven models. Needs a rotating metric; for a
+        static metric :class:`blackpy.errors.NodalPrecessionUnavailableError`
+        is raised.
+        """
         from blackpy.orbits.frequencies import nodal_precession_frequency
 
-        return nodal_precession_frequency(metric, r, mass, **params)
+        return jnp.abs(nodal_precession_frequency(metric, r, mass, direction=direction, **params))
 
 
 def _model(name, description, upper, lower, formula) -> QPOModel:
@@ -220,13 +241,13 @@ def get_qpo_model(model) -> QPOModel:
     return QPO_MODELS[key]
 
 
-def _resonance_radius_core(metric, p, model=None, ratio=1.5, n_scan=256):
+def _resonance_radius_core(metric, p, model=None, ratio=1.5, n_scan=256, direction=1):
     """Outermost radius outside the ISCO where ``nu_U / nu_L = ratio``."""
     _, _, _, r_out = static_domain_core(metric, p, n_scan=n_scan)
-    r_isco = isco_core(metric, p, n_scan=n_scan)
+    r_isco = isco_core(metric, p, n_scan=n_scan, direction=direction)
 
     def mismatch(r):
-        upper, lower = model.frequencies_core(metric, p, r, 1.0)
+        upper, lower = model.frequencies_core(metric, p, r, 1.0, direction)
         return upper - ratio * lower
 
     lo = jnp.where(jnp.isfinite(r_isco), r_isco * (1.0 + 1e-9), 1.0)
@@ -236,7 +257,15 @@ def _resonance_radius_core(metric, p, model=None, ratio=1.5, n_scan=256):
     return jnp.where(jnp.isfinite(r_isco), best, jnp.nan)
 
 
-def resonance_radius(metric, model="RP", *, ratio: float = 1.5, n_scan: int = 256, **params):
+def resonance_radius(
+    metric,
+    model="RP",
+    *,
+    ratio: float = 1.5,
+    n_scan: int = 256,
+    direction="prograde",
+    **params,
+):
     r"""Radius at which the model frequencies are in a given ratio.
 
     Solves :math:`\nu_U(r) / \nu_L(r) = \mathrm{ratio}` outside the ISCO
@@ -261,5 +290,10 @@ def resonance_radius(metric, model="RP", *, ratio: float = 1.5, n_scan: int = 25
     """
     model = get_qpo_model(model)
     return metric.evaluate(
-        _resonance_radius_core, params, model=model, ratio=float(ratio), n_scan=n_scan
+        _resonance_radius_core,
+        params,
+        model=model,
+        ratio=float(ratio),
+        n_scan=n_scan,
+        **_options(metric, direction),
     )
