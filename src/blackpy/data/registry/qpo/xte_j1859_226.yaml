@@ -2,7 +2,7 @@ schema_version: 1
 id: qpo/xte_j1859_226
 object: XTE J1859+226
 data_type: qpo_triplet
-dataset_version: "2"
+dataset_version: "3"
 verified_by_human: false
 description: >
   QPO triplet in RXTE/PCA observation 40124-01-07-00 (1999-2000 outburst): type-C QPO and
@@ -79,11 +79,13 @@ references:
     doi: "10.1093/mnras/stac2719"
     arxiv: "2209.10395"
     role: "independent (dynamical) black hole mass"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit: read from the ar5iv HTML rendering of the arXiv version on 2026-11-15 by Claude; the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit: read from the ar5iv HTML rendering of the arXiv version on 2026-11-15 by Claude (re-read the same day for dataset version 3, which only adds open_questions); the journal version was not compared"
 notes: >
   The RPM mass obtained by Motta et al. (2022) themselves, M = 7.85 +- 0.46 Msun, is a
   Kerr QPO fit and must NOT be used as a mass prior (circular inference).
   Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
+open_questions:
+  - "Published RPM uncertainties are about 2.7 times larger than error propagation gives. Motta et al. (2022; abstract, Sec. 3, Table 3) quote M = 7.85 +- 0.46 Msun, a = 0.149 +- 0.005, R = 6.85 +- 0.18 Rg and state that they follow Motta et al. (2014) at every step. Propagating the Table 2 frequency uncertainties through the same RPM equations (Monte Carlo with split-normal errors, and independently a BlackPy fit with flat priors) gives +- 0.175 Msun, +- 0.0018 and +- 0.067 Rg: smaller by factors 2.6, 2.8 and 2.7, nearly the same factor for all three quantities, while the central values agree. For GRO J1655-40 the same procedure reproduces the published uncertainties. The origin of the larger published errors is not known (see VERIFICATION_v0.2.md, section 2.7, and examples/06_rpm_published_results.py). The frequencies in this file are unaffected; only the published_fit uncertainties are in question."
 todo:
   - "The dynamical mass was read from the abstract of Yanes-Rizo et al. (2022) only; confirm it in the body of the paper."
   - "Human check of Table 2 of Motta et al. (2022) against the published MNRAS version."

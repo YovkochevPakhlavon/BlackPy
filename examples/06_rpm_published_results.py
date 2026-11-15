@@ -98,14 +98,24 @@ for dataset_id in ("qpo/gro_j1655_40", "qpo/xte_j1859_226"):
         pm(result[f"r_{slug}"], 3),
     )
     published = data.published_fit
+    first_author = data.references[data.spin.source].citation.split(",")[0]
     report(
-        "published (" + data.references[data.spin.source].citation.split(",")[0] + ")",
+        f"published ({first_author}; preferred)",
         str(published["mass"]).replace(" Msun", ""),
         str(data.spin),
         str(published["radius"]).replace(" G M / c^2", ""),
     )
+    # Conflicting values printed elsewhere in the same paper (registry: other_values).
+    for k, other_spin in enumerate(data.spin.other_values):
+        other_mass = published["mass"].other_values[k : k + 1]
+        other_radius = published["radius"].other_values[k : k + 1]
+        report(
+            f"published ({first_author}; text)",
+            str(other_mass[0]).replace(" Msun", "") if other_mass else "-",
+            str(other_spin),
+            str(other_radius[0]).replace(" G M / c^2", "") if other_radius else "-",
+        )
     if dataset_id == "qpo/gro_j1655_40":
-        report("Motta et al. (2014), Table 3", "5.307 +- 0.066", "0.286 +- 0.003", "5.677 +- 0.035")
         report("Ingram & Motta (2014), Table 1", "5.31 +- 0.07", "0.285 +- 0.003", "5.68 +- 0.04")
         report("Stuchlik & Kolos (2016), RP model", "5.3 +- 0.1", "0.286 +- 0.004", "-")
     r_isco = float(bp.orbits.isco(kerr, a=float(exact.spin)))
@@ -118,6 +128,6 @@ print(
     "  Stuchlik & Kolos use the same frequencies; their 0.286 is the exact solution, and their\n"
     "  larger errors are maximum errors from the edges of the frequency intervals.\n"
     "- The published masses are 0.18% above BlackPy's because of the constant beta.\n"
-    "- XTE J1859+226: the central values agree; the published uncertainties are larger than\n"
-    "  the propagated frequency uncertainties."
+    "- XTE J1859+226: the central values agree; the published uncertainties are 2.7 times\n"
+    "  larger than the propagated frequency uncertainties (open question in the dataset file)."
 )

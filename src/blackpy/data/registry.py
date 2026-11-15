@@ -57,6 +57,31 @@ def _measurement(raw: Any, where: str, cls=Measurement, **extra) -> Measurement:
     for key in ("err_minus", "err_plus"):
         if raw[key] is not None and raw[key] < 0:
             raise RegistryError(f"{where}: '{key}' must be a positive number.")
+    others_raw = raw.get("other_values") or ()
+    if not isinstance(others_raw, list | tuple):
+        raise RegistryError(f"{where}: 'other_values' must be a list of measurements.")
+    others = []
+    for k, item in enumerate(others_raw):
+        if isinstance(item, dict) and item.get("other_values"):
+            raise RegistryError(f"{where}: other_values[{k}] must not be nested.")
+        if not isinstance(item, dict) or not str(item.get("location", "")).strip():
+            raise RegistryError(
+                f"{where}: other_values[{k}] needs a 'location' (where in the source the "
+                "conflicting value is printed)."
+            )
+        others.append(
+            _measurement(
+                {"unit": raw.get("unit", ""), "source": raw.get("source"), **item},
+                f"{where}: other_values[{k}]",
+            )
+        )
+    reason = str(raw.get("preferred_reason", "")).strip()
+    if others and not reason:
+        raise RegistryError(
+            f"{where}: 'other_values' are given, so 'preferred_reason' must say why the main "
+            "value is preferred."
+        )
+    extra = {**extra, "other_values": tuple(others), "preferred_reason": reason}
     return cls(
         value=_number(raw["value"], where),
         err_minus=_number(raw["err_minus"], where),
@@ -119,6 +144,7 @@ def parse_dataset(raw: dict, *, sha256: str = "", origin: str = "<memory>") -> D
         description=str(raw.get("description", "")),
         notes=str(raw.get("notes", "")),
         todo=tuple(str(t) for t in (raw.get("todo") or ())),
+        open_questions=tuple(str(t) for t in (raw.get("open_questions") or ())),
         sha256=sha256,
     )
     data_type = common["data_type"]
@@ -280,4 +306,6 @@ def list_datasets(verbose: bool = True) -> builtins.list[Dataset]:
             print(f"{d.id:<22} {d.object:<15} {d.data_type:<13} {d.dataset_version:<8} {d.status}")
             for item in d.todo:
                 print(f"{'':<22} TODO: {item}")
+            for item in d.open_questions:
+                print(f"{'':<22} OPEN QUESTION: {item}")
     return datasets

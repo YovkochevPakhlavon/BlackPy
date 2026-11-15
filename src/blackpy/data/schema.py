@@ -62,6 +62,15 @@ class Measurement:
         Exact location in the source (table, figure, equation, section).
     note : str
         Free-text remark.
+    other_values : tuple of Measurement
+        Other published values of the *same* quantity that disagree with
+        ``value`` (for example a number in the text of a paper that differs
+        from the one in its table), each with its own ``location``. The
+        main entry is then the preferred one and ``preferred_reason`` says
+        why. They are stored for the record and never used in a fit.
+    preferred_reason : str
+        Why ``value`` is preferred over ``other_values`` (empty if there are
+        none).
     """
 
     value: float | None
@@ -71,6 +80,13 @@ class Measurement:
     source: str | None = None
     location: str = ""
     note: str = ""
+    other_values: tuple = ()
+    preferred_reason: str = ""
+
+    @property
+    def has_conflicting_values(self) -> bool:
+        """True if the source gives more than one value for this quantity."""
+        return bool(self.other_values)
 
     @property
     def is_complete(self) -> bool:
@@ -154,6 +170,10 @@ class Dataset:
     notes : str
     todo : tuple of str
         Open issues (unverified or missing values).
+    open_questions : tuple of str
+        Unresolved scientific questions about the published values (for
+        example a published uncertainty that could not be reproduced). Unlike
+        ``todo`` items they cannot be closed by checking the paper again.
     sha256 : str
         Hash of the YAML file, stored in fit results for reproducibility.
     """
@@ -169,6 +189,7 @@ class Dataset:
     notes: str = ""
     todo: tuple[str, ...] = ()
     sha256: str = ""
+    open_questions: tuple[str, ...] = ()
 
     @property
     def is_complete(self) -> bool:

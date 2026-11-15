@@ -131,3 +131,47 @@ def test_measurement_helpers():
     assert str(Measurement(None)) == "null"
     with pytest.raises(RegistryError):
         _ = Measurement(None, None, None).sigma
+
+
+def test_conflicting_published_values_are_stored_with_a_preference(tmp_path):
+    """Schema only: a quantity printed twice keeps both values, each with its location."""
+    gro = bp.data.load("qpo/gro_j1655_40")
+    for m in (gro.spin, gro.published_fit["mass"], gro.published_fit["radius"]):
+        assert m.has_conflicting_values and m.preferred_reason
+        assert "Table 3" in m.location  # the preferred entry is the table
+        for other in m.other_values:
+            assert isinstance(other, Measurement) and other.is_complete and other.location
+            assert other.unit == m.unit and other.source == m.source  # inherited
+            assert not other.other_values
+    assert not gro.upper.has_conflicting_values and gro.upper.preferred_reason == ""
+
+    raw = yaml.safe_load((bp.data.registry_path() / "qpo/gro_j1655_40.yaml").read_text())
+
+    def load_modified(change):
+        modified = copy.deepcopy(raw)
+        change(modified)
+        path = tmp_path / "modified.yaml"
+        path.write_text(yaml.safe_dump(modified))
+        return bp.data.load_file(path)
+
+    with pytest.raises(RegistryError, match="preferred_reason"):
+        load_modified(lambda d: d["spin"].pop("preferred_reason"))
+    with pytest.raises(RegistryError, match="location"):
+        load_modified(lambda d: d["spin"]["other_values"][0].pop("location"))
+    with pytest.raises(RegistryError, match="list"):
+        load_modified(lambda d: d["spin"].update(other_values="0.29"))
+    with pytest.raises(RegistryError, match="nested"):
+        load_modified(
+            lambda d: d["spin"]["other_values"][0].update(
+                other_values=[{"value": 1.0, "err_minus": 0.1, "err_plus": 0.1, "location": "x"}]
+            )
+        )
+
+
+def test_open_questions_are_loaded_and_listed(capsys):
+    """Schema only: unresolved questions about published values travel with the dataset."""
+    xte = bp.data.load("qpo/xte_j1859_226")
+    assert len(xte.open_questions) == 1 and "uncertainties" in xte.open_questions[0]
+    assert bp.data.load("eht/sgra").open_questions == ()
+    bp.data.list()
+    assert "OPEN QUESTION:" in capsys.readouterr().out

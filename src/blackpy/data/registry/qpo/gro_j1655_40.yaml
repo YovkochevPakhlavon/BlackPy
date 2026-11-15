@@ -2,7 +2,7 @@ schema_version: 1
 id: qpo/gro_j1655_40
 object: GRO J1655-40
 data_type: qpo_triplet
-dataset_version: "2"
+dataset_version: "3"
 verified_by_human: false
 description: >
   Three QPOs detected simultaneously with RXTE/PCA: the type-C low-frequency QPO and
@@ -32,32 +32,57 @@ frequencies:
     note: "Nodal-precession QPO: fitted with rotating metrics (since BlackPy 0.2); ignored with a warning for static metrics."
 simultaneous: true
 spin:
-  value: 0.290
+  value: 0.286
   err_minus: 0.003
   err_plus: 0.003
   unit: ""
   method: "relativistic precession model applied to this QPO triplet in the Kerr metric (Monte Carlo over the frequency errors)"
   independent: false
   source: motta2014
-  location: "Abstract and Sec. 4.1 ('a = 0.290 +- 0.003'). Table 3 of the same paper lists the spin distribution as mean 0.286, standard deviation 0.003."
-  note: "The text (0.290) and Table 3 (0.286) of the paper disagree. The exact solution of the RPM equations for the central frequencies is a = 0.2861 (BlackPy, Ingram & Motta 2014 formulas); Ingram & Motta (2014, Table 1) quote 0.285 +- 0.003 and Stuchlik & Kolos (2016) 0.286 +- 0.004 for the same triplet."
+  location: "Table 3 ('Black hole parameters and associated quantities as measured from the RPM'), row 'Spin': mean value 0.286, standard deviation 0.003"
+  preferred_reason: "The paper prints two different spins. The Table 3 value is preferred because it equals the exact solution of the RPM equations for the central frequencies of Table 2 (a = 0.2861 with the formulas of Ingram & Motta 2014, reproduced by BlackPy), whereas the value in the text (0.290) does not solve them. Ingram & Motta (2014, Table 1) quote 0.285 +- 0.003 and Stuchlik & Kolos (2016) 0.286 +- 0.004 for the same triplet."
+  other_values:
+    - value: 0.290
+      err_minus: 0.003
+      err_plus: 0.003
+      location: "Abstract, Sec. 4.1 ('a = 0.290 +- 0.003'), caption of Fig. 3 and Sec. 5"
+      note: "Value quoted in the text; it differs from Table 3 of the same paper by more than its uncertainty and cannot be a rounding of 0.286."
 published_fit:
   mass:
-    value: 5.31
-    err_minus: 0.07
-    err_plus: 0.07
+    value: 5.307
+    err_minus: 0.066
+    err_plus: 0.066
     unit: Msun
     source: motta2014
-    location: "Abstract and Sec. 4.1 ('M = (5.31 +- 0.07) Msun'); Table 3: mean 5.307, standard deviation 0.066"
+    location: "Table 3, row 'Mass (Solar masses)': mean value 5.307, standard deviation 0.066"
     note: "RPM (Kerr) fit of the QPO triplet; NOT an independent mass and never used as a prior."
+    preferred_reason: "Table 3 gives the fitted distribution with one more digit than the text; the two agree after rounding. Table 3 is preferred for consistency with the spin."
+    other_values:
+      - value: 5.31
+        err_minus: 0.07
+        err_plus: 0.07
+        location: "Abstract, Sec. 4.1 ('M = (5.31 +- 0.07) Msun'), caption of Fig. 3 and Sec. 5"
+        note: "Rounded form of the Table 3 value."
   radius:
-    value: 5.68
-    err_minus: 0.04
-    err_plus: 0.04
+    value: 5.677
+    err_minus: 0.035
+    err_plus: 0.035
     unit: "G M / c^2"
     source: motta2014
-    location: "Sec. 4.1 ('R = (5.68 +- 0.04) Rg'); Table 3: mean 5.677, standard deviation 0.035; Sec. 5 quotes 5.68 +- 0.03"
+    location: "Table 3, row 'Radius (Gravitational radii)': mean value 5.677, standard deviation 0.035"
     note: "Emission radius of the three QPOs in the RPM fit."
+    preferred_reason: "Table 3 gives the fitted distribution with one more digit than the text; the text quotes two different rounded uncertainties. Table 3 is preferred for consistency with the spin."
+    other_values:
+      - value: 5.68
+        err_minus: 0.04
+        err_plus: 0.04
+        location: "Sec. 4.1 ('R = (5.68 +- 0.04) Rg')"
+        note: "Rounded form of the Table 3 value."
+      - value: 5.68
+        err_minus: 0.03
+        err_plus: 0.03
+        location: "Sec. 5 ('R = 5.68 +- 0.03 Rg')"
+        note: "Same central value with a different rounded uncertainty."
 mass_prior:
   value: 5.40
   err_minus: 0.30
@@ -79,11 +104,11 @@ references:
     doi: "10.1046/j.1365-8711.2002.05189.x"
     arxiv: "astro-ph/0109136"
     role: "independent (dynamical) black hole mass"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit: read from the ar5iv HTML rendering of the arXiv version on 2026-11-15 by Claude; the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit (text values and Table 3): read again from the ar5iv HTML rendering of the arXiv version (arXiv:1309.3652) on 2026-11-15 by Claude for dataset version 3; the journal version was not compared"
 notes: >
   In the ar5iv rendering of Table 2 the three observations 10255-01-06-01, 10255-01-07-00
   and 10255-01-17-00 form Sample B1 and share one set of QPO parameters. The same three
   values are quoted by Stuchlik & Kolos (2016, A&A 586, A130, Eq. 2). Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
 todo:
   - "Human check of Table 2 of Motta et al. (2014) against the published MNRAS version."
-  - "Human check of the RPM results (abstract, Sec. 4.1, Table 3) and of the 0.290 / 0.286 discrepancy against the published MNRAS version."
+  - "Human check of the RPM results (abstract, Sec. 4.1, Table 3) and of the 0.290 / 0.286 discrepancy against the published MNRAS version. Since dataset version 3 the Table 3 values are the main entries and the text values are stored under other_values."
