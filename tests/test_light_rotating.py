@@ -50,6 +50,7 @@ def polygon_observables(alpha, beta):
 # ----------------------------------------------------------------------------- required tests
 
 
+@pytest.mark.slow
 def test_zero_spin_gives_the_circle_of_radius_3_sqrt_3(kerr, kerr_newman, johannsen, schwarzschild):
     for metric in (kerr, kerr_newman, johannsen, schwarzschild):
         for inclination in (0.0, 0.4, math.pi / 2):
@@ -187,6 +188,7 @@ def test_shadow_radius_dispatches_on_the_metric_class(kerr, rn):
 # ----------------------------------------------------------------------------- other metrics
 
 
+@pytest.mark.slow
 def test_kerr_newman_and_generated_metrics(kerr, kerr_newman, rn, hayward):
     a, inclination = 0.6, 1.1
     reference = lt.shadow_observables(kerr, inclination, a=a)
@@ -254,6 +256,7 @@ def test_johannsen_spherical_photon_orbits_solve_the_radial_equation(johannsen, 
 # ----------------------------------------------------------------------------- finite distance
 
 
+@pytest.mark.slow
 def test_observer_at_finite_distance(kerr, schwarzschild, rn, sds):
     # Static metric: the ZAMO is the static observer, so Synge's formula is recovered.
     for r_obs in (4.0, 10.0, 300.0):

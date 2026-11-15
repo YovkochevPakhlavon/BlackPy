@@ -149,6 +149,7 @@ def test_kerr_energy_and_angular_momentum(kerr):
     )
 
 
+@pytest.mark.slow
 def test_kerr_marginally_bound_and_photon_orbits(kerr):
     a = np.linspace(-0.99, 0.99, 199)
     r_mb = np.asarray(ob.marginally_bound_orbit(kerr, a=a))
@@ -194,6 +195,7 @@ def test_nodal_precession(kerr, schwarzschild):
 # ----------------------------------------------------------------------------- limits
 
 
+@pytest.mark.slow
 def test_kerr_newman_reduces_to_rn_and_kerr(kerr, kerr_newman, rn):
     """Mandatory validation: Kerr-Newman -> RN at a = 0 and -> Kerr at Q = 0."""
     q = np.array([0.0, 0.3, 0.6, 0.9, 1.0])
@@ -313,6 +315,7 @@ def test_epicyclic_frequencies_against_the_direct_definition(johannsen):
             assert abs(float(sp.diff(potential.subs(equator), s.r).subs(point))) < 1e-11
 
 
+@pytest.mark.slow
 def test_johannsen_orbits(johannsen, kerr):
     a = np.array([-0.8, 0.0, 0.5, 0.9])
     np.testing.assert_allclose(ob.isco(johannsen, a=a), ob.isco(kerr, a=a), rtol=1e-12)
@@ -329,6 +332,7 @@ def test_johannsen_orbits(johannsen, kerr):
 # ----------------------------------------------------------------------------- QPO models
 
 
+@pytest.mark.slow
 def test_all_qpo_models_work_with_rotation(kerr):
     """All 11 models of Stuchlik & Kolos (2016), Table 1, with the Kerr closed forms."""
     r, a, mass = np.geomspace(6.0, 20.0, 7), 0.5, 5.3

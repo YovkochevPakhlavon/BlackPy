@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4", "ruff>=0.4"]
+dev = ["pytest>=7.4", "pytest-xdist>=3.5", "ruff>=0.4"]
 docs = ["mkdocs>=1.5", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.24"]
 
 [project.urls]
@@ -46,7 +46,7 @@ packages = ["src/blackpy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["slow: long-running tests (performance benchmarks, sampler runs)"]
+markers = ["slow: long-running tests (sampler runs, benchmarks, symbolic 4D tensors, tests that compile many metric/observable combinations)"]
 filterwarnings = ["ignore::DeprecationWarning:jax.*", "ignore::DeprecationWarning:dynesty.*"]
 
 [tool.ruff]
