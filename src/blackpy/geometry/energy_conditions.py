@@ -90,9 +90,14 @@ def energy_conditions(
 ) -> EnergyConditionResult:
     """Evaluate NEC, WEC, SEC and DEC on a radial grid outside the event horizon.
 
+    For a rotating metric the call is forwarded to
+    :func:`blackpy.geometry.effective_source`, which works on an
+    ``(r, theta)`` grid and also classifies the source; ``r``, ``r_max`` and
+    ``rtol`` keep their meaning and ``n`` is the number of radii.
+
     Parameters
     ----------
-    metric : StaticSpherical
+    metric : StaticSpherical or StationaryAxisymmetric
     r : array, optional
         Explicit radial grid. Default: ``n`` logarithmically spaced points
         from just outside the event horizon to ``r_max``.
@@ -110,6 +115,17 @@ def energy_conditions(
     -------
     EnergyConditionResult
     """
+    if metric.is_rotating_class:
+        from blackpy.geometry.axisymmetric import effective_source
+
+        return effective_source(
+            metric,
+            r,
+            r_max=r_max,
+            n_r=min(n, 24) if r is None else n,
+            rtol=max(rtol, 1e-7),
+            **params,
+        )
     if r is None:
         _, r_cosmo, r_in, r_out = (float(v) for v in metric.evaluate(static_domain_core, params))
         lo = r_in * (1.0 + 1e-6)
