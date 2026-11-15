@@ -156,7 +156,52 @@ class Gaussian(Prior):
         }
 
 
-_PRIOR_TYPES = {"Uniform": Uniform, "LogUniform": LogUniform, "Gaussian": Gaussian}
+class Isotropic(Prior):
+    r"""Prior of an inclination angle (in degrees) for randomly oriented systems.
+
+    The spin axis is uniformly distributed on the sphere, so
+    :math:`p(i) \propto \sin i`, i.e. uniform in :math:`\cos i`.
+
+    Parameters
+    ----------
+    low, high : float
+        Range of the inclination in degrees, ``0 <= low < high <= 180``
+        (default 0 to 90).
+    """
+
+    def __init__(self, low: float = 0.0, high: float = 90.0):
+        if not 0.0 <= low < high <= 180.0:
+            raise ValueError(f"Isotropic prior needs 0 <= low < high <= 180, got ({low}, {high}).")
+        self.low, self.high = float(low), float(high)
+        self.support = (self.low, self.high)
+        self._cos_low = math.cos(math.radians(self.low))
+        self._norm = self._cos_low - math.cos(math.radians(self.high))
+
+    def logpdf(self, x):
+        x = np.asarray(x, dtype=float)
+        inside = (x >= self.low) & (x <= self.high)
+        density = np.sin(np.radians(np.where(inside, x, 45.0))) * (math.pi / 180.0) / self._norm
+        with np.errstate(divide="ignore"):
+            return np.where(inside, np.log(density), -np.inf)
+
+    def cdf(self, x):
+        x = np.clip(np.asarray(x, dtype=float), self.low, self.high)
+        return np.clip((self._cos_low - np.cos(np.radians(x))) / self._norm, 0.0, 1.0)
+
+    def ppf(self, u):
+        u = np.asarray(u, dtype=float)
+        return np.degrees(np.arccos(np.clip(self._cos_low - u * self._norm, -1.0, 1.0)))
+
+    def to_dict(self) -> dict:
+        return {"type": "Isotropic", "low": self.low, "high": self.high}
+
+
+_PRIOR_TYPES = {
+    "Uniform": Uniform,
+    "LogUniform": LogUniform,
+    "Gaussian": Gaussian,
+    "Isotropic": Isotropic,
+}
 
 
 def prior_from_dict(spec: dict) -> Prior:

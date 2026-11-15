@@ -21,6 +21,7 @@ from blackpy.data.schema import (
     Reference,
     RegistryError,
     ShadowDataset,
+    SpinMeasurement,
 )
 
 _REQUIRED = (
@@ -145,11 +146,33 @@ def parse_dataset(raw: dict, *, sha256: str = "", origin: str = "<memory>") -> D
             method=str(mp.get("method", "")),
             independent=independent,
         )
+        spin = None
+        if raw.get("spin") is not None:
+            sp_raw = raw["spin"]
+            spin_independent = sp_raw.get("independent") if isinstance(sp_raw, dict) else None
+            if spin_independent is not None and not isinstance(spin_independent, bool):
+                raise RegistryError(f"{origin}: spin.independent must be true, false or null.")
+            spin = _measurement(
+                sp_raw,
+                f"{origin}: spin",
+                cls=SpinMeasurement,
+                method=str(sp_raw.get("method", "")),
+                independent=spin_independent,
+            )
+        published_raw = raw.get("published_fit") or {}
+        if not isinstance(published_raw, dict):
+            raise RegistryError(f"{origin}: 'published_fit' must be a mapping.")
+        published = {
+            str(key): _measurement(value, f"{origin}: published_fit.{key}")
+            for key, value in published_raw.items()
+        }
         for m, where in (
             (upper, "frequencies.upper"),
             (lower, "frequencies.lower"),
             (low, "frequencies.low"),
             (mass, "mass_prior"),
+            (spin, "spin"),
+            *[(m, f"published_fit.{key}") for key, m in published.items()],
         ):
             check_source(m, where)
         return QPODataset(
@@ -157,6 +180,8 @@ def parse_dataset(raw: dict, *, sha256: str = "", origin: str = "<memory>") -> D
             upper=upper,
             lower=lower,
             low=low,
+            spin=spin,
+            published_fit=published,
             simultaneous=bool(raw.get("simultaneous", True)),
             mass_prior=mass,
             intended_models=tuple(str(m) for m in (raw.get("intended_models") or ())),

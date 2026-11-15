@@ -20,6 +20,7 @@ from blackpy.data.schema import (
     Reference,
     RegistryError,
     ShadowDataset,
+    SpinMeasurement,
 )
 
 __all__ = [
@@ -30,6 +31,7 @@ __all__ = [
     "Reference",
     "RegistryError",
     "ShadowDataset",
+    "SpinMeasurement",
     "available",
     "list",
     "load",

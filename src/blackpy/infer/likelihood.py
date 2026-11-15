@@ -12,8 +12,23 @@ The joint log-likelihood is the sum over the chosen datasets:
 * **Shadow datasets**: Gaussian or interval (top-hat) likelihood on
   ``r_sh / M`` for an observer at infinity.
 
+Rotating metrics (:class:`blackpy.metric.StationaryAxisymmetric`)
+-----------------------------------------------------------------
+* **QPO triplets**: the low-frequency (type-C) QPO is fitted as well, as the
+  nodal precession frequency ``|nu_phi - nu_theta|`` at the same radius
+  (Gaussian term, like the twin peaks). With the RP model this is the
+  relativistic-precession-model triplet likelihood.
+* **Spin and deformation bounds**: the likelihood is zero outside the
+  metric's declared black hole domain and wherever no event horizon exists
+  (``require_black_hole=True``), so the allowed spin range depends on the
+  metric and on its other parameters.
+* **Shadow**: the shadow of a rotating hole is not a circle and depends on
+  the observer's inclination. The compared quantity is the mean radius of
+  the contour (or its area-equivalent radius), and the inclination (in
+  degrees) is a nuisance parameter named ``"inclination"``.
+
 The log-likelihood is a pure JAX function of the parameter vector and is
-compiled once; root finding for the shadow happens inside it.
+compiled once; root finding for the horizon and the shadow happens inside it.
 """
 
 from __future__ import annotations
@@ -32,12 +47,23 @@ from blackpy.errors import (
     BlackPyError,
     CircularInferenceWarning,
     IgnoredDataWarning,
+    NodalPrecessionUnavailableError,
     NotAsymptoticallyFlatError,
+    SpinIgnoredWarning,
     UnverifiedDataWarning,
 )
-from blackpy.infer.priors import Gaussian, Prior, Uniform
+from blackpy.geometry.horizons import static_domain_core
+from blackpy.infer.priors import Gaussian, Isotropic, Prior, Uniform
+from blackpy.light.rotating import area_radius_core, mean_radius_core, require_separable
 from blackpy.light.shadow import shadow_radius_core
+from blackpy.orbits.circular import direction_sign, require_equatorial_orbits
 from blackpy.orbits.qpo import QPOModel, get_qpo_model
+
+#: Name of the inclination nuisance parameter (degrees) of rotating-metric shadows.
+INCLINATION = "inclination"
+
+#: Default prior of the inclination: random orientation, 0 to 90 degrees.
+DEFAULT_INCLINATION_PRIOR = (0.0, 90.0)
 
 #: Default prior on the orbital radius of a QPO source, in units of M.
 DEFAULT_RADIUS_PRIOR = (1.0, 50.0)
@@ -68,7 +94,8 @@ class Problem:
     priors : list of Prior
         One prior per sampled parameter.
     kinds : list of str
-        ``"metric"``, ``"mass"`` or ``"radius"`` for each parameter.
+        ``"metric"``, ``"mass"``, ``"radius"`` or ``"nuisance"`` (the shadow
+        inclination) for each parameter.
     fixed : dict
         Metric parameters held fixed, with their values.
     log_likelihood : callable
@@ -144,12 +171,16 @@ def build_problem(
     shadow_likelihood: str = "gaussian",
     shadow_level: str = "2sigma",
     warn: bool = True,
+    direction: str | int = "prograde",
+    use_low_frequency: bool | None = None,
+    require_black_hole: bool | None = None,
+    shadow_size: str = "mean",
 ) -> Problem:
     """Assemble parameters, priors and the joint log-likelihood.
 
     Parameters
     ----------
-    metric : StaticSpherical
+    metric : StaticSpherical or StationaryAxisymmetric
         The spacetime model.
     data : dataset, id, or sequence of them
         QPO and/or shadow datasets (objects or registry identifiers).
@@ -161,10 +192,13 @@ def build_problem(
         ``M_<source>`` and ``r_<source>``; the generic keys ``"M"`` and
         ``"r"`` apply to every source without a specific entry. Defaults: the
         registry mass measurement (Gaussian, truncated at zero) for the mass
-        and ``Uniform(1, 50)`` for the radius.
+        and ``Uniform(1, 50)`` for the radius. With a rotating metric and
+        shadow data, ``"inclination"`` (degrees) is sampled as a nuisance
+        parameter; its default prior is ``Isotropic(0, 90)``.
     fixed : mapping of str -> float
         Values of metric parameters that are not sampled (default: the
-        parameter's default value).
+        parameter's default value). ``fixed={"inclination": 30.0}`` fixes
+        the shadow inclination instead of sampling it.
     shadow_likelihood : {"gaussian", "interval"}
         Form of the shadow likelihood. ``"interval"`` is flat inside the
         bounds of ``shadow_level`` and zero outside.
@@ -172,7 +206,23 @@ def build_problem(
         Which bound of the dataset the interval likelihood uses.
     warn : bool
         Emit the integrity warnings (circular mass prior, ignored
-        low-frequency QPO, data not verified by a human).
+        low-frequency QPO, static metric for a rotating source, data not
+        verified by a human).
+    direction : {"prograde", "retrograde"}
+        Rotating metrics: orbit direction of the QPO-emitting matter.
+        Counter-rotation can equally be described by a negative spin.
+    use_low_frequency : bool, optional
+        Fit the low-frequency QPO of triplets as the nodal precession
+        frequency. Default: True for rotating metrics, False for static
+        ones (where it vanishes identically; asking for it is an error).
+    require_black_hole : bool, optional
+        Give zero likelihood to parameter values outside the metric's
+        declared black hole domain or without an event horizon. Default:
+        True for rotating metrics (this is what bounds the spin), False for
+        static ones (unchanged v0.1 behaviour).
+    shadow_size : {"mean", "area"}
+        Rotating metrics: compare the mean radius of the shadow contour
+        (default) or its area-equivalent radius with the shadow data.
 
     Returns
     -------
@@ -192,14 +242,45 @@ def build_problem(
         model = get_qpo_model(qpo_model)
     if shadow_likelihood not in ("gaussian", "interval"):
         raise ValueError("shadow_likelihood must be 'gaussian' or 'interval'.")
+    if shadow_size not in ("mean", "area"):
+        raise ValueError("shadow_size must be 'mean' or 'area'.")
+    rotating = metric.is_rotating_class
+    sign = direction_sign(direction)
+    if qpo_sets:
+        require_equatorial_orbits(metric)
+    if use_low_frequency is None:
+        use_low_frequency = rotating
+    elif use_low_frequency and not rotating:
+        raise NodalPrecessionUnavailableError(
+            f"use_low_frequency=True needs a rotating metric: in the static metric "
+            f"'{metric.name}' the nodal precession frequency vanishes identically. Use a "
+            "rotating metric (e.g. blackpy.metric.Kerr or rotating_from_static(metric, a))."
+        )
+    if require_black_hole is None:
+        require_black_hole = rotating
+    if shadow_sets and rotating:
+        require_separable(metric)
 
     names, labels, prior_list, kinds = [], [], [], []
     overlap = set(fixed) & set(priors) & set(metric.param_names)
     if overlap:
         raise ValueError(f"Parameters {sorted(overlap)} have both a prior and a fixed value.")
-    unknown_fixed = set(fixed) - set(metric.param_names)
+    uses_inclination = bool(shadow_sets) and rotating
+    unknown_fixed = set(fixed) - set(metric.param_names) - ({INCLINATION} if rotating else set())
     if unknown_fixed:
         raise ValueError(f"'fixed' contains unknown metric parameters {sorted(unknown_fixed)}.")
+    if INCLINATION in fixed and INCLINATION in priors:
+        raise ValueError("'inclination' has both a prior and a fixed value.")
+    if not uses_inclination and (INCLINATION in fixed or INCLINATION in priors):
+        raise ValueError(
+            "'inclination' is only a parameter when a rotating metric is fitted to shadow data"
+            + (
+                "."
+                if rotating
+                else f": the shadow of the static metric '{metric.name}' is a circle for every "
+                "observer."
+            )
+        )
     fixed_values, free_index = {}, {}
     for par in metric.parameters:
         if par.name in priors:
@@ -219,7 +300,7 @@ def build_problem(
 
     generic_mass = priors.pop("M", None)
     generic_radius = priors.pop("r", None)
-    source_index, circular, ignored_low = [], [], []
+    source_index, circular, ignored_low, used_low, rotating_sources = [], [], [], [], []
     for d in qpo_sets:
         slug = _slug(d.id)
         if not d.has_frequencies:
@@ -242,12 +323,28 @@ def build_problem(
         if radius_prior is None:
             radius_prior = Uniform(*DEFAULT_RADIUS_PRIOR)
         if d.low is not None:
-            ignored_low.append(d.id)
+            (used_low if (use_low_frequency and d.is_triplet) else ignored_low).append(d.id)
+        if not rotating and (d.low is not None or d.spin is not None):
+            rotating_sources.append(d.id)
         source_index.append((len(names), len(names) + 1))
         names += [f"M_{slug}", f"r_{slug}"]
         labels += [rf"M_{{\rm {d.object}}}/M_\odot", rf"r_{{\rm {d.object}}}/M"]
         prior_list += [mass_prior, radius_prior]
         kinds += ["mass", "radius"]
+    inclination_index, inclination_fixed = None, None
+    if uses_inclination:
+        if INCLINATION in fixed:
+            inclination_fixed = float(fixed[INCLINATION])
+            if not 0.0 <= inclination_fixed <= 180.0:
+                raise ValueError("The fixed inclination must lie between 0 and 180 degrees.")
+        else:
+            inclination_index = len(names)
+            names.append(INCLINATION)
+            labels.append(r"i\ [{}^\circ]")
+            prior_list.append(
+                priors.pop(INCLINATION, None) or Isotropic(*DEFAULT_INCLINATION_PRIOR)
+            )
+            kinds.append("nuisance")
     if priors:
         raise ValueError(
             f"Priors were given for unknown parameters {sorted(priors)}. "
@@ -290,11 +387,26 @@ def build_problem(
                 stacklevel=3,
             )
         if ignored_low:
+            reason = (
+                "use_low_frequency=False was requested"
+                if rotating
+                else "in a spherically symmetric spacetime the nodal precession frequency "
+                "vanishes identically, so it cannot be modelled"
+            )
             warnings.warn(
-                f"The low-frequency (type-C) QPO of {ignored_low} is ignored: in a spherically "
-                "symmetric spacetime the nodal precession frequency vanishes identically, so it "
-                "cannot be modelled. Only the twin high-frequency QPOs are fitted.",
+                f"The low-frequency (type-C) QPO of {ignored_low} is ignored: {reason}. Only "
+                "the twin high-frequency QPOs are fitted.",
                 IgnoredDataWarning,
+                stacklevel=3,
+            )
+        if rotating_sources:
+            warnings.warn(
+                f"The static metric '{metric.name}' is fitted to {rotating_sources}, which "
+                "rotate (they have a published spin measurement or a nodal-precession QPO). "
+                "The extra metric parameters will absorb the effect of the spin, so the result "
+                "is not a physical constraint on them. Use a rotating metric, e.g. "
+                "blackpy.metric.rotating_from_static(metric, a).",
+                SpinIgnoredWarning,
                 stacklevel=3,
             )
         unverified = [d.id for d in datasets if not d.verified_by_human]
@@ -317,7 +429,12 @@ def build_problem(
         )
         for d in qpo_sets
     ]
+    low_obs = [
+        (d.low.value, d.low.err_minus, d.low.err_plus) if d.id in used_low else None
+        for d in qpo_sets
+    ]
     param_order = metric.param_names
+    size_core = mean_radius_core if shadow_size == "mean" else area_radius_core
 
     def log_likelihood(theta):
         p = (
@@ -331,25 +448,47 @@ def build_problem(
             else jnp.zeros((0,))
         )
         total = jnp.asarray(0.0)
-        for (i_mass, i_radius), obs in zip(source_index, qpo_obs, strict=True):
-            nu_u, nu_l = model.frequencies_core(metric, p, theta[i_radius], theta[i_mass])
+        for (i_mass, i_radius), obs, low in zip(source_index, qpo_obs, low_obs, strict=True):
+            mass, radius = theta[i_mass], theta[i_radius]
+            nu_u, nu_l = model.frequencies_core(metric, p, radius, mass, sign)
             total = total + _split_normal_logpdf(nu_u, obs[0], obs[1], obs[2])
             total = total + _split_normal_logpdf(nu_l, obs[3], obs[4], obs[5])
+            if low is not None:
+                nu_low = model.low_frequency_core(metric, p, radius, mass, sign)
+                total = total + _split_normal_logpdf(nu_low, *low)
         if shadow_terms:
-            r_sh = shadow_radius_core(metric, p)
+            if rotating:
+                inclination = (
+                    theta[inclination_index]
+                    if inclination_index is not None
+                    else jnp.asarray(inclination_fixed)
+                )
+                r_sh = size_core(metric, p, jnp.radians(inclination))
+            else:
+                r_sh = shadow_radius_core(metric, p)
             for kind, a, b in shadow_terms:
                 if kind == "gaussian":
                     total = total - 0.5 * ((r_sh - a) / b) ** 2 - math.log(b) - _HALF_LOG_2PI
                 else:
                     inside = (r_sh >= a) & (r_sh <= b)
                     total = total + jnp.where(inside, -math.log(b - a), -jnp.inf)
+        if require_black_hole:
+            allowed = jnp.isfinite(static_domain_core(metric, p)[0])
+            if rotating:
+                allowed = allowed & metric.in_domain_array(p)
+            total = jnp.where(allowed, total, -jnp.inf)
         return jnp.where(jnp.isfinite(total), total, -jnp.inf)
 
     description = {
         "metric": {
             "name": metric.name,
             "parameters": list(metric.param_names),
-            "symbolic_f": str(metric.symbolic.f) if metric.is_symbolic else None,
+            "class": type(metric).__name__,
+            "symbolic_f": str(metric.symbolic.f) if metric.is_symbolic and not rotating else None,
+            "symbolic_components": [str(e) for e in metric.symbolic.components]
+            if metric.is_symbolic and rotating
+            else None,
+            "spin_parameter": metric.spin_parameter if rotating else None,
             "reference": metric.reference,
         },
         "fixed": fixed_values,
@@ -372,6 +511,14 @@ def build_problem(
         "parameter_kinds": dict(zip(names, kinds, strict=True)),
         "circular_mass_priors": circular,
         "ignored_low_frequency_qpos": ignored_low,
+        "fitted_low_frequency_qpos": used_low,
+        "static_metric_for_rotating_sources": rotating_sources,
+        "direction": "prograde" if sign > 0 else "retrograde",
+        "require_black_hole": bool(require_black_hole),
+        "shadow_size": (shadow_size + " radius") if uses_inclination else None,
+        "inclination_deg": inclination_fixed
+        if inclination_fixed is not None
+        else ("sampled" if uses_inclination else None),
     }
     return Problem(
         param_names=names,
@@ -395,6 +542,8 @@ def simulate_qpo_dataset(
     sigma_nu: float | Sequence[float],
     mass_sigma: float,
     rng: np.random.Generator | None = None,
+    sigma_low: float | None = None,
+    direction: str | int = "prograde",
     **params,
 ) -> QPODataset:
     """Create a synthetic QPO dataset from a known model (for tests and forecasts).
@@ -417,6 +566,12 @@ def simulate_qpo_dataset(
         If given, Gaussian noise is added to the frequencies and the mass.
         Without it the data equal the model prediction exactly (a
         noise-free "Asimov" dataset, whose posterior is centred on the truth).
+    sigma_low : float, optional
+        Rotating metrics: if given, the dataset is a triplet whose
+        low-frequency QPO is the nodal precession frequency with this
+        1-sigma uncertainty in Hz.
+    direction : {"prograde", "retrograde"}
+        Rotating metrics: orbit direction.
     **params
         True metric parameters.
 
@@ -427,15 +582,21 @@ def simulate_qpo_dataset(
     from blackpy.data.registry import parse_dataset
 
     model = get_qpo_model(qpo_model)
-    nu_u, nu_l = (float(v) for v in model.frequencies(metric, r, mass, **params))
+    options = {"direction": direction} if metric.is_rotating_class else {}
+    nu_u, nu_l = (float(v) for v in model.frequencies(metric, r, mass, **options, **params))
     if not (np.isfinite(nu_u) and np.isfinite(nu_l)):
         raise ValueError("The model frequencies are not finite at this radius (inside the ISCO?).")
+    nu_low = None
+    if sigma_low is not None:
+        nu_low = float(model.low_frequency(metric, r, mass, **options, **params))
     sig_u, sig_l = (sigma_nu, sigma_nu) if np.isscalar(sigma_nu) else sigma_nu
     mass_obs = float(mass)
     if rng is not None:
         nu_u += rng.normal(0.0, sig_u)
         nu_l += rng.normal(0.0, sig_l)
         mass_obs += rng.normal(0.0, mass_sigma)
+        if nu_low is not None:
+            nu_low += rng.normal(0.0, sigma_low)
 
     def entry(value, sigma, unit):
         return {
@@ -451,11 +612,15 @@ def simulate_qpo_dataset(
         "schema_version": 1,
         "id": f"synthetic/{name}",
         "object": name,
-        "data_type": "qpo_pair",
+        "data_type": "qpo_pair" if nu_low is None else "qpo_triplet",
         "dataset_version": "synthetic",
         "verified_by_human": True,
         "description": f"Synthetic data from {metric.name}, model {model.name}.",
-        "frequencies": {"upper": entry(nu_u, sig_u, "Hz"), "lower": entry(nu_l, sig_l, "Hz")},
+        "frequencies": {
+            "upper": entry(nu_u, sig_u, "Hz"),
+            "lower": entry(nu_l, sig_l, "Hz"),
+            **({} if nu_low is None else {"low": entry(nu_low, sigma_low, "Hz")}),
+        },
         "mass_prior": {
             **entry(mass_obs, mass_sigma, "Msun"),
             "method": "synthetic",

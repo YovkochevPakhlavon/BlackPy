@@ -126,6 +126,25 @@ class FitResult:
             raise KeyError(f"No parameter '{name}'. Available: {self.param_names}.")
         return self.samples[:, self.param_names.index(name)]
 
+    def correlation(self, first: str, second: str, method: str = "pearson") -> float:
+        """Posterior correlation coefficient between two sampled parameters.
+
+        Parameters
+        ----------
+        first, second : str
+            Parameter names.
+        method : {"pearson", "spearman"}
+            Linear or rank correlation.
+        """
+        x, y = self[first], self[second]
+        if method == "pearson":
+            return float(np.corrcoef(x, y)[0, 1])
+        if method == "spearman":
+            from scipy import stats
+
+            return float(stats.spearmanr(x, y).statistic)
+        raise ValueError("method must be 'pearson' or 'spearman'.")
+
     def summary(self, level: float = 0.68) -> dict[str, dict[str, float]]:
         """Posterior median and central credible interval of every parameter.
 
@@ -168,6 +187,13 @@ class FitResult:
             lines.append(f"  ln Z = {self.log_evidence:.3f} +- {self.log_evidence_err:.3f}")
         if "converged" in self.diagnostics:
             lines.append(f"  converged: {self.diagnostics['converged']}")
+        spin = self.diagnostics.get("spin_parameter")
+        for name, corr in self.diagnostics.get("spin_correlations", {}).items():
+            flag = "   [strongly degenerate]" if self.diagnostics["spin_degenerate"][name] else ""
+            lines.append(
+                f"  corr({spin}, {name}) = {corr['pearson']:+.3f} "
+                f"(rank {corr['spearman']:+.3f}){flag}"
+            )
         return "\n".join(lines)
 
     # ------------------------------------------------------------------ model comparison

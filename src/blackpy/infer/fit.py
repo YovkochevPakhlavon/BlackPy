@@ -12,7 +12,12 @@ import numpy as np
 from scipy import stats
 
 from blackpy._version import __version__
-from blackpy.errors import BlackPyError, ConvergenceWarning, PriorDominatedWarning
+from blackpy.errors import (
+    BlackPyError,
+    ConvergenceWarning,
+    DegeneracyWarning,
+    PriorDominatedWarning,
+)
 from blackpy.infer.likelihood import Problem, build_problem
 from blackpy.infer.priors import Prior
 from blackpy.infer.result import PRIOR_DOMINATED_KS, BayesFactor, FitResult
@@ -24,6 +29,10 @@ AUTOCORR_FACTOR = 50.0
 
 #: Number of autocorrelation times discarded as burn-in.
 BURN_IN_FACTOR = 5.0
+
+#: Posterior correlation between the spin and another metric parameter above which the
+#: two are reported as strongly degenerate.
+DEGENERACY_CORRELATION = 0.9
 
 
 def _versions() -> dict:
@@ -51,7 +60,7 @@ class Fit:
 
     Parameters
     ----------
-    model : StaticSpherical
+    model : StaticSpherical or StationaryAxisymmetric
         The spacetime.
     data : dataset, registry id, or sequence of them
         E.g. ``["qpo/gro_j1655_40", "eht/sgra"]``.
@@ -65,6 +74,10 @@ class Fit:
         Fixed values of metric parameters that are not sampled.
     shadow_likelihood, shadow_level
         Options of the shadow likelihood, see :func:`blackpy.infer.build_problem`.
+    direction, use_low_frequency, require_black_hole, shadow_size
+        Options for rotating metrics (orbit direction, nodal-precession QPO
+        of triplets, restriction to black holes, shadow size definition), see
+        :func:`blackpy.infer.build_problem`.
     **sampler_kwargs
         emcee: ``nwalkers`` (default ``max(32, 4 ndim)``), ``nsteps`` (5000),
         ``max_steps`` (= ``nsteps``; if larger, sampling continues in blocks
@@ -91,6 +104,10 @@ class Fit:
         fixed: Mapping[str, float] | None = None,
         shadow_likelihood: str = "gaussian",
         shadow_level: str = "2sigma",
+        direction: str | int = "prograde",
+        use_low_frequency: bool | None = None,
+        require_black_hole: bool | None = None,
+        shadow_size: str = "mean",
         **sampler_kwargs,
     ):
         if sampler not in SAMPLERS:
@@ -104,14 +121,16 @@ class Fit:
         self.shadow_likelihood = shadow_likelihood
         self.shadow_level = shadow_level
         self.sampler_kwargs = dict(sampler_kwargs)
+        self.options = {
+            "shadow_likelihood": shadow_likelihood,
+            "shadow_level": shadow_level,
+            "direction": direction,
+            "use_low_frequency": use_low_frequency,
+            "require_black_hole": require_black_hole,
+            "shadow_size": shadow_size,
+        }
         self.problem: Problem = build_problem(
-            model,
-            data,
-            qpo_model,
-            self.priors,
-            fixed=self.fixed,
-            shadow_likelihood=shadow_likelihood,
-            shadow_level=shadow_level,
+            model, data, qpo_model, self.priors, fixed=self.fixed, **self.options
         )
         self.result: FitResult | None = None
         self._seed: int | None = None
@@ -155,6 +174,7 @@ class Fit:
         problem = self.problem
         diagnostics = dict(extra.pop("diagnostics", {}))
         diagnostics.update(self._prior_dominance(samples))
+        diagnostics.update(self._spin_degeneracy(samples))
         metadata = {
             "versions": _versions(),
             "sampler_settings": settings,
@@ -407,6 +427,48 @@ class Fit:
             )
         return {"prior_ks_distance": distance, "prior_dominated": dominated}
 
+    def _spin_degeneracy(self, samples: np.ndarray) -> dict:
+        """Posterior correlation between the spin and every other sampled metric parameter.
+
+        Both the linear (Pearson) and the rank (Spearman) correlation are
+        recorded; the rank correlation also sees curved degeneracies. A
+        parameter is flagged when either exceeds ``DEGENERACY_CORRELATION``
+        in absolute value.
+        """
+        problem = self.problem
+        spin = getattr(self.model, "spin_parameter", None)
+        if spin is None or spin not in problem.param_names:
+            return {}
+        i_spin = problem.param_names.index(spin)
+        correlations, degenerate = {}, {}
+        for i, (name, kind) in enumerate(zip(problem.param_names, problem.kinds, strict=True)):
+            if kind != "metric" or i == i_spin:
+                continue
+            pearson = float(np.corrcoef(samples[:, i_spin], samples[:, i])[0, 1])
+            spearman = float(stats.spearmanr(samples[:, i_spin], samples[:, i]).statistic)
+            correlations[name] = {"pearson": pearson, "spearman": spearman}
+            degenerate[name] = max(abs(pearson), abs(spearman)) >= DEGENERACY_CORRELATION
+        flagged = [n for n, bad in degenerate.items() if bad]
+        if flagged:
+            detail = ", ".join(
+                f"{n}: r = {correlations[n]['pearson']:+.3f} "
+                f"(rank {correlations[n]['spearman']:+.3f})"
+                for n in flagged
+            )
+            warnings.warn(
+                f"The spin '{spin}' is strongly degenerate with {flagged} (posterior "
+                f"correlation {detail}). The data constrain a combination of these parameters, "
+                "not each of them: report the joint posterior (corner plot), not the marginal "
+                "intervals, and consider adding data that break the degeneracy.",
+                DegeneracyWarning,
+                stacklevel=3,
+            )
+        return {
+            "spin_parameter": spin,
+            "spin_correlations": correlations,
+            "spin_degenerate": degenerate,
+        }
+
     # ------------------------------------------------------------------ model comparison
 
     def bayes_factor(self, null: Mapping[str, float], method: str | None = None) -> BayesFactor:
@@ -460,8 +522,7 @@ class Fit:
                 priors,
                 sampler="dynesty",
                 fixed={**self.fixed, **null},
-                shadow_likelihood=self.shadow_likelihood,
-                shadow_level=self.shadow_level,
+                **self.options,
                 **self.sampler_kwargs,
             )
             with warnings.catch_warnings():

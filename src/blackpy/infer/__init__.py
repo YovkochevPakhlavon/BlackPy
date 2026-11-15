@@ -2,7 +2,7 @@
 
 from blackpy.infer.fit import SAMPLERS, Fit
 from blackpy.infer.likelihood import Problem, build_problem, simulate_qpo_dataset
-from blackpy.infer.priors import Gaussian, LogUniform, Prior, Uniform, prior_from_dict
+from blackpy.infer.priors import Gaussian, Isotropic, LogUniform, Prior, Uniform, prior_from_dict
 from blackpy.infer.result import BayesFactor, FitResult
 
 __all__ = [
@@ -11,6 +11,7 @@ __all__ = [
     "Fit",
     "FitResult",
     "Gaussian",
+    "Isotropic",
     "LogUniform",
     "Prior",
     "Problem",

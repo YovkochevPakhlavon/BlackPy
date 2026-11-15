@@ -114,6 +114,25 @@ class MassPrior(Measurement):
 
 
 @dataclass(frozen=True)
+class SpinMeasurement(Measurement):
+    """Published spin of the source (dimensionless, ``a = J c / (G M^2)``).
+
+    Additional attributes
+    ---------------------
+    method : str
+        How the spin was measured (e.g. a relativistic-precession-model fit
+        of the QPO triplet in the Kerr metric).
+    independent : bool or None
+        True if the measurement does not rely on QPO modelling. A spin that
+        was derived from the same QPOs in the Kerr metric must not be used
+        as a prior when another metric is tested with those QPOs.
+    """
+
+    method: str = ""
+    independent: bool | None = None
+
+
+@dataclass(frozen=True)
 class Dataset:
     """Fields common to all datasets.
 
@@ -173,8 +192,19 @@ class QPODataset(Dataset):
     upper, lower : Measurement
         Upper and lower high-frequency QPO, in Hz.
     low : Measurement or None
-        Low-frequency (type-C) QPO for triplets. It cannot be modelled in
-        spherical symmetry and is ignored (with a warning) by the MVP.
+        Low-frequency (type-C) QPO for triplets. With a rotating metric it is
+        fitted as the nodal precession frequency; with a static metric it
+        cannot be modelled and is ignored with a warning.
+    spin : SpinMeasurement or None
+        Published spin of the source, if any. It marks the source as
+        rotating (fitting it with a static metric triggers a
+        :class:`blackpy.errors.SpinIgnoredWarning`) and is used by the
+        examples that reproduce published results. It is never used as a
+        prior automatically.
+    published_fit : dict of str -> Measurement
+        Other published results of the same fit as ``spin`` (e.g. ``"mass"``
+        and ``"radius"`` of a relativistic-precession-model solution), for
+        comparison only.
     simultaneous : bool
         Whether the peaks were detected in the same data selection.
     mass_prior : MassPrior
@@ -188,10 +218,17 @@ class QPODataset(Dataset):
     upper: Measurement = field(default=None)  # type: ignore[assignment]
     lower: Measurement = field(default=None)  # type: ignore[assignment]
     low: Measurement | None = None
+    spin: SpinMeasurement | None = None
+    published_fit: dict[str, Measurement] = field(default_factory=dict)
     simultaneous: bool = True
     mass_prior: MassPrior = field(default=None)  # type: ignore[assignment]
     intended_models: tuple[str, ...] = ()
     alternatives: tuple[dict[str, Any], ...] = ()
+
+    @property
+    def is_triplet(self) -> bool:
+        """True if a complete low-frequency QPO is available besides the twin peaks."""
+        return self.low is not None and self.low.is_complete
 
     @property
     def has_frequencies(self) -> bool:

@@ -2,7 +2,7 @@ schema_version: 1
 id: qpo/xte_j1859_226
 object: XTE J1859+226
 data_type: qpo_triplet
-dataset_version: "1"
+dataset_version: "2"
 verified_by_human: false
 description: >
   QPO triplet in RXTE/PCA observation 40124-01-07-00 (1999-2000 outburst): type-C QPO and
@@ -29,8 +29,34 @@ frequencies:
     unit: Hz
     source: motta2022
     location: "Table 2, block 'Triplet', row 'Type-C', column 'Frequency [Hz]'"
-    note: "Nodal-precession QPO; cannot be modelled in spherical symmetry (ignored by the MVP)."
+    note: "Nodal-precession QPO: fitted with rotating metrics (since BlackPy 0.2); ignored with a warning for static metrics."
 simultaneous: true
+spin:
+  value: 0.149
+  err_minus: 0.005
+  err_plus: 0.005
+  unit: ""
+  method: "relativistic precession model applied to this QPO triplet in the Kerr metric (Monte Carlo over the frequency errors)"
+  independent: false
+  source: motta2022
+  location: "Abstract, Sec. 3 ('a BH spin a* = 0.149 +- 0.005') and Table 3"
+published_fit:
+  mass:
+    value: 7.85
+    err_minus: 0.46
+    err_plus: 0.46
+    unit: Msun
+    source: motta2022
+    location: "Abstract, Sec. 3 ('a BH mass M = (7.85 +- 0.46) Msun') and Table 3"
+    note: "RPM (Kerr) fit of the QPO triplet; NOT an independent mass and never used as a prior."
+  radius:
+    value: 6.85
+    err_minus: 0.18
+    err_plus: 0.18
+    unit: "G M / c^2"
+    source: motta2022
+    location: "Sec. 3 ('a QPO emission radius R_QPO = (6.85 +- 0.18) Rg') and Table 3"
+    note: "Emission radius of the three QPOs in the RPM fit."
 mass_prior:
   value: 7.8
   err_minus: 1.9
@@ -53,7 +79,7 @@ references:
     doi: "10.1093/mnras/stac2719"
     arxiv: "2209.10395"
     role: "independent (dynamical) black hole mass"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit: read from the ar5iv HTML rendering of the arXiv version on 2026-11-15 by Claude; the journal version was not compared"
 notes: >
   The RPM mass obtained by Motta et al. (2022) themselves, M = 7.85 +- 0.46 Msun, is a
   Kerr QPO fit and must NOT be used as a mass prior (circular inference).
@@ -61,3 +87,4 @@ notes: >
 todo:
   - "The dynamical mass was read from the abstract of Yanes-Rizo et al. (2022) only; confirm it in the body of the paper."
   - "Human check of Table 2 of Motta et al. (2022) against the published MNRAS version."
+  - "Human check of the RPM results (abstract, Sec. 3, Table 3) against the published MNRAS version."
