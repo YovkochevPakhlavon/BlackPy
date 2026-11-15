@@ -304,10 +304,20 @@ class ShadowObservables(NamedTuple):
     beta_max: jax.Array
 
 
-def observables_core(
-    metric, p, inclination, r_obs, n=256, n_scan=256, finite=False
-) -> ShadowObservables:
-    """Shadow observables by midpoint quadrature along the contour (jit/vmap-compatible)."""
+#: Definitions of the deviation from circularity (see :func:`deviation_from_circularity`).
+DELTA_C_DEFINITIONS = ("fractional_rms", "jp_asymmetry", "bambi2019")
+
+#: Factor between the quantity plotted in Fig. 1 of Bambi et al. (2019) and their Eq. (5),
+#: determined empirically from the published exclusion curve (``docs/theory.md``, section 17).
+BAMBI2019_FACTOR = 4.0
+
+
+def _shape_core(metric, p, inclination, r_obs, n=256, n_scan=256, finite=False):
+    """Shape integrals along the contour: ``(ShadowObservables, jp_asymmetry)``.
+
+    ``jp_asymmetry`` is the asymmetry of Johannsen & Psaltis (2010) divided by their
+    average radius (see :func:`deviation_from_circularity`).
+    """
     setup = _setup(metric, p, inclination, n_scan)
     to_screen, ok = _screen_map(metric, p, setup, r_obs, finite)
     t = (jnp.arange(n) + 0.5) * (math.pi / n)
@@ -332,6 +342,15 @@ def observables_core(
     edges = jax.vmap(lambda x: _upper_half(metric, p, setup, to_screen, x)[0])(
         jnp.asarray([0.0, math.pi])
     )
+    # Johannsen & Psaltis (2010), Eqs. (3)-(8): centre at the midpoint of the horizontal
+    # extent, angle-weighted mean radius <R>, asymmetry A = 2 rms(R - <R>).
+    midpoint = 0.5 * (edges[0] + edges[1])
+    radius_jp = jnp.sqrt((alpha - midpoint) ** 2 + beta**2)
+    d_psi = ((alpha - midpoint) * d_beta - beta * d_alpha) / radius_jp**2
+    star_jp = jnp.all(d_psi > 0.0) | jnp.all(d_psi < 0.0)
+    mean_jp = jnp.sum(radius_jp * jnp.abs(d_psi)) * weight / math.pi
+    variance_jp = jnp.sum((radius_jp - mean_jp) ** 2 * jnp.abs(d_psi)) * weight / math.pi
+    asymmetry = jnp.where(star_jp, 2.0 * jnp.sqrt(variance_jp) / mean_jp, jnp.nan)
     rotating = ShadowObservables(
         mean_radius=jnp.where(star_shaped, mean_radius, jnp.nan),
         area_radius=area_radius,
@@ -350,12 +369,48 @@ def observables_core(
         radius, radius, zero, shift, math.pi * radius**2, shift - radius, shift + radius, radius
     )
     use_contour = setup.rotating & (~setup.slow)
-    return ShadowObservables(
+    observables = ShadowObservables(
         *[
             jnp.where(ok, jnp.where(use_contour, a, b), jnp.nan)
             for a, b in zip(rotating, circle, strict=True)
         ]
     )
+    asymmetry = jnp.where(ok, jnp.where(use_contour, asymmetry, zero), jnp.nan)
+    return observables, asymmetry
+
+
+def observables_core(
+    metric, p, inclination, r_obs, n=256, n_scan=256, finite=False
+) -> ShadowObservables:
+    """Shadow observables by midpoint quadrature along the contour (jit/vmap-compatible)."""
+    return _shape_core(metric, p, inclination, r_obs, n=n, n_scan=n_scan, finite=finite)[0]
+
+
+def check_delta_c_definition(definition) -> str:
+    """Validate the name of a deviation-from-circularity definition."""
+    if definition not in DELTA_C_DEFINITIONS:
+        raise ValueError(
+            f"Unknown deviation-from-circularity definition {definition!r}. Choose one of "
+            f"{DELTA_C_DEFINITIONS}; they differ by factors of 2 to 4, see "
+            "blackpy.light.deviation_from_circularity."
+        )
+    return definition
+
+
+def delta_c_core(
+    metric, p, inclination, r_obs, definition="fractional_rms", n=256, n_scan=256, finite=False
+):
+    """Deviation from circularity in the given definition (jit/vmap-compatible)."""
+    observables, asymmetry = _shape_core(
+        metric, p, inclination, r_obs, n=n, n_scan=n_scan, finite=finite
+    )
+    if definition == "fractional_rms":
+        return observables.delta_c
+    if definition == "bambi2019":
+        return BAMBI2019_FACTOR * observables.delta_c
+    if definition == "jp_asymmetry":
+        return asymmetry
+    raise ValueError(f"Unknown deviation-from-circularity definition {definition!r}.")
 
 
 def mean_radius_core(metric, p, inclination, n=128, n_scan=256):
@@ -565,8 +620,10 @@ def shadow_observables(
       with the area of the shadow;
     * ``mean_radius``: :math:`\langle\ell\rangle =
       \frac{1}{2\pi}\oint \ell\,d\varphi`;
-    * ``delta_c``: the deviation from circularity of Bambi, Freese, Vagnozzi
-      & Visinelli (2019), Phys. Rev. D 100, 044057, Eqs. (4)-(5),
+    * ``delta_c``: the deviation from circularity in the ``"fractional_rms"``
+      definition (other definitions: :func:`deviation_from_circularity`), i.e.
+      Eqs. (4)-(5) of Bambi, Freese, Vagnozzi & Visinelli (2019), Phys. Rev. D
+      100, 044057, as printed,
 
       .. math::
 
@@ -616,3 +673,121 @@ def shadow_observables(
     )
     _check_observer(metric, r_obs, params, out.area_radius, "shadow_observables")
     return out
+
+
+def deviation_from_circularity(
+    metric,
+    inclination,
+    r_obs=None,
+    *,
+    definition: str = "fractional_rms",
+    n: int = 256,
+    n_scan: int = 256,
+    **params,
+):
+    r"""Deviation from circularity :math:`\Delta C` of the shadow, in a named definition.
+
+    The literature uses different quantities under this name; they differ by
+    factors of 2 to 4, so a bound such as :math:`\Delta C < 0.1` means
+    nothing without its definition. With :math:`\ell(\varphi)` the distance
+    of the contour from the geometric centre (centroid of the area) and
+    :math:`\bar R^2 = \frac{1}{2\pi}\oint\ell^2 d\varphi`:
+
+    ``"fractional_rms"`` (default)
+        :math:`\Delta C = \bar R^{-1}\sqrt{\frac{1}{2\pi}\oint(\ell - \bar
+        R)^2 d\varphi}`. This is Eq. (5) of Bambi et al. (2019, Phys. Rev. D
+        100, 044057) and Eq. (28) of Shaikh et al. (arXiv:2102.04299) as
+        printed. It is the default because it is the only one of the three
+        that is fully specified by a published formula with a published
+        normalisation. Its largest Kerr value is 0.050 (a = 0.998, edge-on).
+    ``"jp_asymmetry"``
+        :math:`A/\langle R\rangle` with the definitions of Johannsen & Psaltis
+        (2010, Astrophys. J. 718, 446), Eqs. (3)-(8): centre at the midpoint
+        :math:`D` of the horizontal extent of the contour, :math:`R` the
+        distance from it, :math:`\langle R\rangle` its mean over the angle
+        about that centre, and :math:`A = 2\sqrt{\langle(R - \langle
+        R\rangle)^2\rangle}`. The paper defines :math:`A` as a length; it is
+        divided here by :math:`\langle R\rangle` to make it dimensionless
+        (the paper's "in units of the ring diameter" is half this value).
+    ``"bambi2019"``
+        :math:`4\times` the fractional rms. This is **empirical**: it is the
+        quantity whose 0.1 contour reproduces the exclusion curve in Fig. 1
+        of Bambi et al. (2019). Their Eq. (5) as printed does not (it never
+        reaches 0.1 for a Kerr black hole). The origin of the factor is
+        unknown; see ``docs/theory.md``, section 17.
+
+    Parameters
+    ----------
+    metric, inclination, r_obs, n
+        As in :func:`shadow_observables`.
+    definition : str
+        One of :data:`DELTA_C_DEFINITIONS`.
+    **params
+        Metric parameters.
+
+    Returns
+    -------
+    jax.Array
+        Dimensionless; NaN where no shadow exists or the contour is not
+        star-shaped about the centre used.
+    """
+    check_delta_c_definition(definition)
+    metric = _as_rotating(metric)
+    require_separable(metric)
+    finite = r_obs is not None
+    out = metric.evaluate(
+        delta_c_core,
+        params,
+        inclination,
+        r_obs if finite else np.inf,
+        definition=definition,
+        n=n,
+        n_scan=n_scan,
+        finite=finite,
+    )
+    _check_observer(metric, r_obs, params, out, "deviation_from_circularity")
+    return out
+
+
+def warn_if_definition_mismatch(definition: str, bound_definition: str | None, what: str) -> bool:
+    """Warn when a circularity bound is used with a definition it was not derived for.
+
+    Parameters
+    ----------
+    definition : str
+        Definition used for the model value.
+    bound_definition : str or None
+        Definition the observational bound was derived for (``None`` or a
+        name outside :data:`DELTA_C_DEFINITIONS` means that none of the
+        implemented definitions is known to match it).
+    what : str
+        Description of the bound, for the message.
+
+    Returns
+    -------
+    bool
+        True if a warning was issued.
+    """
+    import warnings
+
+    from blackpy.errors import CircularityDefinitionWarning
+
+    check_delta_c_definition(definition)
+    if bound_definition == definition:
+        return False
+    known = bound_definition in DELTA_C_DEFINITIONS
+    detail = (
+        f"was derived for the definition '{bound_definition}'"
+        if known
+        else f"was derived for '{bound_definition}', which is none of the definitions "
+        f"implemented in BlackPy {DELTA_C_DEFINITIONS}"
+    )
+    warnings.warn(
+        f"{what} {detail}, but it is being compared with Delta C in the definition "
+        f"'{definition}'. The definitions differ by factors of 2 to 4, so the resulting "
+        "exclusion region is not the one the bound implies. "
+        + (f"Use definition='{bound_definition}'." if known else "Treat the result as indicative."),
+        CircularityDefinitionWarning,
+        stacklevel=3,
+    )
+    return True

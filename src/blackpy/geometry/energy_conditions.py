@@ -8,9 +8,11 @@ Ellis type I) the conditions are, with ``p_i`` running over ``p_r, p_t``:
 * SEC (strong):    NEC and ``rho + p_r + 2 p_t >= 0``
 * DEC (dominant):  ``rho >= |p_i|``
 
-References: S. W. Hawking & G. F. R. Ellis, *The Large Scale Structure of
-Space-Time* (Cambridge University Press, 1973), section 4.3; E. Curiel, "A
-primer on energy conditions", Einstein Stud. 13 (2017) 43, arXiv:1405.0403.
+References: the conditions for a type I tensor are those listed by
+P. Martin-Moruno & M. Visser, "Classical and semi-classical energy
+conditions", arXiv:1702.05915, section 2.1 (read for BlackPy 0.3), who
+follow S. W. Hawking & G. F. R. Ellis, *The Large Scale Structure of
+Space-Time* (Cambridge University Press, 1973), section 4.3 (not accessed).
 
 They are evaluated only in the static region outside the event horizon,
 where ``rho = -T^t_t`` is the energy density seen by static observers.

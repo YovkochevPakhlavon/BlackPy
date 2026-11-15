@@ -20,17 +20,27 @@ Conventions as in :mod:`blackpy.geometry.symbolic` (Misner, Thorne & Wheeler
 Classification of the source
 ----------------------------
 The effective stress-energy tensor :math:`T^a{}_b = G^a{}_b / 8\pi` is
-classified at every grid point by its eigenvalue structure (Hawking & Ellis
-1973, section 4.3; cited from memory, see ``docs/theory.md``):
+classified at every grid point by its eigenvalue structure. The
+classification is that of Hawking & Ellis (1973, section 4.3), implemented
+as stated by Martin-Moruno & Visser (2018), Class. Quantum Grav. 35, 125003
+(arXiv:1802.00865), section 2, which was read for this purpose (the book
+itself was not accessed). In an orthonormal frame:
 
-* all eigenvalues real, a complete set of eigenvectors, exactly one of them
-  timelike (type I): :math:`T^a{}_b` is diagonal in an orthonormal frame,
-  with energy density :math:`\rho = -\lambda_{\rm timelike}` and principal
-  pressures :math:`p_i` equal to the other three eigenvalues. Three equal
-  pressures: **perfect fluid**; otherwise **anisotropic fluid**;
-* complex eigenvalues, a defective matrix, or no timelike eigenvector
-  (types II-IV): **neither**;
-* :math:`T^a{}_b = 0` within round-off: **vacuum**.
+* **type I**: :math:`T^a{}_b` has a timelike eigenvector, which is then
+  unique, and three spacelike ones; it is diagonalisable with real
+  eigenvalues :math:`\{-\rho, p_1, p_2, p_3\}`. Three equal pressures:
+  **perfect fluid**; otherwise **anisotropic fluid**;
+* **type II**: a double eigenvalue with a null eigenvector; the matrix is
+  defective (three eigenvectors). Example: null dust;
+* **type III**: a triple eigenvalue with a null eigenvector; defective (two
+  eigenvectors);
+* **type IV**: a pair of complex-conjugate eigenvalues and no causal
+  eigenvector.
+
+Types II to IV are reported as **neither**; :math:`T^a{}_b = 0` within
+round-off is **vacuum**. The implementation tests exactly these properties:
+real eigenvalues (otherwise type IV), a complete set of eigenvectors
+(otherwise type II or III), and exactly one timelike direction among them.
 
 Degenerate eigenvalues (as for an electromagnetic field, where
 :math:`\rho = -p_1`) are handled by looking at the whole eigenspace: it

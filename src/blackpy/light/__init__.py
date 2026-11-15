@@ -8,10 +8,12 @@ from blackpy.light.photon_sphere import (
     photon_spheres,
 )
 from blackpy.light.rotating import (
+    DELTA_C_DEFINITIONS,
     CriticalParameters,
     ShadowContour,
     ShadowObservables,
     critical_impact_parameters,
+    deviation_from_circularity,
     photon_region,
     require_separable,
     shadow_contour,
@@ -20,6 +22,7 @@ from blackpy.light.rotating import (
 from blackpy.light.shadow import shadow_angular_radius, shadow_radius
 
 __all__ = [
+    "DELTA_C_DEFINITIONS",
     "CriticalParameters",
     "PhotonSphere",
     "PlasmaModel",
@@ -28,6 +31,7 @@ __all__ = [
     "critical_impact_parameter",
     "critical_impact_parameters",
     "deflection_angle",
+    "deviation_from_circularity",
     "photon_region",
     "photon_sphere",
     "photon_spheres",

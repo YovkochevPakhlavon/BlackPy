@@ -67,3 +67,8 @@ class UnverifiedDataWarning(BlackPyWarning):
 
 class IgnoredDataWarning(BlackPyWarning):
     """Part of a dataset cannot be used by the current model and is ignored."""
+
+
+class CircularityDefinitionWarning(BlackPyWarning):
+    """A bound on the deviation from circularity is combined with a definition of
+    Delta C other than the one the bound was derived for."""

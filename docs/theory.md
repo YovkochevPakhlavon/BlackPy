@@ -1,8 +1,9 @@
 # Theory and formulas
 
 Sections 1 to 11 cover static, spherically symmetric metrics (version 0.1).
-Sections 12 to 17 cover stationary, axisymmetric (rotating) metrics
-(version 0.2). All formulas are written in LaTeX so that they can be reused.
+Sections 12 to 16 cover stationary, axisymmetric (rotating) metrics
+(version 0.2). Sections 17 onwards were added in version 0.3. All formulas
+are written in LaTeX so that they can be reused.
 
 Every formula used by BlackPy is listed here with its source or derivation
 and the test that checks it. Status labels:
@@ -103,11 +104,14 @@ Reissner–Nordström gives the Coulomb field
 
 ## 4. Energy conditions
 
-**Status: transcribed** from Hawking & Ellis, *The Large Scale Structure of
-Space-Time* (1973), section 4.3, in the form given for anisotropic fluids by
-Curiel, "A primer on energy conditions", Einstein Stud. 13 (2017) 43
-(arXiv:1405.0403). *Both references are cited from memory of standard
-material; the text was not re-read for this project.*
+**Status: transcribed** from Martín-Moruno & Visser, "Classical and
+semi-classical energy conditions" (arXiv:1702.05915), section 2.1, where the
+conditions for a Hawking–Ellis type I tensor are listed as necessary and
+sufficient constraints. That text was read for version 0.3 (2026-11-15). The
+original, Hawking & Ellis, *The Large Scale Structure of Space-Time* (1973),
+section 4.3, was not accessed. For the anisotropic fluid of a static,
+spherically symmetric metric the three principal pressures are
+\(p_r, p_t, p_t\):
 
 | Condition | Requirement (\(p_i \in \{p_r, p_t\}\)) |
 |---|---|
@@ -532,14 +536,28 @@ Kerr–Newman the same computation gives
 
 **Effective source.** \(T^\mu{}_\nu = G^\mu{}_\nu/8\pi\) is classified at
 each grid point by its eigenvalue structure in an orthonormal frame
-(Hawking & Ellis 1973, section 4.3; *cited from memory*):
+following the Hawking–Ellis classification. **Status: transcribed** from
+Martín-Moruno & Visser (2018), "Essential core of the Hawking–Ellis types",
+Class. Quantum Grav. 35, 125003 (arXiv:1802.00865), section 2, read for
+version 0.3 (the classification was implemented from memory in version 0.2;
+the comparison with this source found no difference). The book of Hawking &
+Ellis (1973, section 4.3) itself was not accessed. In an orthonormal frame:
 
-| Result | Condition |
+| Type | Characterisation (Martín-Moruno & Visser 2018) | Eigenvalues |
+|---|---|---|
+| I | a timelike eigenvector, which is then unique, and three spacelike ones; diagonalisable | \(\{-\rho, p_1, p_2, p_3\}\) |
+| II | a null eigenvector for a double eigenvalue; defective (three eigenvectors) | \(\{-\mu, -\mu, p_2, p_3\}\) |
+| III | a null eigenvector for a triple eigenvalue; defective (two eigenvectors) | \(\{-\rho, -\rho, -\rho, p_3\}\) |
+| IV | no causal eigenvector; two real (spacelike) eigenvectors only | \(\{-\rho + if, -\rho - if, p_2, p_3\}\) |
+
+BlackPy reports:
+
+| Result | Condition tested |
 |---|---|
 | vacuum | all frame components below \(10^{-7}\sqrt{K}/8\pi\) |
-| perfect fluid | real eigenvalues, complete eigenvectors, one timelike eigenvector, three equal pressures |
-| anisotropic fluid | the same with unequal pressures (type I) |
-| neither | complex eigenvalues, a defective matrix, or no timelike eigenvector (types II–IV) |
+| perfect fluid | type I (real eigenvalues, a complete set of eigenvectors, exactly one timelike direction among them) with three equal pressures |
+| anisotropic fluid | type I with unequal pressures |
+| neither | complex eigenvalues (type IV) or a defective matrix (types II, III) |
 
 For type I, \(\rho = -\lambda_{\rm timelike}\) and the principal pressures
 \(p_i\) are the other eigenvalues; a degenerate eigenvalue is assigned by the
@@ -786,14 +804,8 @@ tested). The integrals use the midpoint rule in the contour parameter
 \(t\), \(r_p = \tfrac12(r_{\max} + r_{\min}) - \tfrac12(r_{\max} - r_{\min})\cos t\),
 which converges exponentially (64 points give \(10^{-10}\)).
 
-*Note on the EHT definition.* The EHT M87\* papers do not define a quantity
-called \(\Delta C\). Paper VI (ApJL 875, L6, section 7.4) measures the
-"fractional spread" of the ring diameter over orientations and states that
-Kerr shadows have "a maximum asymmetry of 10%, as defined in Johannsen &
-Psaltis (2010)", whose asymmetry is \(A = 2\sqrt{\langle(R - \langle
-R\rangle)^2\rangle}\). With the definition above the largest Kerr value is
-\(\Delta C = 0.050\) (\(a = 0.998\), edge-on); twice that, 0.10, matches the
-EHT statement.
+Three definitions of the deviation from circularity are in use and are
+implemented; see section 17.
 
 Checks: \(a = 0\) gives the circle of radius \(3\sqrt3\); the Kerr contour
 agrees with the formulas above to \(10^{-10}\); the horizontal width shrinks
@@ -833,3 +845,99 @@ to a source with a published spin or a nodal-precession QPO raises a
 on the data, the central 68% credible interval contains the truth in 68% of
 the cases. A slow test checks this on 100 noisy datasets (observed 73, the
 binomial standard deviation being 4.7).
+
+## 17. Deviation from circularity: three definitions
+
+The literature uses different quantities under the name "deviation from
+circularity". They differ by factors of 2 to 4, so a bound such as
+\(\Delta C < 0.1\) has no meaning without its definition.
+`blackpy.light.deviation_from_circularity(..., definition=...)` implements
+three; every likelihood or plot that uses \(\Delta C\) takes the definition
+explicitly, and a `CircularityDefinitionWarning` is raised when a bound is
+combined with a definition other than the one it was derived for.
+
+Notation as in section 15: \(\ell(\varphi)\) is the distance of the contour
+from its geometric centre \((\alpha_G, 0)\) and
+\(\bar R^2 = \frac{1}{2\pi}\oint\ell^2 d\varphi\) (so \(\bar R = R_A\)).
+
+**`"fractional_rms"` (default). Status: transcribed.**
+
+\[ \Delta C = \frac{1}{\bar R}\sqrt{\frac{1}{2\pi}\oint(\ell - \bar R)^2 d\varphi} . \]
+
+This is Eq. (5) of Bambi, Freese, Vagnozzi & Visinelli (2019), Phys. Rev. D
+100, 044057 (arXiv:1904.12983), and Eq. (28) of Shaikh, Pal, Pathak & Joshi
+(arXiv:2102.04299), who call it "the fractional RMS distance from the average
+radius". Both were read. Largest Kerr value: 0.050 (\(a = 0.998\), edge-on).
+It is the default because it is the only one of the three that is fully
+specified by a published formula *including* its normalisation.
+
+**`"jp_asymmetry"`. Status: transcribed, with one choice.** Johannsen &
+Psaltis (2010), Astrophys. J. 718, 446 (arXiv:1005.1931), Eqs. (3)–(8):
+
+\[
+D = \frac{|x'_{\max} + x'_{\min}|}{2}, \qquad
+R = \sqrt{(x' - D)^2 + y'^2}, \qquad
+\langle R\rangle = \frac{1}{2\pi}\oint R\,d\alpha, \qquad
+A = 2\sqrt{\frac{1}{2\pi}\oint(R - \langle R\rangle)^2 d\alpha} .
+\]
+
+The centre is the midpoint of the horizontal extent, not the centroid of the
+area; \(\alpha\) is the polar angle about that centre (the paper writes
+\(\tan\alpha = y'/x'\); BlackPy takes \(x'\) relative to the centre, which is
+the only reading for which \(\langle R\rangle\) is a mean radius). The paper
+defines \(A\) as a length and remarks that only values "in units of the ring
+diameter" \(L = 2\langle R\rangle\) matter. BlackPy returns the dimensionless
+\(A/\langle R\rangle\), i.e. twice the rms relative to the mean radius, which
+is the quantity that equals 0.10 for a near-extremal Kerr hole seen edge-on
+("a maximum asymmetry of 10%", EHT M87\* Paper VI); \(A/L\) is half of it.
+Check: the paper's own fit, its Eq. (10), \(A/M = 0.36\,(a/M)^3\sin^{3/2}i\)
+for Kerr, agrees with BlackPy's \(A\) within 15% (a test).
+
+**`"bambi2019"`. Status: empirical.** \(4\times\) the fractional rms.
+Bambi et al. (2019) print Eq. (5) above, state that "the EHT limit" is
+\(\Delta C < 0.1\), and show the excluded region of Kerr parameter space in
+their Fig. 1. Their abstract says that the bound excludes Kerr black holes
+with \(\theta_{\rm obs} \gtrsim 45^\circ\) for \(0.95 \lesssim a_* \le 1\) and
+leaves \(\theta_{\rm obs}\) unbounded for \(a_* \lesssim 0.9\). Eq. (5) as
+printed cannot do that: it never exceeds 0.050 for a Kerr black hole. To
+find what was plotted, the black curve of Fig. 1 was read from the pixels of
+the published figure (192 points; one pixel is 0.003 in \(a_*\) and
+\(0.26^\circ\)) and candidate quantities were evaluated along it:
+
+| Quantity | Value along the published curve | Its own 0.1 contour at \(a_* = 0.92,\ 0.95,\ 0.97,\ 0.99\) |
+|---|---|---|
+| published curve (Fig. 1) | – | \(64.0^\circ,\ 54.1^\circ,\ 48.1^\circ,\ 42.4^\circ\); reaches \(90^\circ\) at \(a_* = 0.881\) |
+| fractional rms, Eq. (5) | 0.024 to 0.025 | never reaches 0.1 |
+| \(2\times\) fractional rms | 0.048 to 0.051 | only for \(a_* > 0.998\), edge-on |
+| **\(4\times\) fractional rms** | **0.096 to 0.101** | \(64.2^\circ,\ 53.5^\circ,\ 47.6^\circ,\ 41.9^\circ\); \(90^\circ\) at \(a_* = 0.889\) |
+| unnormalised rms in units of \(M\) | 0.121 to 0.125 | \(51.1^\circ,\ 44.8^\circ,\ 40.8^\circ,\ 36.9^\circ\); \(90^\circ\) at \(a_* = 0.829\) |
+
+Only \(4\times\) the fractional rms reproduces the published curve, to
+within the accuracy with which the figure can be read (the angles differ by
+0.2° to 0.6°). It also matches the colour scale of the figure, which
+saturates at 0.20 in the corner \(a_* \to 1\), \(\theta_{\rm obs} = 90^\circ\):
+BlackPy gives 0.20 at \(a_* = 0.998\). The origin of the factor 4 is not known; it is not
+any of the three normalisations one would guess (fractional, twice, or
+unnormalised). The statements in the text of the paper are looser than its
+figure: "for \(a_* = 0.9\), \(\theta_{\rm obs} \gtrsim 70^\circ\) is excluded"
+agrees with the figure (72.5°) and with the \(4\times\) quantity (74.5°), but
+"for \(a_* = 0.95\), \(\theta_{\rm obs} \gtrsim 45^\circ\)" does not agree
+with the figure (54°); 45° happens to be where the *unnormalised* rms reaches
+0.1 at that spin, which however misses the figure everywhere else and gives
+56°, not 70°, at \(a_* = 0.9\). BlackPy therefore defines `"bambi2019"` by
+the figure. It is a reproduction device: use it only to compare with that
+paper and with papers that adopted its exclusion region.
+
+**Which definition does a published "10%" bound refer to?** It depends on
+the paper, and it must be recorded with the bound (the registry field
+`circularity.definition`, section 20). In particular the EHT M87\* papers do
+not define \(\Delta C\) at all: Paper VI measures the fractional spread of
+the ring *diameter* over position angles, which is none of the three
+quantities above, so any use of the EHT statement with a shadow-contour
+\(\Delta C\) triggers the warning.
+
+Tests (`tests/test_circularity.py`): relations between the definitions; the
+Johannsen–Psaltis quantity against a direct polygon computation
+(\(2\times10^{-5}\)) and against their fit formula; the published curve of
+Bambi et al. (angles within 1.5°, edge-on spin within 0.01); the three other
+normalisations shown *not* to reproduce it.
