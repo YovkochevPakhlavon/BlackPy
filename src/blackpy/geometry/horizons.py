@@ -7,7 +7,9 @@ range are located by sign-change scanning plus extremum detection (see
 
 ``event``
     ``g`` changes sign from negative to positive with increasing ``r``
-    (static region outside). The outermost such root is *the* event horizon.
+    (static region outside). The outermost such root is *the* event horizon:
+    event horizon = outermost black hole horizon, not the cosmological
+    horizon.
 ``extremal``
     Degenerate (double) root with ``g >= 0`` on both sides, e.g. extremal
     Reissner-Nordstrom. Counts as an event horizon.
@@ -41,11 +43,14 @@ from blackpy._numerics import derivative, find_roots, nanmax_or_nan, nanmin_or_n
 #: |f| below this value at a root of g counts as "f vanishes too".
 F_ZERO_ATOL = 1e-8
 
+#: Default tolerance on |g| at a minimum of g for an extremal (double) horizon.
+DEGENERATE_ATOL = 1e-10
+
 # Integer codes used inside jit-compiled code.
 _EVENT, _EXTREMAL, _OUTGOING, _DEGENERATE, _NOT_HORIZON = 1, 2, -1, -2, 0
 
 
-def horizon_roots_core(metric, p, n_scan=256, max_roots=6):
+def horizon_roots_core(metric, p, n_scan=256, max_roots=6, degenerate_atol=DEGENERATE_ATOL):
     """Roots of ``g`` with classification codes (jit/vmap-compatible).
 
     Returns
@@ -58,7 +63,9 @@ def horizon_roots_core(metric, p, n_scan=256, max_roots=6):
     """
     r_min, r_max = metric.r_range
     g = lambda r: metric.g_array(r, p)
-    roots, degenerate = find_roots(g, r_min, r_max, n_scan=n_scan, max_roots=max_roots)
+    roots, degenerate = find_roots(
+        g, r_min, r_max, n_scan=n_scan, max_roots=max_roots, degenerate_atol=degenerate_atol
+    )
     safe = jnp.where(jnp.isfinite(roots), roots, 1.0)
     slope = jax.vmap(derivative(g))(safe)
     curvature = jax.vmap(derivative(g, 2))(safe)
@@ -74,7 +81,7 @@ def horizon_roots_core(metric, p, n_scan=256, max_roots=6):
     return roots, codes
 
 
-def static_domain_core(metric, p, n_scan=256, max_roots=3):
+def static_domain_core(metric, p, n_scan=256, max_roots=3, degenerate_atol=DEGENERATE_ATOL):
     """Event horizon, cosmological horizon and the static domain between them.
 
     Only the ``max_roots`` outermost roots of ``g`` are examined (default 3:
@@ -84,7 +91,8 @@ def static_domain_core(metric, p, n_scan=256, max_roots=3):
     Returns
     -------
     r_event : float
-        Event horizon radius, NaN if the configuration is horizonless.
+        Event horizon radius (outermost black hole horizon, not the
+        cosmological horizon); NaN if the configuration is horizonless.
     r_cosmo : float
         Cosmological horizon radius, NaN if there is none.
     r_in, r_out : float
@@ -94,7 +102,9 @@ def static_domain_core(metric, p, n_scan=256, max_roots=3):
         upper end of the scan range).
     """
     r_min, r_max = metric.r_range
-    roots, codes = horizon_roots_core(metric, p, n_scan=n_scan, max_roots=max_roots)
+    roots, codes = horizon_roots_core(
+        metric, p, n_scan=n_scan, max_roots=max_roots, degenerate_atol=degenerate_atol
+    )
     r_event = nanmax_or_nan(roots, (codes == _EVENT) | (codes == _EXTREMAL))
     has_event = jnp.isfinite(r_event)
     outside = jnp.where(has_event, roots > r_event, True)
@@ -104,22 +114,31 @@ def static_domain_core(metric, p, n_scan=256, max_roots=3):
     return r_event, r_cosmo, r_in, r_out
 
 
-def _event_horizon_core(metric, p, n_scan=256):
-    return static_domain_core(metric, p, n_scan=n_scan)[0]
+def _event_horizon_core(metric, p, n_scan=256, degenerate_atol=DEGENERATE_ATOL):
+    return static_domain_core(metric, p, n_scan=n_scan, degenerate_atol=degenerate_atol)[0]
 
 
 def _cosmological_horizon_core(metric, p, n_scan=256):
     return static_domain_core(metric, p, n_scan=n_scan)[1]
 
 
-def event_horizon(metric, *, n_scan: int = 256, **params):
+def event_horizon(metric, *, n_scan: int = 256, degenerate_atol: float = DEGENERATE_ATOL, **params):
     """Event horizon radius (vectorised over parameters).
+
+    The event horizon is the outermost *black hole* horizon: the outermost
+    root of ``g`` across which ``g`` goes from negative to positive (or an
+    extremal double root). It is not simply the outermost root of ``g``,
+    which in de Sitter-like spacetimes is the cosmological horizon.
 
     Parameters
     ----------
     metric : StaticSpherical
     n_scan : int
         Number of scan points on the metric's ``r_range``.
+    degenerate_atol : float
+        A minimum of ``g`` with ``|g| <= degenerate_atol`` counts as an
+        extremal (double) horizon. Lower it to resolve configurations closer
+        than about 1e-10 to extremality.
     **params
         Metric parameters (scalars or arrays).
 
@@ -129,7 +148,9 @@ def event_horizon(metric, *, n_scan: int = 256, **params):
         Radius in units of M; NaN where the configuration is horizonless
         (e.g. Reissner-Nordstrom with ``Q > 1``).
     """
-    return metric.evaluate(_event_horizon_core, params, n_scan=n_scan)
+    return metric.evaluate(
+        _event_horizon_core, params, n_scan=n_scan, degenerate_atol=float(degenerate_atol)
+    )
 
 
 def cosmological_horizon(metric, *, n_scan: int = 256, **params):
@@ -169,7 +190,8 @@ class HorizonResult:
     horizons : tuple of Horizon
         Every root of ``g`` on the scan range, in ascending order.
     event_horizon : float or None
-        Radius of the event horizon; ``None`` if horizonless.
+        Radius of the event horizon, i.e. of the outermost black hole
+        horizon (not the cosmological horizon); ``None`` if horizonless.
     cosmological_horizon : float or None
     horizonless : bool
         True if there is no event horizon on the scan range.
@@ -195,7 +217,14 @@ class HorizonResult:
         return "\n".join(lines)
 
 
-def horizons(metric, *, n_scan: int = 256, max_roots: int = 6, **params) -> HorizonResult:
+def horizons(
+    metric,
+    *,
+    n_scan: int = 256,
+    max_roots: int = 6,
+    degenerate_atol: float = DEGENERATE_ATOL,
+    **params,
+) -> HorizonResult:
     """Find and classify all horizons for one set of (scalar) parameters.
 
     Parameters
@@ -205,6 +234,8 @@ def horizons(metric, *, n_scan: int = 256, max_roots: int = 6, **params) -> Hori
         Number of scan points on ``metric.r_range``.
     max_roots : int
         Maximum number of roots reported.
+    degenerate_atol : float
+        Tolerance on ``|g|`` at a minimum for an extremal (double) horizon.
     **params
         Scalar metric parameters.
 
@@ -215,7 +246,8 @@ def horizons(metric, *, n_scan: int = 256, max_roots: int = 6, **params) -> Hori
         through ``horizonless=True`` and ``event_horizon=None``; it is not an
         error.
     """
-    roots, codes = metric.evaluate(horizon_roots_core, params, n_scan=n_scan, max_roots=max_roots)
+    options = {"n_scan": n_scan, "max_roots": max_roots, "degenerate_atol": float(degenerate_atol)}
+    roots, codes = metric.evaluate(horizon_roots_core, params, **options)
     roots, codes = np.asarray(roots), np.asarray(codes)
     if roots.ndim != 1:
         raise ValueError(
@@ -223,8 +255,7 @@ def horizons(metric, *, n_scan: int = 256, max_roots: int = 6, **params) -> Hori
             "event_horizon() for arrays."
         )
     r_event, r_cosmo, _, _ = (
-        float(v)
-        for v in metric.evaluate(static_domain_core, params, n_scan=n_scan, max_roots=max_roots)
+        float(v) for v in metric.evaluate(static_domain_core, params, **options)
     )
     found = []
     for radius, code in zip(roots, codes, strict=True):

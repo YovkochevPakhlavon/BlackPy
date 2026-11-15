@@ -55,9 +55,11 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
   The physical mass enters only through `blackpy.constants.omega_to_hz`.
 - Conventions: signature (-,+,+,+); `G^mu_nu = 8 pi T^mu_nu`;
   `rho = -T^t_t`, `p_r = T^r_r`, `p_t = T^theta_theta`.
-- The event horizon is the outermost root of `g` with `g' > 0` (or an
-  extremal double root), **not** simply the outermost root: in de Sitter-like
-  metrics the outermost root is the cosmological horizon.
+- **Event horizon = outermost black hole horizon, not the cosmological
+  horizon.** In code: the outermost root of `g` with `g' > 0` (or an extremal
+  double root), **not** simply the outermost root: in de Sitter-like metrics
+  the outermost root is the cosmological horizon. Use this wording in code,
+  docstrings and docs.
 - Out-of-scope features (rotation, plasma, lensing, QNMs, thermodynamics,
   nodal precession) are stubs that raise `NotImplementedError` with a
   roadmap message. Do not implement them silently or half-way.

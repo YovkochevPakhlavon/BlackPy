@@ -52,7 +52,8 @@ directly, so the shadow radius is solved *inside* the compiled likelihood.
    Newton iteration starts from the secant point; the vectorised fast paths
    examine only the three outermost roots. Result: 0.006 ms per ISCO for
    Reissner-Nordstrom, including the horizon search.
-5. **Event horizon is not "the outermost root".** See deviation D1.
+5. **Event horizon = outermost black hole horizon, not the cosmological horizon**
+   (so not simply "the outermost root"). See deviation D1.
 6. **ISCO definition.** "Outermost radius where circular orbits change from
    unstable (inside) to stable (outside)". Unique for ordinary black holes; in
    Schwarzschild-de Sitter it correctly returns the inner edge, not the OSCO.

@@ -77,14 +77,55 @@ def test_root_of_g_without_root_of_f_is_not_a_horizon():
     assert not res.horizons[0].f_vanishes and res.radii == ()
 
 
-@pytest.mark.parametrize(
-    "name,par,critical",
-    [("Bardeen", "q", 4 / (3 * math.sqrt(3))), ("Hayward", "l", 4 / (3 * math.sqrt(3)))],
-)
-def test_regular_black_holes_lose_horizon_above_critical_value(name, par, critical):
+def _exact_extremal_configuration(name):
+    """Solve g = g' = 0 exactly with sympy: (critical parameter, extremal radius)."""
     metric = bp.metric.CATALOGUE[name]()
-    assert len(geo.horizons(metric, **{par: 0.99 * critical}).horizons) == 2
-    assert geo.horizons(metric, **{par: 1.01 * critical}).horizonless
+    s = metric.symbolic
+    (par,) = s.params
+    if name == "Bardeen":
+        # g' = 0  <=>  r^2 = 2 q^2 ; substitute into g = 0 and solve for q.
+        r_of_par = sp.sqrt(2) * par
+    else:
+        # Hayward: g' = 0  <=>  r^3 = 4 l^2.
+        r_of_par = (4 * par**2) ** sp.Rational(1, 3)
+    positive = sp.Symbol("x", positive=True)
+    g_prime = sp.diff(s.g, s.r).subs(s.r, r_of_par).subs(par, positive)
+    assert sp.simplify(g_prime) == 0
+    solutions = sp.solve(sp.simplify(s.g.subs(s.r, r_of_par).subs(par, positive)), positive)
+    assert len(solutions) == 1
+    critical = solutions[0]
+    return critical, sp.simplify(r_of_par.subs(par, critical))
+
+
+@pytest.mark.parametrize("name,par", [("Bardeen", "q"), ("Hayward", "l")])
+def test_regular_black_holes_lose_horizon_at_exact_critical_value(name, par):
+    """Extremal condition g = g' = 0, derived exactly, against the root finder (1e-10)."""
+    critical_exact, r_ext_exact = _exact_extremal_configuration(name)
+    assert sp.simplify(critical_exact - 4 / (3 * sp.sqrt(3))) == 0
+    expected_radius = {"Bardeen": 4 * sp.sqrt(6) / 9, "Hayward": sp.Rational(4, 3)}[name]
+    assert sp.simplify(r_ext_exact - expected_radius) == 0
+    critical, r_ext = float(critical_exact), float(r_ext_exact)
+
+    metric = bp.metric.CATALOGUE[name]()
+    # At the critical value: one extremal (double) horizon at the exact radius.
+    result = geo.horizons(metric, **{par: critical})
+    assert [hz.kind for hz in result.horizons] == ["extremal"]
+    assert math.isclose(result.event_horizon, r_ext, rel_tol=1e-10)
+
+    # Bisect on "an event horizon exists" with a tight double-root tolerance.
+    def has_horizon(value):
+        r_h = geo.event_horizon(metric, degenerate_atol=1e-14, **{par: value})
+        return bool(np.isfinite(r_h))
+
+    lo, hi = 0.9 * critical, 1.1 * critical
+    assert has_horizon(lo) and not has_horizon(hi)
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if has_horizon(mid) else (lo, mid)
+    assert abs(0.5 * (lo + hi) - critical) < 1e-10
+    # Just below: two distinct horizons; just above: horizonless.
+    assert len(geo.horizons(metric, **{par: critical * (1 - 1e-6)}).horizons) == 2
+    assert geo.horizons(metric, **{par: critical * (1 + 1e-6)}).horizonless
 
 
 def test_closed_form_curvature_matches_full_tensor_computation():

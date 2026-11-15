@@ -21,6 +21,31 @@ def test_constant_values():
     assert math.isclose(c.M_SUN, 1.98841e30, rel_tol=1e-5)
 
 
+def test_constants_match_scipy_codata():
+    """c and G against scipy.constants; records which CODATA edition SciPy ships."""
+    import scipy.constants as sc
+    from scipy.constants import _codata
+
+    assert c.C == sc.c
+    assert c.G == sc.G
+    # G is identical in the CODATA 2018 and CODATA 2022 adjustments.
+    name = "Newtonian constant of gravitation"
+    assert _codata._physical_constants_2018[name][0] == c.G
+    assert _codata._physical_constants_2022[name][0] == c.G
+    assert sc.physical_constants[name][2] == 1.5e-15
+    # The edition SciPy treats as current (CODATA 2022 for SciPy >= 1.15).
+    current = _codata._current_codata
+    assert current in ("CODATA 2018", "CODATA 2022"), current
+    print(f"scipy.constants uses {current}")
+
+
+def test_gm_sun_is_the_iau_2015_b3_nominal_value():
+    """(GM)^N_sun = 1.3271244e20 m^3 s^-2 exactly (IAU 2015 Resolution B3)."""
+    assert c.GM_SUN == 1.3271244e20
+    assert math.isclose(c.R_SUN_GRAV, 1476.6250, rel_tol=1e-7)  # metres
+    assert math.isclose(c.T_SUN, 4.925490947e-6, rel_tol=1e-9)  # seconds
+
+
 def test_omega_hz_round_trip():
     omega = np.array([0.01, 0.068, 0.2])
     np.testing.assert_allclose(c.hz_to_omega(c.omega_to_hz(omega, 7.3), 7.3), omega, rtol=1e-15)

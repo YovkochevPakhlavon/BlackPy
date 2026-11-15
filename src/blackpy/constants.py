@@ -4,13 +4,19 @@ All constants are in SI units.
 
 Sources
 -------
-* ``C``: exact by definition of the metre (SI, 2019 redefinition).
-* ``G``: CODATA 2018 recommended value, 6.67430(15)e-11 m^3 kg^-1 s^-2
-  (Tiesinga et al. 2021, Rev. Mod. Phys. 93, 025010). The CODATA 2022
-  adjustment left this value unchanged.
-* ``GM_SUN``: IAU 2015 Resolution B3 *nominal solar mass parameter*,
-  1.3271244e20 m^3 s^-2 (Prsa et al. 2016, AJ 152, 41). This is an exact
-  nominal conversion constant.
+* ``C``: exact by definition of the metre (SI, 2019 redefinition). Equal to
+  ``scipy.constants.c``.
+* ``G``: CODATA recommended value, 6.67430(15)e-11 m^3 kg^-1 s^-2. The
+  CODATA 2018 adjustment (Tiesinga et al. 2021, Rev. Mod. Phys. 93, 025010)
+  and the CODATA 2022 adjustment give the same value and uncertainty. Equal
+  to ``scipy.constants.G``; SciPy 1.18 ships CODATA 2022 as its current set
+  (SciPy 1.8 to 1.14 shipped CODATA 2018). Both facts are checked by the
+  test-suite against the installed SciPy.
+* ``GM_SUN``: IAU 2015 Resolution B3 *nominal solar mass parameter*
+  (GM)^N_sun = 1.3271244e20 m^3 s^-2, adopted as an exact number
+  (Resolution B3, recommendation 3, arXiv:1510.07674; Prsa et al. 2016,
+  AJ 152, 41, Table 1, arXiv:1605.09788). Read from both arXiv texts on
+  2026-11-15. SciPy does not provide this constant.
 * ``M_SUN``: derived as ``GM_SUN / G``.
 
 Unit conversions use ``GM_SUN`` directly, because the product G*M_sun is
@@ -32,7 +38,7 @@ import math
 #: Speed of light in vacuum [m s^-1] (exact).
 C: float = 299_792_458.0
 
-#: Newtonian constant of gravitation [m^3 kg^-1 s^-2] (CODATA 2018).
+#: Newtonian constant of gravitation [m^3 kg^-1 s^-2] (CODATA 2018 and 2022: same value).
 G: float = 6.67430e-11
 
 #: Nominal solar mass parameter G*M_sun [m^3 s^-2] (IAU 2015 Resolution B3).

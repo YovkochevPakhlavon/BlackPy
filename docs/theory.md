@@ -35,9 +35,18 @@ roots of \(g\) on the scan range and classifies them by the sign of \(g'\):
 | cosmological | \(g\) goes from positive to negative, outside the event horizon |
 | not a horizon | \(g = 0\) but \(f \ne 0\) (e.g. a wormhole throat) |
 
-The "outermost root" is deliberately *not* used as the definition of the
-event horizon: in Schwarzschild–de Sitter the outermost root is the
-cosmological horizon.
+**Event horizon = outermost black hole horizon, not the cosmological
+horizon.** The "outermost root" is deliberately *not* used as the definition:
+in Schwarzschild–de Sitter the outermost root is the cosmological horizon.
+
+A minimum of \(g\) with \(|g| \le 10^{-10}\) (option `degenerate_atol`) is
+reported as an extremal horizon. The exact extremal values of the regular
+black holes follow from \(g = g' = 0\): for Bardeen \(g' = 0\) gives
+\(r^2 = 2q^2\) and then \(g = 0\) gives \(q_c = 4/(3\sqrt3)\),
+\(r_{\rm ext} = 4\sqrt6/9\); for Hayward \(g' = 0\) gives \(r^3 = 4\ell^2\)
+and then \(\ell_c = 4/(3\sqrt3)\), \(r_{\rm ext} = 4/3\). Both are derived
+with sympy in the test-suite and reproduced by the root finder to
+\(10^{-10}\).
 
 Tests: Schwarzschild \(r_h = 2\); Reissner–Nordström
 \(r_\pm = 1 \pm \sqrt{1 - Q^2}\), the extremal double root at \(Q = 1\) and
