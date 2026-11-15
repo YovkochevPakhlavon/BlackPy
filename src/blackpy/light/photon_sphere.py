@@ -77,6 +77,17 @@ def critical_impact_parameter_core(metric, p, n_scan=256):
     return jnp.where(ok, jnp.sqrt(jnp.where(ok, ratio, 1.0)), jnp.nan)
 
 
+def _static_only(metric, what: str) -> None:
+    if metric.is_rotating_class:
+        raise TypeError(
+            f"{what} is defined for static, spherically symmetric metrics. A rotating metric "
+            f"such as '{metric.name}' has a photon region instead of a photon sphere: use "
+            "blackpy.light.photon_region (spherical photon orbits), "
+            "blackpy.light.critical_impact_parameters, or blackpy.orbits.photon_orbit "
+            "(equatorial circular photon orbits)."
+        )
+
+
 def photon_sphere(metric, *, n_scan: int = 256, **params):
     """Radius of the (outermost) unstable photon sphere, vectorised.
 
@@ -93,6 +104,7 @@ def photon_sphere(metric, *, n_scan: int = 256, **params):
     jax.Array
         ``r_ph`` in units of M; NaN if there is no unstable photon sphere.
     """
+    _static_only(metric, "photon_sphere")
     return metric.evaluate(photon_sphere_core, params, n_scan=n_scan)
 
 
@@ -104,6 +116,7 @@ def critical_impact_parameter(metric, *, n_scan: int = 256, **params):
     jax.Array
         ``b_c`` in units of M; NaN if there is no unstable photon sphere.
     """
+    _static_only(metric, "critical_impact_parameter")
     return metric.evaluate(critical_impact_parameter_core, params, n_scan=n_scan)
 
 
@@ -134,6 +147,7 @@ def photon_spheres(metric, *, n_scan: int = 256, **params) -> list[PhotonSphere]
     list of PhotonSphere
         In ascending radius; empty if there are none.
     """
+    _static_only(metric, "photon_spheres")
     roots, unstable = metric.evaluate(photon_spheres_core, params, n_scan=n_scan)
     roots, unstable = np.asarray(roots), np.asarray(unstable)
     if roots.ndim != 1:

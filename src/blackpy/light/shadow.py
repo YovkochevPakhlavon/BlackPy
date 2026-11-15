@@ -22,6 +22,10 @@ have no observer at infinity: the shadow is only defined for a finite
 ``r_obs`` inside the static region, and the result applies to a *static*
 observer. For observers comoving with the cosmic expansion see Perlick,
 Tsupko & Bisnovatyi-Kogan (2018), Phys. Rev. D 97, 104062.
+
+Rotating metrics have non-circular shadows; they are handled by
+:mod:`blackpy.light.rotating`. :func:`shadow_radius` forwards to it and
+returns the mean radius of the contour.
 """
 
 from __future__ import annotations
@@ -63,6 +67,14 @@ def shadow_radius_finite_core(metric, p, r_obs, n_scan=256):
     return jnp.sqrt(metric.h_array(r_obs, p)) * jnp.sin(alpha)
 
 
+def _static_only(metric, what: str, instead: str) -> None:
+    if metric.is_rotating_class:
+        raise TypeError(
+            f"{what} is defined for static, spherically symmetric metrics; '{metric.name}' is a "
+            f"StationaryAxisymmetric metric, whose shadow is not a circle. Use {instead}."
+        )
+
+
 def shadow_angular_radius(metric, r_obs, *, n_scan: int = 256, **params):
     r"""Angular radius of the shadow for a static observer at radius ``r_obs``.
 
@@ -81,11 +93,24 @@ def shadow_angular_radius(metric, r_obs, *, n_scan: int = 256, **params):
         :math:`\alpha_{\rm sh}` in radians; NaN if the observer is not in
         the static region or there is no unstable photon sphere.
     """
+    _static_only(
+        metric, "shadow_angular_radius", "blackpy.light.shadow_contour(metric, inclination, r_obs)"
+    )
     return metric.evaluate(shadow_angular_radius_core, params, r_obs, n_scan=n_scan)
 
 
-def shadow_radius(metric, r_obs=None, *, n_scan: int = 256, **params):
+def shadow_radius(
+    metric, r_obs=None, *, inclination=None, kind: str = "mean", n_scan: int = 256, **params
+):
     r"""Shadow radius in units of M.
+
+    Rotating metrics (:class:`blackpy.metric.StationaryAxisymmetric`): the
+    shadow is not a circle, so ``inclination`` (radians) is required and the
+    result is the mean radius of the contour about its centre
+    (``kind="mean"``, default) or the area-equivalent radius
+    (``kind="area"``); see :func:`blackpy.light.shadow_observables`.
+
+    Static metrics (``inclination`` and ``kind`` are ignored):
 
     * ``r_obs=None``: observer at infinity, :math:`r_{\rm sh} = b_c`. Only
       defined for asymptotically flat metrics.
@@ -96,9 +121,13 @@ def shadow_radius(metric, r_obs=None, *, n_scan: int = 256, **params):
 
     Parameters
     ----------
-    metric : StaticSpherical
+    metric : StaticSpherical or StationaryAxisymmetric
     r_obs : float or array, optional
         Observer radius in units of M.
+    inclination : float or array, optional
+        Rotating metrics: polar angle of the observer in radians.
+    kind : {"mean", "area"}
+        Rotating metrics: which radius to return.
     **params
         Metric parameters.
 
@@ -110,7 +139,21 @@ def shadow_radius(metric, r_obs=None, *, n_scan: int = 256, **params):
     ------
     NotAsymptoticallyFlatError
         If ``r_obs`` is None and the metric is not asymptotically flat.
+    NotSeparableError
+        Rotating metrics whose null geodesics do not separate.
     """
+    if metric.is_rotating_class:
+        from blackpy.light.rotating import shadow_observables
+
+        if inclination is None:
+            raise TypeError(
+                f"The shadow of the rotating metric '{metric.name}' depends on the observer's "
+                "inclination: pass inclination=<polar angle in radians> (pi/2 is edge-on)."
+            )
+        if kind not in ("mean", "area"):
+            raise ValueError("kind must be 'mean' or 'area'.")
+        observables = shadow_observables(metric, inclination, r_obs, n_scan=n_scan, **params)
+        return observables.mean_radius if kind == "mean" else observables.area_radius
     if r_obs is None:
         if not metric.is_asymptotically_flat(**params):
             raise NotAsymptoticallyFlatError(

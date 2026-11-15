@@ -5,8 +5,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 _ROADMAP = (
-    "{what} is not part of the BlackPy MVP. The interface is reserved; see DESIGN_NOTES.md "
-    "(roadmap)."
+    "{what} is not part of the BlackPy MVP or of v0.2 (planned for v0.3). The interface is "
+    "reserved; see DESIGN_NOTES.md (roadmap)."
 )
 
 
