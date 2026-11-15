@@ -280,3 +280,71 @@ metric classes can be added without changing the public API.
 - The roadmap of the time listed "v0.3: plasma, lensing, QNMs,
   thermodynamics". QNMs and thermodynamics were later removed from v0.3 on
   purpose (section 6); see section 8 for the v0.3 status.
+
+## 8. Status of the v0.3 session (2026-11-15, stopped early: usage limit)
+
+The session followed `BLACKPY_v0.3_PROMPT.md` in priority order and stopped
+in the middle of Part B1. The version number is still 0.2.0; nothing below
+has been released, and `CLAUDE.md`, `CHANGELOG.md`, the README, the tutorial
+and `VERIFICATION_v0.3.md` have **not** been updated yet.
+
+**Done and committed** (see `git log`):
+
+- **A1.** `blackpy.light.deviation_from_circularity(definition=...)` with
+  `"fractional_rms"` (default), `"jp_asymmetry"` and `"bambi2019"`;
+  `CircularityDefinitionWarning`. Empirical result: the black curve of
+  Fig. 1 of Bambi et al. (2019) is the 0.1 contour of **4 x the fractional
+  rms**, not of any of the three normalisations the specification proposed
+  (theory section 17; `tests/test_circularity.py`).
+- **A2.** `Measurement.other_values` / `preferred_reason`,
+  `Dataset.open_questions`; GRO J1655-40 (Table 3 preferred, text values
+  kept) and XTE J1859+226 (factor 2.7 in the uncertainties) at version 3.
+- **A3.** Hawking-Ellis classification compared with Martin-Moruno & Visser
+  (2018, arXiv:1802.00865, section 2) and arXiv:1702.05915 (section 2.1):
+  no difference; "from memory" notes replaced by these sources.
+- **A4.** `blackpy.plot.shadow`; example 07 uses it.
+- **A5.** `pytest-xdist` (dev extra), eight compile-heavy tests marked slow.
+  Quick subset: 95 s with `-n 4 --dist loadfile` (was 285 s).
+- **A6.** CI: quick subset on Linux/macOS/Windows, full suite on Linux, pip
+  cache. Never run (nothing is pushed).
+- **A7, A8.** Thermodynamics and QNM stubs say "not scheduled";
+  `CONTRIBUTING.md`; roadmap table (section 6).
+- **B1 (partly).** `infer/quality.py`: `FitResult.goodness_of_fit()`,
+  `FitResult.posterior_predictive(n, seed)`, `Fit.goodness_of_fit(**theta)`,
+  `PoorFitWarning` (threshold 0.05 on the posterior predictive p-value),
+  fit quality in `print(result)`, model predictions stored in the bundle,
+  Bayes factors check the favoured model. The likelihood is now built from
+  a table of fitted data (`Problem.data_table`, `Problem.predict`). Sources
+  read: Gelman, Meng & Stern (1996, full text, including Rubin's comment);
+  Meng (1994, abstract only, from Crossref). Quick tests in
+  `tests/test_fit_quality.py` pass (hand computation, "undefined" for zero
+  degrees of freedom, wrong model triggers the warning, bundle round trip).
+
+**Left in B1:**
+
+- slow test of the false-alarm rate of `PoorFitWarning` under the true
+  model (must not exceed 5% over about 100 simulated fits); a first single
+  noisy fit gave p = 0.042, so this test must be run before trusting the
+  threshold;
+- test that emcee and dynesty give the same fit quality (use the module
+  fixtures of `tests/test_infer.py`), and a test of the Bayes-factor path
+  (`favoured_fit_is_poor`, Savage-Dickey null model by optimisation);
+- `simulate_shadow_dataset` (the shadow equivalent of
+  `simulate_qpo_dataset`); `blackpy.plot` residual / posterior predictive
+  plot; an example; theory section 18 (the convention for the degrees of
+  freedom is so far documented only in the docstrings of `infer/quality.py`).
+
+**Not started:** B2 (plasma), B3 (M87*), B4 (RZ, KRZ), B5 (Fisher
+forecasts), B6 (lensing), B7 (thin disks), B8 (catalogue metrics), and all
+deliverables (version 0.3.0, changelog, tutorial, `VERIFICATION_v0.3.md`,
+`CLAUDE.md`). The stubs in `light/future.py` and `metric/future.py` still
+say "planned for v0.3". The full suite (slow tests included) was not run
+after these changes; the quick subset was last run in full after A5 and the
+inference and fit-quality files after B1.
+
+Design notes for whoever continues: B2 and B3 both extend `build_problem`.
+The planned shape is per-source copies of metric parameters named
+`<param>_<slug>` (explicit `shared=` / `per_source=` choice required with two
+or more shadow datasets) and one inclination per shadow source; rows of
+`data_table` already carry the dataset id, so the fit-quality code needs no
+change.

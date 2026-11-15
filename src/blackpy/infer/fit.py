@@ -16,11 +16,19 @@ from blackpy.errors import (
     BlackPyError,
     ConvergenceWarning,
     DegeneracyWarning,
+    PoorFitWarning,
     PriorDominatedWarning,
 )
 from blackpy.infer.likelihood import Problem, build_problem
 from blackpy.infer.priors import Prior
-from blackpy.infer.result import PRIOR_DOMINATED_KS, BayesFactor, FitResult
+from blackpy.infer.quality import (
+    POOR_FIT_P_VALUE,
+    GoodnessOfFit,
+    best_fit,
+    goodness_at,
+    posterior_predictive,
+)
+from blackpy.infer.result import PRIOR_DOMINATED_KS, BayesFactor, FitResult, poor_fit_message
 
 SAMPLERS = ("emcee", "dynesty")
 
@@ -33,6 +41,9 @@ BURN_IN_FACTOR = 5.0
 #: Posterior correlation between the spin and another metric parameter above which the
 #: two are reported as strongly degenerate.
 DEGENERACY_CORRELATION = 0.9
+
+#: Number of posterior draws of the automatic posterior predictive check.
+PREDICTIVE_DRAWS = 4000
 
 
 def _versions() -> dict:
@@ -175,6 +186,8 @@ class Fit:
         diagnostics = dict(extra.pop("diagnostics", {}))
         diagnostics.update(self._prior_dominance(samples))
         diagnostics.update(self._spin_degeneracy(samples))
+        predictions = np.asarray(problem.predict_batch(np.asarray(samples)))
+        diagnostics.update(self._fit_quality(samples, log_prob, predictions, seed))
         metadata = {
             "versions": _versions(),
             "sampler_settings": settings,
@@ -198,8 +211,66 @@ class Fit:
             config=config,
             metadata=metadata,
             diagnostics=diagnostics,
+            predictions=predictions,
         )
         return self.result
+
+    def goodness_of_fit(self, **theta) -> GoodnessOfFit:
+        """Pulls and chi-square at a parameter point given by keywords.
+
+        Without arguments this is the goodness of fit at the best-fit point
+        of the last run (see :meth:`FitResult.goodness_of_fit`). With all
+        sampled parameters given, the pulls are evaluated at that point; no
+        p-value is attached to it, because the chi-square distribution
+        applies only to the minimum.
+        """
+        if not theta:
+            if self.result is None:
+                raise BlackPyError(
+                    "Call run() first, or pass the parameter values as keywords: "
+                    f"{self.param_names}."
+                )
+            return self.result.goodness_of_fit()
+        missing = set(self.param_names) - set(theta)
+        if missing or set(theta) - set(self.param_names):
+            raise TypeError(
+                f"Give exactly the sampled parameters {self.param_names}; got {sorted(theta)}."
+            )
+        vector = np.array([float(theta[n]) for n in self.param_names])
+        return goodness_at(self.problem, vector, is_best_fit=False)
+
+    def _fit_quality(self, samples, log_prob, predictions, seed) -> dict:
+        """Best-fit pulls and the automatic posterior predictive check."""
+        problem = self.problem
+        start = samples[int(np.argmax(log_prob))]
+        point = best_fit(problem, start)
+        goodness = goodness_at(problem, point, is_best_fit=True)
+        check = posterior_predictive(
+            problem.data_table,
+            problem.param_names,
+            problem.priors,
+            samples,
+            predictions,
+            min(PREDICTIVE_DRAWS, max(samples.shape[0], 1)),
+            None if seed is None else seed + 104729,
+        )
+        if check.poor_fit:
+            warnings.warn(poor_fit_message(check.p_value, check.dof), PoorFitWarning, stacklevel=4)
+        return {
+            "goodness_of_fit": goodness.to_dict(),
+            "posterior_predictive": {
+                "p_value": check.p_value,
+                "p_value_simulated": check.p_value_simulated,
+                "datum_p_values": dict(
+                    zip(check.labels, check.datum_p_values.tolist(), strict=True)
+                ),
+                "dof": check.dof,
+                "threshold": POOR_FIT_P_VALUE,
+                "n_draws": int(check.replicated.shape[0]),
+                "poor_fit": check.poor_fit,
+                "defined": check.defined,
+            },
+        }
 
     def _initial_state(self, rng: np.random.Generator, nwalkers: int) -> np.ndarray:
         """Starting positions: a small ball around the posterior maximum.
@@ -504,7 +575,7 @@ class Fit:
         if method is None:
             method = "evidence" if self.sampler == "dynesty" else "savage-dickey"
         if method == "savage-dickey":
-            return self.result.savage_dickey(null)
+            return self._attach_fit_quality(self.result.savage_dickey(null), null, None)
         if method != "evidence":
             raise ValueError("method must be 'evidence' or 'savage-dickey'.")
         if self.sampler != "dynesty":
@@ -532,7 +603,7 @@ class Fit:
         null_result = self._null_results[key]
         log_bf = self.result.log_evidence - null_result.log_evidence
         err = float(np.hypot(self.result.log_evidence_err, null_result.log_evidence_err))
-        return BayesFactor(
+        factor = BayesFactor(
             log_bf=float(log_bf),
             log_bf_err=err,
             method="evidence ratio",
@@ -542,3 +613,73 @@ class Fit:
                 f"ln Z(null) = {null_result.log_evidence:.3f}"
             ],
         )
+        return self._attach_fit_quality(factor, null, null_result)
+
+    def _attach_fit_quality(self, factor: BayesFactor, null, null_result) -> BayesFactor:
+        """Check the fit quality of the favoured model and warn if it fails.
+
+        A Bayes factor ranks two models; it does not say that the better one
+        describes the data. If the full model is favoured its posterior
+        predictive check is used. If the null model is favoured and was
+        sampled (evidence ratio) its own check is used; with the
+        Savage-Dickey ratio the null model is not sampled, so its minimum
+        chi-square is found by optimisation and the classical chi-square
+        p-value is used instead (approximate).
+        """
+        full = self.result.diagnostics.get("posterior_predictive", {})
+        if factor.log_bf > 0:
+            favoured, p_value, dof = "full model", full.get("p_value"), full.get("dof")
+            kind = "posterior predictive p"
+        elif null_result is not None:
+            record = null_result.diagnostics.get("posterior_predictive", {})
+            favoured, p_value, dof = "null model", record.get("p_value"), record.get("dof")
+            kind = "posterior predictive p"
+        else:
+            favoured, kind = "null model", "chi-square p at the best fit (null model not sampled)"
+            p_value, dof = self._null_chi2_p_value(null)
+        if p_value is None:
+            factor.notes.append(
+                f"fit quality of the favoured {favoured}: undefined (no degrees of freedom)"
+            )
+            return factor
+        factor.favoured_fit_is_poor = bool(p_value < POOR_FIT_P_VALUE)
+        factor.notes.append(f"fit quality of the favoured {favoured}: {kind} = {p_value:.3g}")
+        if factor.favoured_fit_is_poor:
+            factor.notes.append(
+                "THE FAVOURED MODEL FAILS THE FIT-QUALITY CHECK: the Bayes factor compares "
+                "two models of which the better one does not describe the data"
+            )
+            warnings.warn(
+                f"The Bayes factor favours the {favoured}, which fails the fit-quality check "
+                f"({kind} = {p_value:.2g}, threshold {POOR_FIT_P_VALUE}). "
+                + poor_fit_message(p_value, dof),
+                PoorFitWarning,
+                stacklevel=3,
+            )
+        return factor
+
+    def _null_chi2_p_value(self, null):
+        """Minimum chi-square of the nested null model, by optimisation (no sampling)."""
+        names = self.problem.param_names
+        keep = [i for i, n in enumerate(names) if n not in null]
+        full_best = np.array([self.result.goodness_of_fit().point[n] for n in names], dtype=float)
+        priors = {k: v for k, v in self.priors.items() if k not in null}
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # the same warnings were shown for the full fit
+            problem = build_problem(
+                self.model,
+                self.data,
+                self.qpo_model,
+                priors,
+                fixed={**self.fixed, **null},
+                **self.options,
+            )
+        start = full_best[keep]
+        if not np.isfinite(float(problem.log_likelihood(start))):
+            draws = problem.sample_prior(np.random.default_rng(0), 4000)
+            log_post = problem.log_posterior_batch(draws)
+            if not np.isfinite(log_post).any():
+                return None, None
+            start = draws[int(np.argmax(log_post))]
+        goodness = goodness_at(problem, best_fit(problem, start), is_best_fit=True)
+        return goodness.p_value, goodness.dof

@@ -68,8 +68,6 @@ DEFAULT_INCLINATION_PRIOR = (0.0, 90.0)
 #: Default prior on the orbital radius of a QPO source, in units of M.
 DEFAULT_RADIUS_PRIOR = (1.0, 50.0)
 
-_HALF_LOG_2PI = 0.5 * math.log(2.0 * math.pi)
-
 
 def _slug(dataset_id: str) -> str:
     return dataset_id.split("/")[-1]
@@ -104,6 +102,17 @@ class Problem:
         Jit-compiled, vectorised version for arrays of shape ``(n, ndim)``.
     description : dict
         JSON-serialisable summary, stored in the fit result.
+    predict : callable
+        Jit-compiled ``theta -> model values``, one per fitted datum, in the
+        order of ``data_table``.
+    predict_batch : callable
+        Vectorised version for arrays of shape ``(n, ndim)``.
+    data_table : list of dict
+        One row per fitted datum: ``label``, ``dataset``, ``kind``
+        (``"qpo"``, ``"shadow"`` or ``"shadow_interval"``), and either
+        ``value``, ``err_minus``, ``err_plus`` (Gaussian or split-normal
+        datum) or ``lower``, ``upper`` (interval). Used by the goodness of
+        fit and by the posterior predictive check.
     """
 
     param_names: list[str]
@@ -114,6 +123,9 @@ class Problem:
     log_likelihood: callable
     log_likelihood_batch: callable
     description: dict = field(default_factory=dict)
+    predict: callable = None
+    predict_batch: callable = None
+    data_table: list = field(default_factory=list)
 
     @property
     def ndim(self) -> int:
@@ -436,26 +448,63 @@ def build_problem(
     param_order = metric.param_names
     size_core = mean_radius_core if shadow_size == "mean" else area_radius_core
 
-    def log_likelihood(theta):
-        p = (
-            jnp.stack(
-                [
-                    theta[free_index[n]] if n in free_index else jnp.asarray(fixed_values[n])
-                    for n in param_order
-                ]
-            )
-            if param_order
-            else jnp.zeros((0,))
+    # One row per fitted datum, in the order in which ``model_values`` returns them.
+    data_table = []
+
+    def gaussian_row(label, dataset, kind, value, minus, plus, unit):
+        data_table.append(
+            {
+                "label": label,
+                "dataset": dataset.id,
+                "kind": kind,
+                "value": float(value),
+                "err_minus": float(minus),
+                "err_plus": float(plus),
+                "unit": unit,
+            }
         )
-        total = jnp.asarray(0.0)
-        for (i_mass, i_radius), obs, low in zip(source_index, qpo_obs, low_obs, strict=True):
+
+    for d, obs, low in zip(qpo_sets, qpo_obs, low_obs, strict=True):
+        slug = _slug(d.id)
+        gaussian_row(f"nu_upper[{slug}]", d, "qpo", obs[0], obs[1], obs[2], "Hz")
+        gaussian_row(f"nu_lower[{slug}]", d, "qpo", obs[3], obs[4], obs[5], "Hz")
+        if low is not None:
+            gaussian_row(f"nu_low[{slug}]", d, "qpo", *low, "Hz")
+    for d, (kind, a, b) in zip(shadow_sets, shadow_terms, strict=True):
+        if kind == "gaussian":
+            gaussian_row(f"r_sh[{_slug(d.id)}]", d, "shadow", a, b, b, "M")
+        else:
+            data_table.append(
+                {
+                    "label": f"r_sh[{_slug(d.id)}]",
+                    "dataset": d.id,
+                    "kind": "shadow_interval",
+                    "lower": float(a),
+                    "upper": float(b),
+                    "unit": "M",
+                }
+            )
+
+    def metric_parameters(theta):
+        if not param_order:
+            return jnp.zeros((0,))
+        return jnp.stack(
+            [
+                theta[free_index[n]] if n in free_index else jnp.asarray(fixed_values[n])
+                for n in param_order
+            ]
+        )
+
+    def model_values(theta):
+        """Model prediction for every row of ``data_table``."""
+        p = metric_parameters(theta)
+        values = []
+        for (i_mass, i_radius), low in zip(source_index, low_obs, strict=True):
             mass, radius = theta[i_mass], theta[i_radius]
             nu_u, nu_l = model.frequencies_core(metric, p, radius, mass, sign)
-            total = total + _split_normal_logpdf(nu_u, obs[0], obs[1], obs[2])
-            total = total + _split_normal_logpdf(nu_l, obs[3], obs[4], obs[5])
+            values += [nu_u, nu_l]
             if low is not None:
-                nu_low = model.low_frequency_core(metric, p, radius, mass, sign)
-                total = total + _split_normal_logpdf(nu_low, *low)
+                values.append(model.low_frequency_core(metric, p, radius, mass, sign))
         if shadow_terms:
             if rotating:
                 inclination = (
@@ -466,13 +515,22 @@ def build_problem(
                 r_sh = size_core(metric, p, jnp.radians(inclination))
             else:
                 r_sh = shadow_radius_core(metric, p)
-            for kind, a, b in shadow_terms:
-                if kind == "gaussian":
-                    total = total - 0.5 * ((r_sh - a) / b) ** 2 - math.log(b) - _HALF_LOG_2PI
-                else:
-                    inside = (r_sh >= a) & (r_sh <= b)
-                    total = total + jnp.where(inside, -math.log(b - a), -jnp.inf)
+            values += [r_sh] * len(shadow_terms)
+        return jnp.stack(values)
+
+    def log_likelihood(theta):
+        values = model_values(theta)
+        total = jnp.asarray(0.0)
+        for k, row in enumerate(data_table):
+            if row["kind"] == "shadow_interval":
+                inside = (values[k] >= row["lower"]) & (values[k] <= row["upper"])
+                total = total + jnp.where(inside, -math.log(row["upper"] - row["lower"]), -jnp.inf)
+            else:
+                total = total + _split_normal_logpdf(
+                    values[k], row["value"], row["err_minus"], row["err_plus"]
+                )
         if require_black_hole:
+            p = metric_parameters(theta)
             allowed = jnp.isfinite(static_domain_core(metric, p)[0])
             if rotating:
                 allowed = allowed & metric.in_domain_array(p)
@@ -508,6 +566,7 @@ def build_problem(
         "shadow_likelihood": shadow_likelihood if shadow_sets else None,
         "shadow_level": shadow_level if shadow_sets and shadow_likelihood == "interval" else None,
         "priors": {n: pr.to_dict() for n, pr in zip(names, prior_list, strict=True)},
+        "data_table": data_table,
         "parameter_kinds": dict(zip(names, kinds, strict=True)),
         "circular_mass_priors": circular,
         "ignored_low_frequency_qpos": ignored_low,
@@ -529,6 +588,9 @@ def build_problem(
         log_likelihood=jax.jit(log_likelihood),
         log_likelihood_batch=jax.jit(jax.vmap(log_likelihood)),
         description=description,
+        predict=jax.jit(model_values),
+        predict_batch=jax.jit(jax.vmap(model_values)),
+        data_table=data_table,
     )
 
 

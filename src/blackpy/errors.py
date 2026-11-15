@@ -72,3 +72,8 @@ class IgnoredDataWarning(BlackPyWarning):
 class CircularityDefinitionWarning(BlackPyWarning):
     """A bound on the deviation from circularity is combined with a definition of
     Delta C other than the one the bound was derived for."""
+
+
+class PoorFitWarning(BlackPyWarning):
+    """The best model does not describe the data: the posterior predictive p-value of
+    the chi-square discrepancy is below the documented threshold."""

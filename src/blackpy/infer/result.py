@@ -11,8 +11,14 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 
-from blackpy.errors import BlackPyWarning
+from blackpy.errors import BlackPyError, BlackPyWarning, PoorFitWarning
 from blackpy.infer.priors import Prior, prior_from_dict
+from blackpy.infer.quality import (
+    POOR_FIT_P_VALUE,
+    GoodnessOfFit,
+    PosteriorPredictive,
+    posterior_predictive,
+)
 
 #: A parameter is flagged "prior dominated" if the Kolmogorov-Smirnov distance
 #: between its marginal posterior and its prior is below this value.
@@ -27,6 +33,18 @@ def _json_default(obj):
     if isinstance(obj, float) and not math.isfinite(obj):
         return str(obj)
     return str(obj)
+
+
+def poor_fit_message(p_value: float, dof: int) -> str:
+    """Text of the :class:`blackpy.errors.PoorFitWarning`."""
+    return (
+        f"Poor fit: the posterior predictive p-value of the chi-square discrepancy is "
+        f"{p_value:.2g} (threshold {POOR_FIT_P_VALUE}, {dof} degree(s) of freedom). The model "
+        "does not reproduce the data within their uncertainties, so its posterior and any "
+        "Bayes factor in its favour describe a model that fails. Inspect "
+        "print(result.goodness_of_fit()) for the pulls; check the data uncertainties, the "
+        "priors, or use a different model."
+    )
 
 
 @dataclass
@@ -49,6 +67,11 @@ class BayesFactor:
         resolution of the samples, so ``log_bf`` is only a lower limit.
     notes : list of str
         Caveats that apply to this number.
+    favoured_fit_is_poor : bool or None
+        True if the model favoured by this Bayes factor fails the fit-quality
+        check (a :class:`blackpy.errors.PoorFitWarning` is then raised: a
+        Bayes factor ranks models, it does not say that the better one
+        describes the data). None if the check could not be made.
     """
 
     log_bf: float
@@ -57,6 +80,7 @@ class BayesFactor:
     null: dict
     is_lower_limit: bool = False
     notes: list[str] = field(default_factory=list)
+    favoured_fit_is_poor: bool | None = None
 
     @property
     def interpretation(self) -> str:
@@ -103,7 +127,11 @@ class FitResult:
     metadata : dict
         BlackPy and dependency versions, sampler settings, seed, timing.
     diagnostics : dict
-        Convergence and prior-dominance diagnostics.
+        Convergence, prior-dominance and fit-quality diagnostics.
+    predictions : numpy.ndarray or None, shape (n_samples, n_data)
+        Model value of every fitted datum (rows of ``config["data_table"]``)
+        for every posterior sample. Stored so that the posterior predictive
+        check also works on a result loaded from disk.
     """
 
     samples: np.ndarray
@@ -117,6 +145,7 @@ class FitResult:
     config: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
     diagnostics: dict = field(default_factory=dict)
+    predictions: np.ndarray | None = None
 
     # ------------------------------------------------------------------ summaries
 
@@ -187,6 +216,15 @@ class FitResult:
             lines.append(f"  ln Z = {self.log_evidence:.3f} +- {self.log_evidence_err:.3f}")
         if "converged" in self.diagnostics:
             lines.append(f"  converged: {self.diagnostics['converged']}")
+        if "goodness_of_fit" in self.diagnostics:
+            lines.append("  fit quality: " + self.goodness_of_fit().summary_line())
+            check = self.diagnostics.get("posterior_predictive", {})
+            if check.get("p_value") is not None:
+                flag = "   [POOR FIT]" if check.get("poor_fit") else ""
+                lines.append(
+                    f"  posterior predictive p = {check['p_value']:.3g} (conservative, not "
+                    f"uniform; warning below {check['threshold']}){flag}"
+                )
         spin = self.diagnostics.get("spin_parameter")
         for name, corr in self.diagnostics.get("spin_correlations", {}).items():
             flag = "   [strongly degenerate]" if self.diagnostics["spin_degenerate"][name] else ""
@@ -195,6 +233,104 @@ class FitResult:
                 f"(rank {corr['spearman']:+.3f}){flag}"
             )
         return "\n".join(lines)
+
+    # ------------------------------------------------------------------ fit quality
+
+    def goodness_of_fit(self) -> GoodnessOfFit:
+        r"""Pulls, :math:`\chi^2` and degrees of freedom at the best-fit point.
+
+        The best-fit point minimises the :math:`\chi^2` discrepancy (the sum
+        of the squared pulls of all fitted data and of all informative
+        Gaussian priors) inside the prior support; it was located when the
+        fit ran, starting from the best posterior sample.
+
+        **Degrees of freedom.** Number of fitted data (frequencies, shadow
+        sizes) plus one for each informative Gaussian prior (for example an
+        independent mass measurement, which is a datum in all but name),
+        minus the number of free parameters. This is exact for a model that
+        is linear in its parameters with Gaussian data; a parameter that the
+        data do not constrain, or that sits on a prior boundary, uses less
+        than one degree of freedom, so the count is then a lower bound.
+
+        The number of degrees of freedom **can be zero or negative**: each
+        QPO source has its own mass and radius, so a two-frequency fit with
+        one metric parameter has none. In that case the result reports
+        "no degrees of freedom: goodness of fit is undefined" and
+        ``p_value`` is None.
+
+        Returns
+        -------
+        GoodnessOfFit
+            Print it for a table of the pulls.
+        """
+        record = self.diagnostics.get("goodness_of_fit")
+        if record is None:
+            raise BlackPyError(
+                "This result carries no fit-quality record (it was produced by BlackPy < 0.3). "
+                "Run the fit again with this version."
+            )
+        return GoodnessOfFit.from_dict(record)
+
+    def posterior_predictive(
+        self, n: int = 2000, seed: int | None = None, *, warn: bool = True
+    ) -> PosteriorPredictive:
+        r"""Posterior predictive check (Gelman, Meng & Stern 1996, Statistica Sinica 6, 733).
+
+        ``n`` parameter vectors are drawn from the posterior; for each one,
+        replicated data are simulated from the model with the stated
+        (split-normal) uncertainties, and a replicated measurement is drawn
+        for every informative Gaussian prior. The result holds the
+        replicated data, a p-value for every datum,
+        :math:`P(y^{\rm rep}_k \ge y_k \mid y)`, and the p-value of the
+        :math:`\chi^2` discrepancy,
+        :math:`P(X^2(y^{\rm rep};\theta) \ge X^2(y;\theta) \mid y)`.
+
+        **The p-value is not uniform under the true model.** The data are
+        used twice (to obtain the posterior and to be compared with it), so
+        it concentrates around 0.5 and is conservative: Rubin (1996, comment
+        on Gelman et al.) and Meng (1994, Ann. Stat. 22, 1142), who shows
+        that the frequency of ``p <= alpha`` is "often close to but less
+        than" ``alpha`` and never above ``2 alpha``. Consequently a value
+        near 0.5 does **not** certify the fit (with few degrees of freedom
+        it is what one always gets), while a small value is strong evidence
+        against the model. The warning threshold is 0.05
+        (:data:`blackpy.infer.POOR_FIT_P_VALUE`); a stricter one would
+        almost never fire for a conservative p-value.
+
+        With no degrees of freedom the check is undefined: ``p_value`` is
+        None and no warning is issued.
+
+        Parameters
+        ----------
+        n : int
+            Number of posterior draws.
+        seed : int, optional
+        warn : bool
+            Raise a :class:`blackpy.errors.PoorFitWarning` when the p-value
+            is below the threshold.
+
+        Returns
+        -------
+        PosteriorPredictive
+        """
+        if self.predictions is None or "data_table" not in self.config:
+            raise BlackPyError(
+                "This result carries no model predictions (it was produced by BlackPy < 0.3), "
+                "so replicated data cannot be simulated. Run the fit again with this version."
+            )
+        check = posterior_predictive(
+            self.config["data_table"],
+            self.param_names,
+            self.priors,
+            self.samples,
+            self.predictions,
+            n,
+            seed,
+            threshold=POOR_FIT_P_VALUE,
+        )
+        if warn and check.poor_fit:
+            warnings.warn(poor_fit_message(check.p_value, check.dof), PoorFitWarning, stacklevel=2)
+        return check
 
     # ------------------------------------------------------------------ model comparison
 
@@ -326,11 +462,11 @@ class FitResult:
             "metadata": self.metadata,
             "diagnostics": self.diagnostics,
         }
+        arrays = {"samples": self.samples, "log_prob": self.log_prob}
+        if self.predictions is not None:
+            arrays["predictions"] = self.predictions
         np.savez_compressed(
-            path,
-            samples=self.samples,
-            log_prob=self.log_prob,
-            record=np.array(json.dumps(record, default=_json_default)),
+            path, record=np.array(json.dumps(record, default=_json_default)), **arrays
         )
         return path
 
@@ -341,6 +477,7 @@ class FitResult:
             record = json.loads(str(bundle["record"]))
             samples = np.array(bundle["samples"])
             log_prob = np.array(bundle["log_prob"])
+            predictions = np.array(bundle["predictions"]) if "predictions" in bundle else None
         return cls(
             samples=samples,
             log_prob=log_prob,
@@ -353,4 +490,5 @@ class FitResult:
             config=record["config"],
             metadata=record["metadata"],
             diagnostics=record["diagnostics"],
+            predictions=predictions,
         )
