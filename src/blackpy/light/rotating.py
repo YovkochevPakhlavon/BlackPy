@@ -110,8 +110,26 @@ def _as_rotating(metric):
 # ----------------------------------------------------------------------------- building blocks
 
 
+def _plasma(metric, name):
+    """Plasma hook ``name`` of a metric with plasma, or None for a plain metric."""
+    return getattr(metric, name, None) if hasattr(metric, "plasma") else None
+
+
+def _separable(metric, p, r, theta):
+    """``separable_functions`` plus the plasma term of a metric with plasma.
+
+    A plasma adds ``W omega_p^2 / omega_0^2`` to ``W g^tt`` (Perlick & Tsupko 2017; see
+    :mod:`blackpy.light.plasma`). Plain metrics have no plasma hooks.
+    """
+    t, pp, q, d = separable_functions(metric, p, r, theta)
+    term = _plasma(metric, "plasma_term_array")
+    if term is not None:
+        t = t + term(r, theta, p)
+    return t, pp, q, d
+
+
 def _radial_parts(metric, p, r):
-    t, pp, q, _ = separable_functions(metric, p, r, HALF_PI)
+    t, pp, q, _ = _separable(metric, p, r, HALF_PI)
     return jnp.stack([t, pp, q])
 
 
@@ -129,8 +147,8 @@ def critical_core(metric, p, r_p):
 
 def _polar_parts(metric, p, theta, r_ref):
     """``(T_theta, P_theta, Q_theta)`` at polar angle ``theta``."""
-    at = separable_functions(metric, p, r_ref, theta)
-    eq = separable_functions(metric, p, r_ref, HALF_PI)
+    at = _separable(metric, p, r_ref, theta)
+    eq = _separable(metric, p, r_ref, HALF_PI)
     return at[0] - eq[0], at[1] - eq[1], at[2] - eq[2]
 
 
@@ -203,17 +221,33 @@ def _setup(metric, p, inclination, n_scan) -> _Setup:
     r_lo = nanmax_or_nan(below, jnp.isfinite(below))
     r_hi = -nanmax_or_nan(-above, jnp.isfinite(above))
     rotating = found & (~negligible) & jnp.isfinite(r_lo) & jnp.isfinite(r_hi)
-    ok = found & (negligible | slow) & (parts[0] < 0.0)
-    radius = jnp.where(ok, jnp.sqrt(jnp.where(ok, -parts[0], 1.0)), jnp.nan)
+    # Squared radius of the non-rotating circle: xi^2 + eta = -T_r at the photon sphere.
+    # With a theta-dependent plasma on a static metric the polar term T_theta(i) is
+    # subtracted (Perlick & Tsupko 2017, Eq. (71)); without plasma v0.2 is unchanged.
+    circle2 = -parts[0] - (polar[0] if _plasma(metric, "plasma_term_array") is not None else 0.0)
+    ok = found & (negligible | slow) & (circle2 > 0.0)
+    radius = jnp.where(ok, jnp.sqrt(jnp.where(ok, circle2, 1.0)), jnp.nan)
     return _Setup(inclination, polar, r_lo, r_hi, rotating, slow, radius, r_s, r_in, r_cosmo)
 
 
 def _screen_map(metric, p, setup: _Setup, r_obs, finite: bool):
     """Function ``(xi, eta) -> (alpha, beta^2)`` and whether the observer is admissible."""
     inc = setup.inclination
+    local = _plasma(metric, "plasma_local_array")
     if not finite:
         sin_i = jnp.sin(inc)
-        return (lambda xi, eta: (-xi / sin_i, _theta_potential(xi, eta, setup.polar))), True
+        at_infinity = _plasma(metric, "plasma_infinity_array")
+        if at_infinity is None:
+            return (lambda xi, eta: (-xi / sin_i, _theta_potential(xi, eta, setup.polar))), True
+        # The observer at infinity sits in a medium of refractive index n: the photon
+        # momentum there is n E, so impact parameters are divided by n.
+        n2 = 1.0 - at_infinity(inc, p)
+        ok = n2 > 0.0
+        n2 = jnp.where(ok, n2, 1.0)
+        index = jnp.sqrt(n2)
+        return (
+            lambda xi, eta: (-xi / (sin_i * index), _theta_potential(xi, eta, setup.polar) / n2)
+        ), ok
     g_tt, g_tphi, g_phiphi, _, g_thth = metric.components_array(r_obs, inc, p)
     lapse2 = -g_tt + g_tphi**2 / g_phiphi
     omega = -g_tphi / g_phiphi
@@ -225,9 +259,18 @@ def _screen_map(metric, p, setup: _Setup, r_obs, finite: bool):
     lapse = jnp.sqrt(jnp.where(ok, lapse2, 1.0))
     scale = jnp.sqrt(jnp.where(ok, g_thth / g_phiphi, 1.0))
 
+    plasma_here = 0.0 if local is None else local(r_obs, inc, p)
+
     def to_screen(xi, eta):
         energy = (1.0 - omega * xi) / lapse  # locally measured energy per unit E
-        return -scale * xi / energy, _theta_potential(xi, eta, setup.polar) / energy**2
+        # Squared spatial momentum in the observer's frame; in a plasma it is
+        # E_loc^2 - omega_p^2 (the ray direction is that of the momentum).
+        momentum2 = energy**2 - plasma_here
+        momentum2 = jnp.where(momentum2 > 0.0, momentum2, jnp.nan)
+        return (
+            -scale * xi / jnp.sqrt(momentum2),
+            _theta_potential(xi, eta, setup.polar) / momentum2,
+        )
 
     return to_screen, ok
 
@@ -263,10 +306,19 @@ def _circle_radius_on_screen(metric, p, setup: _Setup, r_obs, finite: bool):
     At infinity it is the critical impact parameter ``b_c``. For a static observer at
     ``r_O`` it is ``b_c sqrt(-g_tt(r_O))``, i.e. ``sqrt(h) sin(alpha_sh)`` of Synge's formula.
     """
+    local = _plasma(metric, "plasma_local_array")
     if not finite:
-        return setup.circle_radius
+        at_infinity = _plasma(metric, "plasma_infinity_array")
+        if at_infinity is None:
+            return setup.circle_radius
+        n2 = 1.0 - at_infinity(setup.inclination, p)
+        return setup.circle_radius / jnp.sqrt(jnp.where(n2 > 0.0, n2, jnp.nan))
     g_tt = metric.gtt_array(r_obs, setup.inclination, p)
-    return setup.circle_radius * jnp.sqrt(jnp.clip(-g_tt, 0.0, None))
+    radius = setup.circle_radius * jnp.sqrt(jnp.clip(-g_tt, 0.0, None))
+    if local is None:
+        return radius
+    n2 = 1.0 + g_tt * local(r_obs, setup.inclination, p)  # 1 - f omega_p^2 / omega_0^2
+    return radius / jnp.sqrt(jnp.where(n2 > 0.0, n2, jnp.nan))
 
 
 def contour_core(metric, p, inclination, r_obs, n=256, n_scan=256, finite=False):
@@ -284,6 +336,8 @@ def contour_core(metric, p, inclination, r_obs, n=256, n_scan=256, finite=False)
     beta = jnp.where(setup.rotating, beta, radius * jnp.sin(t))
     alpha = jnp.where(ok, alpha, jnp.nan)
     beta = jnp.where(ok, beta, jnp.nan)
+    # Non-rotating case: every point of the circle comes from the photon sphere.
+    r_p = jnp.where(setup.rotating, r_p, setup.r_sphere)
     return (
         jnp.concatenate([alpha, alpha[-2:0:-1]]),
         jnp.concatenate([beta, -beta[-2:0:-1]]),

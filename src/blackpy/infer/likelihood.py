@@ -54,6 +54,7 @@ from blackpy.errors import (
 )
 from blackpy.geometry.horizons import static_domain_core
 from blackpy.infer.priors import Gaussian, Isotropic, Prior, Uniform
+from blackpy.light.plasma import PlasmaModel, static_shadow_radius_core, with_plasma
 from blackpy.light.rotating import area_radius_core, mean_radius_core, require_separable
 from blackpy.light.shadow import shadow_radius_core
 from blackpy.orbits.circular import direction_sign, require_equatorial_orbits
@@ -187,6 +188,7 @@ def build_problem(
     use_low_frequency: bool | None = None,
     require_black_hole: bool | None = None,
     shadow_size: str = "mean",
+    plasma: PlasmaModel | None = None,
 ) -> Problem:
     """Assemble parameters, priors and the joint log-likelihood.
 
@@ -235,6 +237,15 @@ def build_problem(
     shadow_size : {"mean", "area"}
         Rotating metrics: compare the mean radius of the shadow contour
         (default) or its area-equivalent radius with the shadow data.
+    plasma : blackpy.light.PlasmaModel, optional
+        Plasma around the black hole; it changes the shadow size (not the
+        QPO frequencies). Its parameters (for example ``omega_p``, the
+        plasma frequency in units of the photon frequency at infinity) are
+        handled like metric parameters: sampled if they have a prior, fixed
+        otherwise (``fixed`` or their default). Parameter values for which
+        the plasma is opaque along the path get zero likelihood. A plasma
+        parameter is usually degenerate with the metric parameters: the
+        prior-dominance and degeneracy guards apply to it.
 
     Returns
     -------
@@ -243,6 +254,15 @@ def build_problem(
     priors = dict(priors or {})
     fixed = dict(fixed or {})
     datasets = _resolve_datasets(data)
+    plasma_names: tuple[str, ...] = ()
+    if plasma is not None:
+        if not any(isinstance(d, ShadowDataset) for d in datasets):
+            raise ValueError(
+                "A plasma only changes the shadow, but no shadow dataset was given: remove "
+                "plasma=... or add a shadow dataset (e.g. 'eht/sgra')."
+            )
+        plasma_names = plasma.param_names
+        metric = with_plasma(metric, plasma)
     qpo_sets = [d for d in datasets if isinstance(d, QPODataset)]
     shadow_sets = [d for d in datasets if isinstance(d, ShadowDataset)]
     if len(qpo_sets) + len(shadow_sets) != len(datasets):
@@ -300,7 +320,7 @@ def build_problem(
             names.append(par.name)
             labels.append(par.symbol)
             prior_list.append(priors.pop(par.name))
-            kinds.append("metric")
+            kinds.append("plasma" if par.name in plasma_names else "metric")
         else:
             value = fixed.get(par.name, par.default)
             if value is None:
@@ -513,6 +533,8 @@ def build_problem(
                     else jnp.asarray(inclination_fixed)
                 )
                 r_sh = size_core(metric, p, jnp.radians(inclination))
+            elif plasma is not None:
+                r_sh = static_shadow_radius_core(metric, p)
             else:
                 r_sh = shadow_radius_core(metric, p)
             values += [r_sh] * len(shadow_terms)
@@ -550,6 +572,13 @@ def build_problem(
             "reference": metric.reference,
         },
         "fixed": fixed_values,
+        "plasma": None
+        if plasma is None
+        else {
+            "model": type(plasma).__name__,
+            "name": plasma.name,
+            "parameters": list(plasma_names),
+        },
         "qpo_model": None if model is None else model.name,
         "qpo_model_formula": None if model is None else model.formula,
         "datasets": [

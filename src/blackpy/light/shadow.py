@@ -96,6 +96,12 @@ def shadow_angular_radius(metric, r_obs, *, n_scan: int = 256, **params):
     _static_only(
         metric, "shadow_angular_radius", "blackpy.light.shadow_contour(metric, inclination, r_obs)"
     )
+    if hasattr(metric, "plasma"):  # a metric with plasma: never fall back to vacuum
+        from blackpy.light.plasma import shadow_angular_radius_in_plasma
+
+        return shadow_angular_radius_in_plasma(
+            metric.metric, metric.plasma, r_obs, n_scan=n_scan, **params
+        )
     return metric.evaluate(shadow_angular_radius_core, params, r_obs, n_scan=n_scan)
 
 
@@ -142,6 +148,19 @@ def shadow_radius(
     NotSeparableError
         Rotating metrics whose null geodesics do not separate.
     """
+    if hasattr(metric, "plasma") and not metric.is_rotating_class:
+        # A static metric with plasma: never fall back to the vacuum formula.
+        from blackpy.light.plasma import shadow_in_plasma
+
+        return shadow_in_plasma(
+            metric.metric,
+            metric.plasma,
+            r_obs,
+            inclination=inclination,
+            kind=kind,
+            n_scan=n_scan,
+            **params,
+        )
     if metric.is_rotating_class:
         from blackpy.light.rotating import shadow_observables
 

@@ -89,6 +89,9 @@ class Fit:
         Options for rotating metrics (orbit direction, nodal-precession QPO
         of triplets, restriction to black holes, shadow size definition), see
         :func:`blackpy.infer.build_problem`.
+    plasma : blackpy.light.PlasmaModel, optional
+        Plasma around the black hole (shadow data only); its parameters are
+        sampled if they have a prior, see :func:`blackpy.infer.build_problem`.
     **sampler_kwargs
         emcee: ``nwalkers`` (default ``max(32, 4 ndim)``), ``nsteps`` (5000),
         ``max_steps`` (= ``nsteps``; if larger, sampling continues in blocks
@@ -119,6 +122,7 @@ class Fit:
         use_low_frequency: bool | None = None,
         require_black_hole: bool | None = None,
         shadow_size: str = "mean",
+        plasma=None,
         **sampler_kwargs,
     ):
         if sampler not in SAMPLERS:
@@ -139,6 +143,7 @@ class Fit:
             "use_low_frequency": use_low_frequency,
             "require_black_hole": require_black_hole,
             "shadow_size": shadow_size,
+            "plasma": plasma,
         }
         self.problem: Problem = build_problem(
             model, data, qpo_model, self.priors, fixed=self.fixed, **self.options
@@ -186,6 +191,7 @@ class Fit:
         diagnostics = dict(extra.pop("diagnostics", {}))
         diagnostics.update(self._prior_dominance(samples))
         diagnostics.update(self._spin_degeneracy(samples))
+        diagnostics.update(self._plasma_degeneracy(samples))
         predictions = np.asarray(problem.predict_batch(np.asarray(samples)))
         diagnostics.update(self._fit_quality(samples, log_prob, predictions, seed))
         metadata = {
@@ -486,7 +492,7 @@ class Fit:
         flagged = [
             n
             for n, k in zip(problem.param_names, problem.kinds, strict=True)
-            if dominated[n] and k == "metric"
+            if dominated[n] and k in ("metric", "plasma")
         ]
         if flagged:
             warnings.warn(
@@ -540,6 +546,45 @@ class Fit:
             "spin_degenerate": degenerate,
         }
 
+    def _plasma_degeneracy(self, samples: np.ndarray) -> dict:
+        """Posterior correlation between every plasma parameter and every metric parameter.
+
+        A plasma changes the shadow size in the same direction as many metric
+        parameters do, so the two are expected to be degenerate. The same
+        criterion as for the spin is used (Pearson or Spearman correlation
+        of at least ``DEGENERACY_CORRELATION`` in absolute value).
+        """
+        problem = self.problem
+        plasma = [i for i, k in enumerate(problem.kinds) if k == "plasma"]
+        others = [i for i, k in enumerate(problem.kinds) if k == "metric"]
+        if not plasma or not others:
+            return {}
+        correlations, flagged = {}, []
+        for i in plasma:
+            for j in others:
+                pearson = float(np.corrcoef(samples[:, i], samples[:, j])[0, 1])
+                spearman = float(stats.spearmanr(samples[:, i], samples[:, j]).statistic)
+                key = f"{problem.param_names[i]}, {problem.param_names[j]}"
+                degenerate = max(abs(pearson), abs(spearman)) >= DEGENERACY_CORRELATION
+                correlations[key] = {
+                    "pearson": pearson,
+                    "spearman": spearman,
+                    "degenerate": degenerate,
+                }
+                if degenerate:
+                    flagged.append(f"({key}): r = {pearson:+.3f} (rank {spearman:+.3f})")
+        if flagged:
+            warnings.warn(
+                "Plasma and metric parameters are strongly degenerate: "
+                + "; ".join(flagged)
+                + ". The shadow size constrains a combination of them, not each one: report "
+                "the joint posterior, not the marginal intervals, and fix the plasma model from "
+                "independent information if possible.",
+                DegeneracyWarning,
+                stacklevel=3,
+            )
+        return {"plasma_correlations": correlations}
+
     # ------------------------------------------------------------------ model comparison
 
     def bayes_factor(self, null: Mapping[str, float], method: str | None = None) -> BayesFactor:
@@ -565,9 +610,9 @@ class Fit:
             raise BlackPyError("Call run() before bayes_factor().")
         null = {k: float(v) for k, v in null.items()}
         kinds = self.problem.description["parameter_kinds"]
-        not_metric = [k for k in null if kinds.get(k) != "metric"]
+        not_metric = [k for k in null if kinds.get(k) not in ("metric", "plasma")]
         if not_metric:
-            sampled = [n for n, k in kinds.items() if k == "metric"]
+            sampled = [n for n, k in kinds.items() if k in ("metric", "plasma")]
             raise ValueError(
                 f"The null hypothesis must fix sampled metric parameters; {not_metric} are not. "
                 f"Sampled metric parameters: {sampled}."

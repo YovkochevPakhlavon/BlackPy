@@ -1039,3 +1039,133 @@ degrees of freedom; a Schwarzschild fit of data simulated from Kerr with
 \(a = 0.9\) gives \(X^2_{\min} > 100\) for one degree of freedom and the
 warning; false-alarm rate over 60 simulated fits; identical results from
 emcee and dynesty; the Bayes-factor path; the bundle round trip.
+
+## 19. Shadows in a plasma
+
+**Sources (all read for version 0.3):** Perlick, Tsupko & Bisnovatyi-Kogan
+(2015), Phys. Rev. D 92, 104031 (arXiv:1507.04217), "PTB"; Perlick & Tsupko
+(2017), Phys. Rev. D 95, 104003 (arXiv:1702.08768), "PT"; Perlick & Tsupko
+(2022), Phys. Rep. 947, 1 (arXiv:2105.07101), section IX.
+
+**Medium.** A cold, non-magnetised, pressureless electron–ion plasma with
+refractive index \(n^2 = 1 - \omega_p(x)^2/\omega(x)^2\), where \(\omega\) is
+the photon frequency measured by a static observer. Rays are the solutions
+of Hamilton's equations for
+\(\mathcal{H} = \tfrac12\left(g^{\mu\nu}p_\mu p_\nu + \omega_p^2\right) = 0\).
+The constant of motion \(\omega_0 = -p_t\) is the frequency at infinity, and
+\(\omega(r) = \omega_0/\sqrt{f}\) (PTB Eq. (13)). BlackPy describes the
+plasma by the dimensionless profile
+
+\[ X(r, \theta) = \frac{\omega_p(r, \theta)^2}{\omega_0^2} . \]
+
+Profiles: homogeneous (\(X = \omega_p^2/\omega_0^2\)); power law
+\(X = \omega_{p,\rm ref}^2\,(r_{\rm ref}/r)^k\) (PTB Eq. (57) with
+\(\beta_0 = \omega_{p,\rm ref}^2\) for \(r_{\rm ref} = M\); the index is named
+`k`, not `q`, which is the Bardeen parameter); any radial callable; and the
+separable class for rotating metrics (below).
+
+### 19.1 Static metrics. Status: transcribed (PTB), notation \(A = f\), \(D = h\)
+
+\[ h_{\rm pl}(r)^2 = \frac{h}{f}\left(1 - fX\right) \qquad \text{(PTB Eq. (17))} \]
+
+- **Propagation condition** (PTB Eq. (14)): a ray with constant of motion
+  \(\omega_0\) exists only where \(fX < 1\), i.e. where the local photon
+  frequency exceeds the plasma frequency. A ray with impact parameter \(b\)
+  is further restricted to \(h_{\rm pl}(r)^2 \ge b^2\) (PTB Eq. (16)).
+- **Photon spheres** (PTB Eq. (32)): \(\tfrac{d}{dr}h_{\rm pl}^2 = 0\); a
+  minimum is unstable.
+- **Shadow** of a static observer at \(r_O\) outside the photon sphere
+  (PTB Eq. (43)):
+  \[ \sin^2\alpha_{\rm sh} = \frac{h_{\rm pl}(r_{\rm ph})^2}{h_{\rm pl}(r_O)^2} . \]
+  BlackPy returns \(\sqrt{h(r_O)}\sin\alpha_{\rm sh}\) at finite distance
+  and, for an asymptotically flat metric, the limit
+  \(r_{\rm sh} = h_{\rm pl}(r_{\rm ph})/n_\infty\) with
+  \(n_\infty^2 = 1 - X(\infty)\) (\(n_\infty = 1\) unless the plasma extends
+  to infinity; \(X(\infty)\) is evaluated at \(r = 10^{12}\)).
+
+**Which photon sphere.** A ray from infinity is captured if and only if
+\(b^2 < h_{\rm pl}(r)^2\) everywhere outside the horizon, so the edge of the
+shadow is the *smallest* minimum of \(h_{\rm pl}^2\) between the horizon and
+the observer (derived from PTB Eq. (16)). For a black hole with a monotonic
+profile there is one minimum.
+
+**Refusal.** BlackPy evaluates \(fX\) and \(h_{\rm pl}^2\) on 64 radii
+between the photon sphere and the observer (or the outer edge of the scan
+range) and raises `PlasmaPropagationError` if \(fX \ge 1\) or
+\(h_{\rm pl}^2 < b_c^2\) anywhere, or if \(X(\infty) \ge 1\). Inside a
+likelihood such parameter values get zero probability instead.
+
+Checks against the papers: Schwarzschild in a homogeneous plasma,
+\(r_{\rm ph} = [3 - 4x + \sqrt{9 - 8x}]/[2(1 - x)]\) with \(x = X\) (solution
+of PTB Eq. (33)) and PTB Eq. (46), to \(10^{-11}\); power law with \(k = 2\):
+\(r_{\rm ph} = 3\) exactly and \(r_{\rm sh} = \sqrt{27 - \beta_0}\); general
+\(k\): the first-order results PTB Eqs. (58)–(59), with an error that scales
+as \(\beta_0^2\); PT Eq. (78): for \(k = 1\) the plasma enlarges the shadow
+for \(3 < r_O < 6\) and shrinks it beyond, and a homogeneous plasma enlarges
+it for every observer.
+
+### 19.2 Rotating metrics. Status: PT's result, re-derived in BlackPy's separability framework
+
+On Kerr the Hamilton–Jacobi equation with plasma separates if and only if
+(PT Eq. (26))
+
+\[ \omega_p(r, \theta)^2 = \frac{f_r(r) + f_\theta(\theta)}{r^2 + a^2\cos^2\theta} . \]
+
+In the notation of section 15 (\(W = g_{\theta\theta}\)), multiplying
+\(\mathcal{H} = 0\) by \(2W/E^2\) gives
+
+\[ (T_r + T_\theta) - 2(P_r + P_\theta)\xi + (Q_r + Q_\theta)\xi^2
+   + \Delta_r\frac{p_r^2}{E^2} + \frac{p_\theta^2}{E^2} + W X = 0 , \]
+
+so the equation separates exactly when \(W X = F_r(r) + F_\theta(\theta)\),
+and the plasma then only replaces
+
+\[ T_r \to T_r + F_r, \qquad T_\theta \to T_\theta + F_\theta . \]
+
+For Kerr \(W = r^2 + a^2\cos^2\theta\) and the condition is PT Eq. (26). All
+formulas of section 15 (spherical photon orbits, the photon region, the
+contour) hold with this replacement, which is how the code implements it:
+`with_plasma(metric, plasma)` returns the metric with one extra hook, and
+the separable-shadow code is otherwise unchanged. A profile for which
+\(\partial_r\partial_\theta(WX) \ne 0\) (tested numerically, tolerance
+\(10^{-8}\)) is refused with `NotSeparableError`; this includes every
+non-constant profile that depends on \(r\) only (PT; review section IX).
+A homogeneous plasma is separable on Kerr-like metrics
+(\(F_r = X r^2\), \(F_\theta = X a^2\cos^2\theta\), PT Eq. (36)).
+
+**Observer.** At infinity the celestial coordinates are Bardeen's divided by
+the refractive index there: \(\alpha = -\xi/(n_\infty\sin i)\),
+\(\beta = \pm\sqrt{\Theta(i)}/n_\infty\). For the ZAMO at finite distance the
+locally measured energy \(E_{\rm loc}\) of section 15 is replaced by the
+magnitude of the spatial momentum, \(\sqrt{E_{\rm loc}^2 - \omega_p^2}\) (the
+ray direction is that of the momentum). **Derived**; it reduces to PTB
+Eq. (43) for a static metric, which is tested. (PT use a different observer,
+their Eq. (45), and stereographic coordinates, so their figures are not
+compared point by point.)
+
+**Propagation.** For seven points of the contour the radial potential
+\(\mathcal{R}(r)\) must be non-negative on 64 radii between the spherical
+photon orbit and the observer, and \(n^2 > 0\) at the observer.
+
+Checks against PT: the constants of motion of spherical light rays, PT
+Eqs. (39)–(40) with the upper sign, for \(f_r = Cr^{3/2}\) and a
+\(\theta\)-dependent \(f_\theta\) (with \(\xi = -p_\varphi/\omega_0\) and
+\(K = \eta + (\xi - a)^2 + f_\theta(\pi/2)\) relating their constants to
+BlackPy's), to \(10^{-10}\); the Schwarzschild case with a
+\(\theta\)-dependent plasma, PT Eqs. (69)–(72): the shadow is a circle whose
+size depends on the observer's polar angle; the homogeneous model against
+PT Eq. (36) written out explicitly; \(X \to 0\) reproduces Kerr in vacuum to
+\(10^{-12}\); static metrics sent through the general path reproduce
+section 19.1 to \(10^{-11}\).
+
+### 19.3 Inference
+
+`Fit(..., plasma=PowerLawPlasma(k=1.5), priors={"omega_p": ...})` adds the
+plasma parameters to the shadow likelihood (kind `"plasma"`). Both a plasma
+that thins out and most metric deformations shrink the shadow, so one shadow
+size constrains only a combination. The prior-dominance guard covers plasma
+parameters, and a `DegeneracyWarning` is raised when the posterior
+correlation (Pearson or Spearman) between a plasma parameter and a metric
+parameter reaches 0.9; both are tested. Relevance: for Sgr A\* and M87\* at
+230 GHz the plasma frequency near the horizon is far below the observing
+frequency, so the effect matters only at low radio frequencies.

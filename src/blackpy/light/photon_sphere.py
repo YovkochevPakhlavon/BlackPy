@@ -78,6 +78,12 @@ def critical_impact_parameter_core(metric, p, n_scan=256):
 
 
 def _static_only(metric, what: str) -> None:
+    if hasattr(metric, "plasma"):
+        raise TypeError(
+            f"{what} computes the vacuum quantity, but '{metric.name}' carries a plasma. Use "
+            "blackpy.light.photon_sphere_in_plasma / photon_spheres_in_plasma / "
+            "shadow_in_plasma(metric, plasma, ...), or pass the plain metric for the vacuum value."
+        )
     if metric.is_rotating_class:
         raise TypeError(
             f"{what} is defined for static, spherically symmetric metrics. A rotating metric "

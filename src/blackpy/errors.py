@@ -31,6 +31,11 @@ class NotSeparableError(BlackPyError):
     separate; this needs numerical ray tracing, which BlackPy does not provide."""
 
 
+class PlasmaPropagationError(BlackPyError):
+    """Light of the requested frequency cannot propagate through the plasma along the
+    path from the photon sphere to the observer (plasma frequency >= photon frequency)."""
+
+
 class SymbolicTimeoutError(BlackPyError):
     """A symbolic computation exceeded its time limit."""
 

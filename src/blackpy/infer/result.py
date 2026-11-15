@@ -232,6 +232,11 @@ class FitResult:
                 f"  corr({spin}, {name}) = {corr['pearson']:+.3f} "
                 f"(rank {corr['spearman']:+.3f}){flag}"
             )
+        for pair, corr in self.diagnostics.get("plasma_correlations", {}).items():
+            flag = "   [strongly degenerate]" if corr["degenerate"] else ""
+            lines.append(
+                f"  corr({pair}) = {corr['pearson']:+.3f} (rank {corr['spearman']:+.3f}){flag}"
+            )
         return "\n".join(lines)
 
     # ------------------------------------------------------------------ fit quality

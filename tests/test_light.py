@@ -94,10 +94,13 @@ def test_shadow_shrinks_with_charge(rn, bardeen, hayward):
 
 
 def test_future_light_stubs_raise():
-    with pytest.raises(NotImplementedError, match="MVP"):
+    with pytest.raises(NotImplementedError, match="roadmap"):
         lt.deflection_angle(None, 5.0)
-    with pytest.raises(NotImplementedError):
-        lt.shadow_in_plasma(None, None)
+    # Plasma is implemented since v0.3 (tests/test_plasma.py); the reserved names still
+    # import from their old location.
+    from blackpy.light import future
+
+    assert future.shadow_in_plasma is lt.shadow_in_plasma and future.PlasmaModel is lt.PlasmaModel
     # Out of scope on purpose (v0.3 roadmap): the messages must not promise a release.
     with pytest.raises(NotImplementedError, match="not scheduled") as info:
         bp.qnm.quasinormal_modes(None)
