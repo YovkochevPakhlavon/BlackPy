@@ -21,6 +21,7 @@ def test_profile_single_metric(rn):
     plt.close(ax.figure)
 
 
+@pytest.mark.slow
 def test_profile_several_metrics_and_quantities(rn, bardeen, hayward):
     grid = np.linspace(0.0, 0.7, 20)
     fig, ax = plt.subplots()
@@ -81,3 +82,54 @@ def test_corner_and_latex_table():
     assert r"\ln Z" in table and "-12.30 \\pm 0.20" in table
     assert table.count(r"$^\dagger$") == 3 and "not a constraint" in table
     assert table.strip().endswith(r"\end{table}")
+
+
+def test_shadow_contours(kerr, kerr_newman, rn):
+    import math
+
+    spins = [0.0, 0.5, 0.9]
+    ax = bp.plot.shadow(kerr, math.pi / 2, a=spins, reference_circle=True)
+    lines = ax.get_lines()
+    assert len(lines) == 4 and ax.get_aspect() == 1.0  # three contours and the circle
+    contour = bp.light.shadow_contour(kerr, math.pi / 2, a=0.9)
+    np.testing.assert_allclose(lines[2].get_xdata()[:-1], contour.alpha)
+    np.testing.assert_allclose(lines[2].get_ydata()[:-1], contour.beta)
+    assert lines[2].get_xdata()[-1] == lines[2].get_xdata()[0]  # closed curve
+    labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    assert labels[:3] == ["$a = 0$", "$a = 0.5$", "$a = 0.9$"] and "Schwarzschild" in labels[3]
+    np.testing.assert_allclose(np.hypot(*lines[3].get_data()), 3.0 * math.sqrt(3.0))
+    plt.close(ax.figure)
+
+    # Several inclinations, recentred, with the Delta C definition named explicitly.
+    ax = bp.plot.shadow(
+        kerr, np.radians([17.0, 90.0]), a=0.95, recentre=True, annotate_delta_c="bambi2019"
+    )
+    labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    assert "i = 17" in labels[0] and "B19" in labels[0] and "0.134" in labels[1]
+    centroid = float(bp.light.shadow_observables(kerr, math.pi / 2, a=0.95).centroid)
+    contour = bp.light.shadow_contour(kerr, math.pi / 2, a=0.95)
+    np.testing.assert_allclose(ax.get_lines()[1].get_xdata()[:-1], contour.alpha - centroid)
+    assert "recentred" in ax.get_xlabel()
+    plt.close(ax.figure)
+
+    # A metric parameter scanned together with the spin; a static metric gives circles;
+    # an observational band from a shadow dataset.
+    ax = bp.plot.shadow(
+        kerr_newman, math.pi / 3, a=[0.2, 0.4], Q=[0.1, 0.6], band="eht/sgra", labels=["A", "B"]
+    )
+    assert len(ax.get_lines()) == 2 and len(ax.patches) == 1
+    assert [t.get_text() for t in ax.get_legend().get_texts()][-2:] == ["A", "B"]
+    bp.plot.shadow(rn, 1.0, Q=[0.0, 0.5], r_obs=50.0, ax=ax)
+    radius = np.hypot(*ax.get_lines()[-1].get_data())
+    np.testing.assert_allclose(radius, float(bp.light.shadow_radius(rn, 50.0, Q=0.5)), rtol=1e-9)
+    plt.close(ax.figure)
+
+    with pytest.raises(ValueError, match="same length"):
+        bp.plot.shadow(kerr_newman, 1.0, a=[0.1, 0.2], Q=[0.1, 0.2, 0.3])
+    with pytest.raises(ValueError, match="fractional_rms"):
+        bp.plot.shadow(kerr, 1.0, a=0.5, annotate_delta_c="default")
+    with pytest.raises(ValueError, match="labels"):
+        bp.plot.shadow(kerr, 1.0, a=[0.1, 0.2], labels=["one"])
+    with pytest.raises(ValueError, match="3sigma"):
+        bp.plot.shadow(kerr, 1.0, a=0.5, band="eht/sgra", band_level="3sigma")
+    plt.close("all")

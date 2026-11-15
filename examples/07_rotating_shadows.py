@@ -1,8 +1,9 @@
 """Example 7: shadows of rotating black holes and the Sgr A* shadow size.
 
-1. Kerr shadow contours for several spins, seen edge-on and at 17 degrees,
-   with the size and shape observables (mean radius, area-equivalent radius,
-   deviation from circularity).
+1. Kerr shadow contours for several spins, seen edge-on and at 17 degrees
+   (drawn with ``blackpy.plot.shadow``), with the size and shape observables
+   (mean radius, area-equivalent radius, deviation from circularity in the
+   three definitions of ``blackpy.light.deviation_from_circularity``).
 2. How much the Kerr shadow size depends on spin and inclination, compared
    with the statement of the EHT Collaboration (2022, Sgr A* Paper VI,
    arXiv:2311.09484): "the radius ranges from ~4.8 GM/c^2 to ~5.2 GM/c^2",
@@ -42,29 +43,58 @@ print("Kerr shadow observables (lengths in units of M)")
 print(
     f"{'i [deg]':>8} {'a':>6} {'mean R':>8} {'area R':>8} {'Delta C':>8} {'centre':>8} {'width':>8}"
 )
+SPINS = [0.0, 0.5, 0.9, 0.998]
 for ax, inclination in zip(axes, (90.0, 17.0), strict=True):
-    for a in (0.0, 0.5, 0.9, 0.998):
-        contour = bp.light.shadow_contour(kerr, math.radians(inclination), a=a)
+    # The definition of Delta C is always given explicitly: the three definitions in use
+    # differ by factors of 2 to 4 (blackpy.light.deviation_from_circularity).
+    bp.plot.shadow(
+        kerr, math.radians(inclination), a=SPINS, annotate_delta_c="fractional_rms", ax=ax
+    )
+    for a in SPINS:
         obs = bp.light.shadow_observables(kerr, math.radians(inclination), a=a)
-        ax.plot(
-            np.append(contour.alpha, contour.alpha[0]),
-            np.append(contour.beta, contour.beta[0]),
-            label=f"a = {a}",
-        )
         width = float(obs.alpha_max - obs.alpha_min)
         print(
             f"{inclination:8.0f} {a:6.3f} {float(obs.mean_radius):8.4f} "
             f"{float(obs.area_radius):8.4f} {float(obs.delta_c):8.4f} "
             f"{float(obs.centroid):8.4f} {width:8.4f}"
         )
-    ax.set_aspect("equal")
-    ax.set_xlabel(r"$\alpha / M$")
     ax.set_title(f"Kerr, inclination {inclination:.0f} deg")
-    ax.grid(alpha=0.3)
-axes[0].set_ylabel(r"$\beta / M$")
-axes[0].legend(loc="center")
+axes[1].set_ylabel("")
 fig.tight_layout()
 fig.savefig(out / "kerr_shadows.png", dpi=130)
+
+print("\nDeviation from circularity of Kerr, a = 0.95, in the three definitions:")
+print(f"{'i [deg]':>8} " + " ".join(f"{d:>15}" for d in bp.light.DELTA_C_DEFINITIONS))
+for inclination in (17.0, 45.0, 54.0, 90.0):
+    row = [
+        float(
+            bp.light.deviation_from_circularity(
+                kerr, math.radians(inclination), a=0.95, definition=d
+            )
+        )
+        for d in bp.light.DELTA_C_DEFINITIONS
+    ]
+    print(f"{inclination:8.0f} " + " ".join(f"{v:15.4f}" for v in row))
+print(
+    "  'bambi2019' (4 x the fractional rms) is the quantity whose 0.1 contour reproduces\n"
+    "  Fig. 1 of Bambi et al. (2019): it crosses 0.1 at i = 54 deg for a = 0.95."
+)
+
+# Recentred contours against the Sgr A* band (the published bound is on a radius).
+fig2, ax2 = plt.subplots(figsize=(5.4, 5.4))
+bp.plot.shadow(
+    kerr,
+    math.radians(60.0),
+    a=[0.0, 0.9, 0.998],
+    band="eht/sgra",
+    band_level="1sigma",
+    recentre=True,
+    reference_circle=True,
+    ax=ax2,
+)
+ax2.set_title("Kerr at 60 deg and the Sgr A* shadow-size band")
+fig2.tight_layout()
+fig2.savefig(out / "kerr_shadows_sgra_band.png", dpi=130)
 
 # ----------------------------------------------------------------- 2. size vs spin, inclination
 spins = np.linspace(0.0, 0.998, 81)[:, None]
@@ -81,8 +111,7 @@ print(
     f"edge-on at the same spin: {mean[-1, -1]:.4f} M"
     "\n  EHT (2022): 'the radius ranges from ~4.8 to ~5.2 GM/c^2', '~8% range'."
     f"\n  largest deviation from circularity: {float(np.max(np.asarray(obs.delta_c))):.4f} "
-    "(twice this, 0.10, is the 'maximum asymmetry of 10%'\n  that EHT M87* Paper VI quotes with "
-    "the definition of Johannsen & Psaltis 2010, A = 2 x rms)"
+    "(definition 'fractional_rms'; the 'jp_asymmetry' definition is twice as large)"
 )
 sgra = bp.data.load("eht/sgra")
 low1, high1 = sgra.bounds["1sigma"]
