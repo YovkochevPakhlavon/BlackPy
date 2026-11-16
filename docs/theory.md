@@ -1261,3 +1261,163 @@ simulated two-source dataset recovers the injected parameters. Reproduced
 in `examples/11_m87_and_sgra_shadows.py`: the Reissner–Nordström shadow
 leaves the 68% interval of M87\* at \(Q/M = 0.904\); Kocherlakota et al.
 (2021) quote \(q \lesssim 0.90\).
+
+## 21. Parametrised metrics: Rezzolla–Zhidenko and KRZ
+
+These are families of metrics, not solutions of field equations. Their
+parameters measure deviations from Schwarzschild and Kerr, so a fit
+constrains deviation parameters instead of one theory at a time. Whatever
+source such a metric would need has to be checked
+(`blackpy.geometry.energy_conditions`, `effective_source`), never assumed.
+
+### 21.1 Rezzolla–Zhidenko (static). Status: transcribed
+
+Rezzolla & Zhidenko (2014), Phys. Rev. D 90, 084009 (arXiv:1407.3086), read
+for version 0.3; their Eqs. (1)–(7), (14)–(19):
+
+\[
+ds^2 = -N^2dt^2 + \frac{B^2}{N^2}dr^2 + r^2d\Omega^2, \qquad
+x = 1 - \frac{r_0}{r}, \qquad N^2 = x\,A(x),
+\]
+\[
+A = 1 - \epsilon(1-x) + (a_0 - \epsilon)(1-x)^2 + \tilde A(x)(1-x)^3, \qquad
+B = 1 + b_0(1-x) + \tilde B(x)(1-x)^2,
+\]
+\[
+\tilde A = \cfrac{a_1}{1 + \cfrac{a_2x}{1 + \cfrac{a_3x}{1 + \dots}}}, \qquad
+\tilde B = \cfrac{b_1}{1 + \cfrac{b_2x}{1 + \cfrac{b_3x}{1 + \dots}}} .
+\]
+
+In BlackPy's notation \(f = N^2\), \(g = N^2/B^2\), \(h = r^2\). "Order
+\(n\)" keeps \(a_1 \dots a_n\), \(b_1 \dots b_n\) and sets
+\(a_{n+1} = b_{n+1} = 0\).
+
+**Unit of length.** The horizon radius \(r_0\) is a parameter of the
+expansion and \(\epsilon = 2M/r_0 - 1\) (their Eq. (14)). BlackPy measures
+lengths in units of the ADM mass, hence
+\[ r_0 = \frac{2}{1 + \epsilon} . \]
+This is the event horizon provided \(A(x) > 0\) on \([0, 1]\) (their
+Eq. (5)); with only \(\epsilon\) non-zero that requires \(\epsilon < 1/2\).
+Otherwise the outer zero of \(A\) is the horizon, which the horizon finder
+returns (tested).
+
+**PPN coefficients** (their Eqs. (15)–(18)):
+\(a_0 = (\beta - \gamma)(1 + \epsilon)^2/2\),
+\(b_0 = (\gamma - 1)(1 + \epsilon)/2\). `ppn="gr"` (default) sets
+\(a_0 = b_0 = 0\), which assumes that the solar-system bounds on \(\beta\),
+\(\gamma\) (their Eq. (10)) also hold for the black hole; `ppn="free"`
+makes them parameters. The choice matters: Reissner–Nordström has
+\(a_0 = Q^2/r_0^2 \ne 0\) and cannot be represented with `ppn="gr"`.
+
+**Coefficients of a given metric** (`rz_coefficients`). **Derived.** For
+\(ds^2 = -f\,dt^2 + d\rho^2/g + h\,d\Omega^2\) the areal radius is
+\(r = \sqrt{h(\rho)}\), so \(N^2 = f\) and \(B^2 = (f/g)\,4h/h'^2\). With the
+operator \(D = (dx/d\rho)^{-1}d/d\rho\) (autodiff), the Taylor coefficients
+in \(x\) of \(f\), \(g\) and \(4h/h'^2\) at the horizon give those of
+\(A = N^2/x\) and of \(B\) by series division, product and square root; the
+series of \(\tilde A = [A - 1 + \epsilon(1-x) - (a_0-\epsilon)(1-x)^2](1-x)^{-3}\)
+and \(\tilde B\) are converted to continued fractions. The asymptotic
+coefficients are \(\epsilon = dA/dx|_{x=1}\),
+\(a_0 = \epsilon + \tfrac12 d^2A/dx^2|_{x=1}\), \(b_0 = -dB/dx|_{x=1}\); the
+derivatives are evaluated by autodiff at 50, 100, 200 and 400 horizon radii
+and extrapolated to \(1 - x = 0\) with the cubic through the four points
+(accuracy about \(10^{-10}\); directly at infinity autodiff yields
+\(0\cdot\infty\), and at larger radii the second derivative loses accuracy
+to cancellation).
+
+Checks:
+
+- all parameters zero is Schwarzschild to \(10^{-12}\);
+- **dilaton black hole** (their section IV): the helper reproduces the
+  printed \(\epsilon, a_0, b_0, a_1, b_1, b_2\) (their Eqs. (30)–(31)) to
+  \(10^{-9}\) and \(a_2\) to \(5\times10^{-6}\) (it is the ratio of two small
+  numbers);
+- **Reissner–Nordström** is not treated in the paper. **Derived:** with
+  \(u = r_0/r\), \(N^2 = 1 - (1+\epsilon)u + (Q^2/r_0^2)u^2\) vanishes at
+  \(u = 1\), so \(Q^2/r_0^2 = \epsilon\) and
+  \(N^2 = x[1 - \epsilon(1-x)]\): \(a_0 = \epsilon\), all \(a_i = b_i = 0\).
+  RN is represented exactly at lowest order; \(\beta = 1 + Q^2/2\);
+- **convergence** against the exact dilaton results, their Eqs. (37) and
+  (43), for orders 1 to 4. Impact parameter of the photon orbit at
+  \(b = \mu/2\): \(9.2\times10^{-5}\), \(1.5\times10^{-5}\),
+  \(2.6\times10^{-7}\), \(2.2\times10^{-9}\) (units of \(\mu\)); maximum
+  relative error of \(g_{tt}\) at \(b = \mu\): \(2.9\times10^{-4}\),
+  \(4.9\times10^{-5}\), \(3.6\times10^{-6}\), \(9.2\times10^{-8}\); ISCO
+  frequency at \(b = \mu/2\): \(1.6\times10^{-6}\) down to
+  \(2.8\times10^{-10}\). The paper quotes \(\sim10^{-4}\mu\) for the impact
+  parameter at \(b \sim \mu/2\) with \(a_2 = 0\), \(3\times10^{-4}\) and
+  \(3\times10^{-6}\) for \(g_{tt}\) at \(b = \mu\), and \(\sim10^{-6}\) for the
+  ISCO frequency; these agree with orders 1 and 3 here. The paper's
+  "\(\sim10^{-6}\mu\) even for \(b \sim \mu\)" for the impact parameter with
+  \(a_4 = 0\) is reached here one order later (\(1.2\times10^{-5}\) at order
+  3, \(2.2\times10^{-7}\) at order 4); its Fig. 1 could not be accessed to
+  compare point by point.
+
+**Published bound reproduced** (example 12): Psaltis et al. (2020) find
+\(-1.2 < a_1 < 1.3\) from the M87\* shadow size (17%, \(\epsilon = a_0 = 0\));
+BlackPy gives \(-1.23 < a_1 < 1.25\).
+
+### 21.2 KRZ (rotating). Status: transcribed, with two corrections
+
+Konoplya, Rezzolla & Zhidenko (2016), Phys. Rev. D 93, 064015
+(arXiv:1602.02378), read for version 0.3. Line element (their Eq. (7)):
+
+\[
+ds^2 = -\frac{N^2 - W^2\sin^2\theta}{K^2}dt^2 - 2Wr\sin^2\theta\,dt\,d\phi
+       + K^2r^2\sin^2\theta\,d\phi^2
+       + \Sigma\left(\frac{B^2}{N^2}dr^2 + r^2d\theta^2\right),
+\qquad \Sigma = 1 + \frac{a^2\cos^2\theta}{r^2} .
+\]
+
+`blackpy.metric.KRZ()` uses the lowest-order form that the paper recommends
+for practical use (its Appendix A, Eqs. (86)–(89), Table 3): reflection
+symmetric, second order in \(\cos\theta\), first order of the continued
+fractions in the radial direction, with
+\(\epsilon_2 = b_{20} = w_{20} = k_{20} = 0\), \(k_{00} = a^2/r_0^2\),
+\(w_{00} = 2a/r_0^2\), \(\epsilon_0 = 2/r_0 - 1\) (units of \(M\)). The kept
+coefficients are \(\epsilon_0\), \(a_{00}\), \(b_{00}\), \(a_{01}\),
+\(b_{01}\), \(w_{01}\), \(a_{20}\), \(a_{21}\), \(k_{21}\), \(w_{21}\),
+\(b_{21}\). BlackPy's parameters are their **deviations from the Kerr
+values** (`d_eps0`, `d_a20`, `d_a21`, `d_k21`; the others vanish for Kerr),
+so that all parameters zero is Kerr; `krz_deviations` converts coefficients
+as printed. The explicit functions are in the docstring of `KRZ`.
+
+**Correction 1: the printed lowest-order form is Kerr only on the equator.**
+With the Kerr coefficients of Appendix A.1
+(\(a_{20} = 2a^2/r_0^3\), \(a_{21} = -a^4/r_0^4\),
+\(k_{21} = a^4/r_0^4 - 2a^2/r_0^3\)), Eqs. (86)–(89) give
+\(N^2 = \Delta/r^2 + (a^4/r_0^4)(r_0/r)^3(1 - r_0/r)\cos^2\theta\), which is
+not the Kerr value off the equatorial plane; at \(r = 3.5\), \(\theta = 0.7\),
+\(a = 0.6\) the components \(g_{tt}\), \(g_{\phi\phi}\), \(g_{rr}\) differ from
+Kerr by \(3\times10^{-4}\) to \(2\times10^{-3}\) (verified symbolically; a
+test). The reason: for Kerr, \(K^2 - aW/r = 1 + [a^2/r^2 +
+(a^4/r^4 - 2a^2/r^3)\cos^2\theta]/\Sigma\), and the \(r^{-4}\) term needs the
+next two coefficients of the continued fraction of \(\tilde K_2\). BlackPy
+keeps the full Kerr function, \(K_2 = a^4/r^4 - 2a^2/r^3 + \delta k_{21}
+r_0^3/r^3\), which is a member of the KRZ family (\(k_{22}\), \(k_{23}\) tied
+to \(k_{21}\)). Then the \(\cos^2\theta\) term of \(N^2\) is
+\([(\delta k_{21} + \delta a_{20})r_0^3/r^3 + \delta a_{21}r_0^4/r^4]\) and
+zero deviations give Kerr to \(10^{-12}\) everywhere.
+
+**Correction 2: the sign of \(w_{01}\) of the rotating dilaton black
+hole.** The paper prints (Eq. (60f), Appendix A.2)
+\(w_{01} = +2a(\mu+b)(b + r_0 - \sqrt{r_0^2 + b^2})/r_0^3\). Evaluating the
+paper's own definitions (\(W_0(x) = w_{00}(1-x)^2 + \tilde W_0(1-x)^3\), so
+\(w_{01} = W(r_0) - w_{00}\)) on its metric (6) with the coordinate
+conditions (16)–(19) gives \(W(r_0) = 2aM\rho_h/r_0^3\) with
+\(\rho_h = \sqrt{r_0^2 + b^2} - b\), hence
+\(w_{01} = -2aM(b + r_0 - \sqrt{r_0^2 + b^2})/r_0^3\): the opposite sign.
+With the corrected sign the lowest-order KRZ metric reproduces the exact
+ISCO frequency of the rotating dilaton black hole to \(5\times10^{-5}\)
+(\(a = 0.5\), \(b = 0.05\)) and \(1\times10^{-3}\) (\(b = 0.2\)); with the
+printed sign the error is 3% and 18%. Both are tested. Only the arXiv
+version (ar5iv rendering) was read; the journal version was not compared.
+
+**Properties.** Reflection symmetric, so equatorial orbits, both epicyclic
+frequencies and all QPO models are available (tested with a deformed metric
+and a triplet likelihood). Null geodesics do not separate for generic
+deviations: the numerical separability test fails and the analytic shadow
+is refused with `NotSeparableError`; nothing is special-cased. For generic
+deviations the surface \(N^2 = 0\) depends on \(\theta\); it is a sphere if
+\(\delta a_{20} + \delta a_{21} + \delta k_{21} = 0\) (the paper's condition
+\(a_{20} + a_{21} + k_{21} = 0\)), which `horizon_profile` reports.

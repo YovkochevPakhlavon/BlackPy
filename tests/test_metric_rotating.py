@@ -254,7 +254,7 @@ def test_rotating_from_static_general_seeds(bardeen, schwarzschild):
 def test_remaining_metric_stubs_raise():
     with pytest.raises(NotImplementedError, match="rotating_from_static"):
         bp.metric.future.newman_janis(None)
-    with pytest.raises(NotImplementedError):
-        bp.metric.future.konoplya_rezzolla_zhidenko()
-    with pytest.raises(NotImplementedError):
-        bp.metric.future.rezzolla_zhidenko()
+    # The RZ and KRZ parametrisations are implemented since v0.3 (tests/test_parametrized.py);
+    # their reserved names forward to the implementations.
+    assert bp.metric.future.rezzolla_zhidenko is bp.metric.RezzollaZhidenko
+    assert bp.metric.future.konoplya_rezzolla_zhidenko is bp.metric.KRZ
