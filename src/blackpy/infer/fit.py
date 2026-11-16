@@ -92,6 +92,18 @@ class Fit:
     plasma : blackpy.light.PlasmaModel, optional
         Plasma around the black hole (shadow data only); its parameters are
         sampled if they have a prior, see :func:`blackpy.infer.build_problem`.
+    shared, per_source : sequence of str, optional
+        Which metric parameters are common to all sources and which have one
+        value per source (named ``<name>_<source>``). Required for every
+        sampled metric parameter when two or more shadow datasets are fitted
+        together; see :func:`blackpy.infer.build_problem`.
+    shadow_mass_prior : str or mapping, optional
+        Mass prior of the shadow dataset(s) on which the bound on ``r_sh/M``
+        rests; see :func:`blackpy.infer.build_problem`.
+    circularity : str, optional
+        Name of the definition of the deviation from circularity with which
+        the circularity bound of the shadow datasets is applied; see
+        :func:`blackpy.infer.build_problem`.
     **sampler_kwargs
         emcee: ``nwalkers`` (default ``max(32, 4 ndim)``), ``nsteps`` (5000),
         ``max_steps`` (= ``nsteps``; if larger, sampling continues in blocks
@@ -123,6 +135,10 @@ class Fit:
         require_black_hole: bool | None = None,
         shadow_size: str = "mean",
         plasma=None,
+        shared=None,
+        per_source=None,
+        shadow_mass_prior=None,
+        circularity: str | None = None,
         **sampler_kwargs,
     ):
         if sampler not in SAMPLERS:
@@ -144,6 +160,10 @@ class Fit:
             "require_black_hole": require_black_hole,
             "shadow_size": shadow_size,
             "plasma": plasma,
+            "shared": shared,
+            "per_source": per_source,
+            "shadow_mass_prior": shadow_mass_prior,
+            "circularity": circularity,
         }
         self.problem: Problem = build_problem(
             model, data, qpo_model, self.priors, fixed=self.fixed, **self.options
@@ -510,21 +530,32 @@ class Fit:
         Both the linear (Pearson) and the rank (Spearman) correlation are
         recorded; the rank correlation also sees curved degeneracies. A
         parameter is flagged when either exceeds ``DEGENERACY_CORRELATION``
-        in absolute value.
+        in absolute value. With per-source spins each copy is compared with
+        the shared parameters and with the per-source parameters of the same
+        source.
         """
         problem = self.problem
         spin = getattr(self.model, "spin_parameter", None)
-        if spin is None or spin not in problem.param_names:
+        base = problem.description.get("parameter_base", {})
+        names = problem.param_names
+        copies = [i for i, n in enumerate(names) if base.get(n, n) == spin]
+        if spin is None or not copies:
             return {}
-        i_spin = problem.param_names.index(spin)
+        several = len(copies) > 1
         correlations, degenerate = {}, {}
-        for i, (name, kind) in enumerate(zip(problem.param_names, problem.kinds, strict=True)):
-            if kind != "metric" or i == i_spin:
-                continue
-            pearson = float(np.corrcoef(samples[:, i_spin], samples[:, i])[0, 1])
-            spearman = float(stats.spearmanr(samples[:, i_spin], samples[:, i]).statistic)
-            correlations[name] = {"pearson": pearson, "spearman": spearman}
-            degenerate[name] = max(abs(pearson), abs(spearman)) >= DEGENERACY_CORRELATION
+        for i_spin in copies:
+            suffix = names[i_spin][len(spin) :]  # "" for a shared spin, "_<source>" otherwise
+            for i, (name, kind) in enumerate(zip(names, problem.kinds, strict=True)):
+                if kind != "metric" or base.get(name, name) == spin:
+                    continue
+                own = name[len(base.get(name, name)) :]
+                if own and suffix and own != suffix:
+                    continue  # a per-source parameter of another source
+                pearson = float(np.corrcoef(samples[:, i_spin], samples[:, i])[0, 1])
+                spearman = float(stats.spearmanr(samples[:, i_spin], samples[:, i]).statistic)
+                key = f"{name} [{names[i_spin]}]" if several else name
+                correlations[key] = {"pearson": pearson, "spearman": spearman}
+                degenerate[key] = max(abs(pearson), abs(spearman)) >= DEGENERACY_CORRELATION
         flagged = [n for n, bad in degenerate.items() if bad]
         if flagged:
             detail = ", ".join(

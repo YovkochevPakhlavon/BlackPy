@@ -79,10 +79,13 @@ POOR_FIT_P_VALUE = 0.05
 
 UNDEFINED = "no degrees of freedom: goodness of fit is undefined"
 
+#: Kinds of data-table rows that are bounds, not Gaussian data, and have no pull.
+_NO_PULL = ("shadow_interval", "circularity")
+
 
 def gaussian_rows(data_table) -> list[int]:
     """Indices of the rows of a data table that have a Gaussian (split-normal) form."""
-    return [k for k, row in enumerate(data_table) if row["kind"] != "shadow_interval"]
+    return [k for k, row in enumerate(data_table) if row["kind"] not in _NO_PULL]
 
 
 def prior_rows(param_names, priors) -> list[tuple[int, str, float, float]]:
@@ -267,14 +270,21 @@ class GoodnessOfFit:
 
 
 def _notes(data_table) -> tuple:
+    notes = []
     intervals = [row["label"] for row in data_table if row["kind"] == "shadow_interval"]
-    if not intervals:
-        return ()
-    return (
-        f"{intervals} use the interval (top-hat) likelihood, which has no pull: they are not "
-        "counted as data in chi2 or in the degrees of freedom. Use shadow_likelihood="
-        "'gaussian' for a goodness-of-fit statement that includes them.",
-    )
+    if intervals:
+        notes.append(
+            f"{intervals} use the interval (top-hat) likelihood, which has no pull: they are "
+            "not counted as data in chi2 or in the degrees of freedom. Use shadow_likelihood="
+            "'gaussian' for a goodness-of-fit statement that includes them."
+        )
+    bounds = [row["label"] for row in data_table if row["kind"] == "circularity"]
+    if bounds:
+        notes.append(
+            f"{bounds} are upper bounds (allowed / excluded), not measurements: they are not "
+            "counted as data in chi2 or in the degrees of freedom."
+        )
+    return tuple(notes)
 
 
 def goodness_at(problem, theta, *, is_best_fit: bool = False) -> GoodnessOfFit:

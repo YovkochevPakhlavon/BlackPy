@@ -119,14 +119,56 @@ class MassPrior(Measurement):
     method : str
         How the mass was measured.
     independent : bool or None
-        True if the measurement is independent of QPO modelling (e.g. a
-        dynamical mass). False if it was derived from a QPO fit in the Kerr
-        or Schwarzschild metric: using it to test another metric is circular
-        and triggers a :class:`blackpy.errors.CircularInferenceWarning`.
+        True if the measurement is independent of the data it is combined
+        with: of QPO modelling for a QPO source (e.g. a dynamical mass), of
+        the horizon-scale image for a shadow source (e.g. stellar dynamics).
+        False if it was derived from those data themselves (a QPO fit in the
+        Kerr metric; a mass obtained from the EHT ring): using it to test
+        another metric is circular and triggers a
+        :class:`blackpy.errors.CircularInferenceWarning`.
+    theta_g : Measurement or None
+        Shadow sources: the angular gravitational radius
+        :math:`GM/(c^2 D)` implied by this mass measurement. It is the
+        quantity a dynamical measurement actually determines (a mass scales
+        with the assumed distance).
+    fractional_deviation : Measurement or None
+        Shadow sources: the published fractional deviation ``delta`` of the
+        shadow size obtained with this mass prior.
     """
 
     method: str = ""
     independent: bool | None = None
+    theta_g: Measurement | None = None
+    fractional_deviation: Measurement | None = None
+
+
+@dataclass(frozen=True)
+class CircularityBound:
+    """Upper bound on the deviation from circularity of an image.
+
+    Attributes
+    ----------
+    upper : float or None
+        The bound (dimensionless).
+    definition : str
+        The definition of the deviation from circularity for which the bound
+        was derived: one of ``blackpy.light.DELTA_C_DEFINITIONS``, or another
+        label if none of them matches. A likelihood that uses the bound with
+        a different definition raises a
+        :class:`blackpy.errors.CircularityDefinitionWarning`.
+    applies_to : str
+        What was measured (for example the emission ring, which is not the
+        shadow boundary).
+    source, location, note : str
+        Provenance, as for :class:`Measurement`.
+    """
+
+    upper: float | None
+    definition: str
+    applies_to: str = ""
+    source: str | None = None
+    location: str = ""
+    note: str = ""
 
 
 @dataclass(frozen=True)
@@ -276,12 +318,38 @@ class ShadowDataset(Dataset):
     fractional_deviation : Measurement or None
         ``delta = r_sh / (3 sqrt(3) M) - 1``, if given by the source; its
         central value and uncertainty define the Gaussian likelihood.
+    assumed_mass_priors : tuple of str
+        Keys of ``mass_priors`` on which the default ``bounds`` and
+        ``fractional_deviation`` rest (several keys: an average). A shadow
+        size in units of M always assumes a mass-to-distance ratio.
+    mass_priors : dict of str -> MassPrior
+        Mass measurements of the source, each with its origin, whether it is
+        independent of the horizon-scale image, and (where published) the
+        angular gravitational radius and the fractional deviation obtained
+        with it.
+    measured : dict of str -> Measurement
+        What the experiment measured (for example the diameter of the
+        emission ring and the calibrated angular gravitational radius), for
+        the record; the likelihood uses the fractional deviation.
+    distance : Measurement or None
+    inclination : Measurement or None
+        A measured inclination (for example of the jet), in degrees. It is
+        **not** used as a prior automatically; see
+        :func:`blackpy.infer.inclination_prior`.
+    circularity : CircularityBound or None
+        Bound on the deviation from circularity, with its definition.
     """
 
     quantity: str = "r_sh/M"
     bounds: dict[str, tuple[float | None, float | None]] = field(default_factory=dict)
     bounds_location: dict[str, str] = field(default_factory=dict)
     fractional_deviation: Measurement | None = None
+    assumed_mass_priors: tuple[str, ...] = ()
+    mass_priors: dict[str, MassPrior] = field(default_factory=dict)
+    measured: dict[str, Measurement] = field(default_factory=dict)
+    distance: Measurement | None = None
+    inclination: Measurement | None = None
+    circularity: CircularityBound | None = None
 
     @property
     def is_complete(self) -> bool:
@@ -289,16 +357,84 @@ class ShadowDataset(Dataset):
             lo is not None and hi is not None for lo, hi in self.bounds.values()
         )
 
-    def gaussian(self) -> tuple[float, float]:
+    def mass_prior_is_independent(self, mass_prior: str | None = None) -> bool | None:
+        """Whether the mass prior behind the shadow bound is independent of the image.
+
+        ``mass_prior=None`` refers to the default bound (``assumed_mass_priors``).
+        Returns None if this is not recorded.
+        """
+        keys = self.assumed_mass_priors if mass_prior is None else (mass_prior,)
+        if not keys:
+            return None
+        flags = [self._mass_prior(key).independent for key in keys]
+        if any(flag is False for flag in flags):
+            return False
+        return True if all(flag is True for flag in flags) else None
+
+    def _mass_prior(self, key: str) -> MassPrior:
+        if key not in self.mass_priors:
+            raise RegistryError(
+                f"Dataset '{self.id}' has no mass prior '{key}'. Available: "
+                f"{sorted(self.mass_priors) or 'none'}."
+            )
+        return self.mass_priors[key]
+
+    def deviation(self, mass_prior: str | None = None) -> Measurement:
+        r"""Fractional deviation ``delta`` of the shadow size for a choice of mass prior.
+
+        ``mass_prior=None``: the default of the dataset. Otherwise the value
+        published for that mass prior; if none was published it is computed
+        as :math:`\delta = \theta_g/\theta_{\rm dyn} - 1` from the measured
+        angular gravitational radius of the image (``measured["theta_g"]``)
+        and that of the mass prior, with the two (symmetrised) relative
+        uncertainties added in quadrature. This is the definition of the EHT
+        Collaboration (2019, Paper VI, Eq. (31)).
+        """
+        if mass_prior is None:
+            if self.fractional_deviation is None or not self.fractional_deviation.is_complete:
+                raise RegistryError(f"Dataset '{self.id}' has no default fractional deviation.")
+            return self.fractional_deviation
+        prior = self._mass_prior(mass_prior)
+        if prior.fractional_deviation is not None and prior.fractional_deviation.is_complete:
+            return prior.fractional_deviation
+        image = self.measured.get("theta_g")
+        if image is None or not image.is_complete or prior.theta_g is None:
+            raise RegistryError(
+                f"Dataset '{self.id}': mass prior '{mass_prior}' has no published fractional "
+                "deviation and the angular gravitational radii needed to compute one are "
+                "missing."
+            )
+        if not prior.theta_g.is_complete:
+            raise RegistryError(f"Dataset '{self.id}': theta_g of '{mass_prior}' is incomplete.")
+        ratio = image.value / prior.theta_g.value
+        sigma = (
+            ratio
+            * ((image.sigma / image.value) ** 2 + (prior.theta_g.sigma / prior.theta_g.value) ** 2)
+            ** 0.5
+        )
+        return Measurement(
+            value=ratio - 1.0,
+            err_minus=sigma,
+            err_plus=sigma,
+            source=prior.source,
+            location=f"computed by BlackPy from theta_g (image) and theta_g ('{mass_prior}')",
+        )
+
+    def gaussian(self, mass_prior: str | None = None) -> tuple[float, float]:
         """Mean and standard deviation of ``r_sh / M`` for a Gaussian likelihood.
 
         If the source gives the fractional deviation ``delta`` with a Gaussian
         uncertainty, ``r_sh/M = 3 sqrt(3) (1 + delta)`` is used; otherwise the
-        centre and half-width of the 1-sigma interval.
+        centre and half-width of the 1-sigma interval. ``mass_prior`` selects
+        the deviation obtained with another mass prior of the dataset
+        (see :meth:`deviation`).
         """
+        scale = 3.0 * 3.0**0.5
+        if mass_prior is not None:
+            fd = self.deviation(mass_prior)
+            return scale * (1.0 + fd.value), scale * fd.sigma
         fd = self.fractional_deviation
         if fd is not None and fd.is_complete:
-            scale = 3.0 * 3.0**0.5
             return scale * (1.0 + fd.value), scale * fd.sigma
         lo, hi = self.bounds["1sigma"]
         if lo is None or hi is None:

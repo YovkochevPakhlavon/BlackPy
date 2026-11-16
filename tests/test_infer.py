@@ -510,5 +510,5 @@ def test_registry_dataset_versions_are_recorded(rn):
         problem = build_problem(rn, ["qpo/gro_j1655_40", "eht/sgra"], "RP", {"Q": Uniform(0, 1)})
     recorded = {d["id"]: d for d in problem.description["datasets"]}
     assert recorded["qpo/gro_j1655_40"]["sha256"] == bp.data.load("qpo/gro_j1655_40").sha256
-    assert recorded["eht/sgra"]["dataset_version"] == "1"
+    assert recorded["eht/sgra"]["dataset_version"] == bp.data.load("eht/sgra").dataset_version
     assert problem.description["ignored_low_frequency_qpos"] == ["qpo/gro_j1655_40"]

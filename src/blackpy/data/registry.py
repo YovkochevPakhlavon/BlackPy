@@ -14,6 +14,7 @@ from blackpy.data.schema import (
     QPO_TYPES,
     SCHEMA_VERSION,
     SHADOW_TYPES,
+    CircularityBound,
     Dataset,
     MassPrior,
     Measurement,
@@ -230,12 +231,91 @@ def parse_dataset(raw: dict, *, sha256: str = "", origin: str = "<memory>") -> D
         if raw.get("fractional_deviation") is not None:
             deviation = _measurement(raw["fractional_deviation"], f"{origin}: fractional_deviation")
             check_source(deviation, "fractional_deviation")
+
+        def optional(key):
+            if raw.get(key) is None:
+                return None
+            m = _measurement(raw[key], f"{origin}: {key}")
+            check_source(m, key)
+            return m
+
+        priors_raw = raw.get("mass_priors") or {}
+        if not isinstance(priors_raw, dict):
+            raise RegistryError(f"{origin}: 'mass_priors' must be a mapping name -> measurement.")
+        mass_priors = {}
+        for key, item in priors_raw.items():
+            where = f"{origin}: mass_priors.{key}"
+            if not isinstance(item, dict):
+                raise RegistryError(f"{where}: expected a mapping.")
+            independent = item.get("independent")
+            if not isinstance(independent, bool):
+                raise RegistryError(
+                    f"{where}: 'independent' must be true or false (is this mass independent of "
+                    "the horizon-scale image?)."
+                )
+            extra = {}
+            for sub in ("theta_g", "fractional_deviation"):
+                if item.get(sub) is not None:
+                    extra[sub] = _measurement(
+                        {"source": item.get("source"), **item[sub]}, f"{where}.{sub}"
+                    )
+                    check_source(extra[sub], f"mass_priors.{key}.{sub}")
+            mass_priors[str(key)] = _measurement(
+                item,
+                where,
+                cls=MassPrior,
+                method=str(item.get("method", "")),
+                independent=independent,
+                **extra,
+            )
+            check_source(mass_priors[str(key)], f"mass_priors.{key}")
+        assumed = raw.get("assumed_mass_priors") or ()
+        if isinstance(assumed, str):
+            assumed = (assumed,)
+        unknown = [key for key in assumed if key not in mass_priors]
+        if unknown:
+            raise RegistryError(
+                f"{origin}: assumed_mass_priors {unknown} are not entries of 'mass_priors'."
+            )
+        measured_raw = raw.get("measured") or {}
+        if not isinstance(measured_raw, dict):
+            raise RegistryError(f"{origin}: 'measured' must be a mapping name -> measurement.")
+        measured = {}
+        for key, item in measured_raw.items():
+            measured[str(key)] = _measurement(item, f"{origin}: measured.{key}")
+            check_source(measured[str(key)], f"measured.{key}")
+        circularity = None
+        if raw.get("circularity") is not None:
+            c = raw["circularity"]
+            if not isinstance(c, dict) or "upper" not in c or not c.get("definition"):
+                raise RegistryError(
+                    f"{origin}: 'circularity' needs 'upper' and 'definition' (the definition of "
+                    "the deviation from circularity for which the bound was derived)."
+                )
+            circularity = CircularityBound(
+                upper=_number(c["upper"], f"{origin}: circularity.upper"),
+                definition=str(c["definition"]),
+                applies_to=str(c.get("applies_to", "")),
+                source=c.get("source"),
+                location=str(c.get("location", "")),
+                note=str(c.get("note", "")),
+            )
+            if circularity.source is not None and circularity.source not in references:
+                raise RegistryError(
+                    f"{origin}: circularity cites unknown reference '{circularity.source}'."
+                )
         return ShadowDataset(
             **common,
             quantity=str(raw.get("quantity", "r_sh/M")),
             bounds=bounds,
             bounds_location=locations,
             fractional_deviation=deviation,
+            assumed_mass_priors=tuple(str(key) for key in assumed),
+            mass_priors=mass_priors,
+            measured=measured,
+            distance=optional("distance"),
+            inclination=optional("inclination"),
+            circularity=circularity,
         )
     raise RegistryError(
         f"{origin}: unknown data_type '{data_type}'. Supported: {QPO_TYPES + SHADOW_TYPES}."

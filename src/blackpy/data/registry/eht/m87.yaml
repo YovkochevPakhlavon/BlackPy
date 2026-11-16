@@ -1,0 +1,212 @@
+schema_version: 1
+id: eht/m87
+object: M87*
+data_type: shadow_bound
+dataset_version: "1"
+verified_by_human: false
+description: >
+  Bound on the shadow radius of M87* in units of its mass, from the EHT 2017 image. The
+  EHT measures the diameter of the emission ring, not the shadow. The chain from the ring
+  to r_sh/M is: (1) ring diameter d = 42 +- 3 muas (image); (2) angular gravitational
+  radius theta_g = GM/(c^2 D) = 3.8 +- 0.4 muas, obtained from d with a scaling factor
+  calibrated on GRMHD simulations in the Kerr metric; (3) fractional deviation
+  delta = theta_g / theta_dyn - 1 between the image-based theta_g and the one from an
+  independent mass measurement; (4) reading delta as the fractional deviation of the
+  shadow radius from the Schwarzschild value, r_sh/M = 3 sqrt(3) (1 + delta). The default
+  bound uses the stellar-dynamics mass.
+quantity: r_sh/M
+bounds:
+  1sigma:
+    lower: 4.31
+    upper: 6.08
+    location: "kocherlakota2021, Eq. (14): 4.31 M <= r_sh <= 6.08 M (68% confidence), i.e. 3 sqrt(3) (1 +- 0.17) M with the stellar-dynamics mass prior"
+fractional_deviation:
+  value: -0.01
+  err_minus: 0.17
+  err_plus: 0.17
+  unit: ""
+  source: eht2019vi
+  location: "Sec. 9.5, text after Eq. (32): 'delta = -0.01 +- 0.17 (68% credible intervals) for the stellar' dynamics prior; delta is defined in Eq. (31) as theta_g / theta_dyn - 1"
+  note: "The EHT defines delta for the mass-to-distance ratio. Its use as the fractional deviation of the shadow size, r_sh/M = 3 sqrt(3) (1 + delta), is the reading of Psaltis et al. (2020, 'consistent to within ~17% at the 68-percentile level') and Kocherlakota et al. (2021, Eqs. (13)-(14))."
+assumed_mass_priors: [stellar_dynamics]
+mass_priors:
+  stellar_dynamics:
+    value: 6.14
+    err_minus: 0.62
+    err_plus: 1.07
+    unit: "1e9 Msun"
+    method: "stellar dynamics (Gemini/NIFS spectroscopy, axisymmetric orbit models), rescaled by the EHT to a distance of 16.8 Mpc"
+    independent: true
+    source: eht2019vi
+    location: "Table 9 (Appendix I), row 'Stellar dynamics, M': 6.14 +1.07 -0.62 x 1e9 Msun (median and 68% interval); also Table 7"
+    note: "Independent of the EHT image. The EHT image favours this measurement over the gas-dynamical one."
+    preferred_reason: "The shadow bound needs the mass at the distance adopted for the image (16.8 Mpc); the EHT rederived it from the likelihood of the original paper. The original value is kept below."
+    other_values:
+      - value: 6.6
+        err_minus: 0.4
+        err_plus: 0.4
+        source: gebhardt2011
+        location: "gebhardt2011, abstract and Sec. 6: '(6.6 +- 0.4) x 1e9 Msun', for an assumed distance of 17.9 Mpc (Sec. 1)"
+        note: "Original measurement at 17.9 Mpc."
+    theta_g:
+      value: 3.62
+      err_minus: 0.34
+      err_plus: 0.60
+      unit: muas
+      location: "Table 9, row 'Stellar dynamics, theta_dyn': 3.62 +0.60 -0.34 muas; also Table 7"
+    fractional_deviation:
+      value: -0.01
+      err_minus: 0.17
+      err_plus: 0.17
+      unit: ""
+      location: "Sec. 9.5: delta = -0.01 +- 0.17 for the stellar-dynamics prior"
+  gas_dynamics:
+    value: 3.45
+    err_minus: 0.26
+    err_plus: 0.85
+    unit: "1e9 Msun"
+    method: "gas dynamics (HST/STIS emission-line kinematics of the nuclear gas disk, Keplerian thin-disk model), rescaled by the EHT to a distance of 16.8 Mpc"
+    independent: true
+    source: eht2019vi
+    location: "Table 9 (Appendix I), row 'Gas dynamics, M': 3.45 +0.85 -0.26 x 1e9 Msun; also Table 7"
+    note: "Independent of the EHT image, but in conflict with it: the EHT mass is 'inconsistent with the gas dynamics measurement ... at the ~99% confidence level' (eht2019vi, Sec. 9.2). Psaltis et al. (2020) give this prior negligible weight. With it the shadow is 78% larger than the Schwarzschild prediction."
+    preferred_reason: "As for stellar_dynamics: the value rederived by the EHT at 16.8 Mpc is used; the original is kept below."
+    other_values:
+      - value: 3.5
+        err_minus: 0.7
+        err_plus: 0.9
+        source: walsh2013
+        location: "walsh2013, abstract: 'M_BH = (3.5 +0.9 -0.7) x 1e9 Msun (68% confidence)', for D = 17.9 Mpc (Sec. 1)"
+        note: "Original measurement at 17.9 Mpc."
+    theta_g:
+      value: 2.05
+      err_minus: 0.16
+      err_plus: 0.48
+      unit: muas
+      location: "Table 9, row 'Gas dynamics, theta_dyn': 2.05 +0.48 -0.16 muas; also Table 7"
+    fractional_deviation:
+      value: 0.78
+      err_minus: 0.3
+      err_plus: 0.3
+      unit: ""
+      location: "Sec. 9.5: 'delta = 0.78 +- 0.3 for the gas dynamics' prior"
+  eht_ring:
+    value: 6.5
+    err_minus: 0.7
+    err_plus: 0.7
+    unit: "1e9 Msun"
+    method: "EHT 2017 image: ring diameter converted to theta_g with a scaling factor calibrated on GRMHD simulations in the Kerr metric, then to a mass with D = 16.8 Mpc"
+    independent: false
+    source: eht2019i
+    location: "eht2019i, Table 1 and Sec. 7: M = (6.5 +- 0.7) x 1e9 Msun; eht2019vi, Table 7, row 'Combined measurements from this work'"
+    note: "NOT independent: this mass is derived from the same image, assuming that the object is a Kerr black hole. Using it to bound the shadow size in units of M is circular."
+    theta_g:
+      value: 3.8
+      err_minus: 0.4
+      err_plus: 0.4
+      unit: muas
+      location: "eht2019i, Table 1: theta_g = GM/(D c^2) = 3.8 +- 0.4 muas; eht2019vi, Table 7"
+measured:
+  ring_diameter:
+    value: 42.0
+    err_minus: 3.0
+    err_plus: 3.0
+    unit: muas
+    source: eht2019i
+    location: "Abstract, Sec. 7 and Table 1, row 'Ring diameter d': 42 +- 3 muas"
+    note: "Diameter of the emission ring (peak brightness), not of the shadow. The ratio alpha = d / theta_g = 11 +0.5 -0.3 (Table 1) is calibrated with GRMHD simulations in the Kerr metric."
+  theta_g:
+    value: 3.8
+    err_minus: 0.4
+    err_plus: 0.4
+    unit: muas
+    source: eht2019i
+    location: "Sec. 7 and Table 1: theta_g = GM/(D c^2) = 3.8 +- 0.4 muas; eht2019vi, Table 7, last row"
+    note: "Image-based angular gravitational radius; depends on the Kerr-based calibration of alpha."
+distance:
+  value: 16.8
+  err_minus: 0.8
+  err_plus: 0.8
+  unit: Mpc
+  source: eht2019i
+  location: "Sec. 1 and Table 1: D = (16.8 +- 0.8) Mpc"
+  note: "Combination by the EHT of one TRGB (Bird et al. 2010) and two SBF (Blakeslee et al. 2009; Cantiello et al. 2018) distances; eht2019vi, Sec. 8.1, quotes 16.8 +0.8 -0.7 Mpc. The three distance papers were not read."
+inclination:
+  value: 17.2
+  err_minus: 3.3
+  err_plus: 3.3
+  unit: deg
+  source: mertens2016
+  location: "Eq. (4): theta = 17.2 +- 3.3 deg, from the apparent speeds of the jet and the counter-jet between 0.5 and 1 mas from the core and their intensity ratio"
+  note: "Viewing angle of the large-scale JET, not of the black hole spin axis: equating the two is an assumption (eht2019vi, Sec. 9.5: 'assuming that the large-scale jet points along the spin axis'). The likelihood does not use this value unless the user passes it as a prior (blackpy.infer.inclination_prior)."
+  preferred_reason: "The EHT papers adopt 17 deg without an uncertainty, citing Walker et al. (2018), who adopt 'theta ~ 17 deg' from Mertens et al. (2016). The entry is the original measurement with its uncertainty."
+  other_values:
+    - value: 17.0
+      err_minus: null
+      err_plus: null
+      source: eht2019i
+      location: "eht2019i, Sec. 6: 'adopting an inclination of 17 deg between the approaching jet and the line of sight (Walker et al. 2018)'; walker2018, Sec. 1: 'we adopt the smaller viewing angle ... of theta ~ 17 deg'"
+      note: "Value adopted by the EHT, without uncertainty."
+circularity:
+  upper: 0.10
+  definition: fractional_rms
+  applies_to: "emission ring of the reconstructed image (locus of peak brightness), not the shadow boundary"
+  source: eht2019i
+  location: "Sec. 7: the axis ratio of the ring is at most 4:3, 'this corresponds to a 10% deviation from circularity in terms of root-mean-square distance from an average radius'; Sec. 8 repeats it; Table 1: axial ratio < 4:3"
+  note: "The bound is stated as an rms distance from an average radius, relative to that radius, which is the 'fractional_rms' definition (an ellipse with axis ratio 4:3 has a fractional rms of 0.101). It is NOT the quantity plotted in Fig. 1 of Bambi et al. (2019), which is four times larger ('bambi2019'). eht2019vi, Sec. 7.4, measures a different quantity, the fractional spread (standard deviation over mean) of the ring diameter along different orientations, which peaks at 0.05-0.06 for the reconstructed images."
+references:
+  eht2019i:
+    citation: "Event Horizon Telescope Collaboration (2019), Astrophys. J. Lett. 875, L1 (Paper I)"
+    doi: "10.3847/2041-8213/ab0ec7"
+    arxiv: "1906.11238"
+    role: "ring diameter, theta_g, distance, circularity statement, image-based mass"
+  eht2019vi:
+    citation: "Event Horizon Telescope Collaboration (2019), Astrophys. J. Lett. 875, L6 (Paper VI)"
+    doi: "10.3847/2041-8213/ab1141"
+    arxiv: "1906.11243"
+    role: "fractional deviation delta, dynamical masses and theta_dyn at 16.8 Mpc"
+  psaltis2020:
+    citation: "Psaltis, Medeiros, Christian, et al. (EHT Collaboration) (2020), Phys. Rev. Lett. 125, 141104"
+    doi: "10.1103/PhysRevLett.125.141104"
+    arxiv: "2010.01055"
+    role: "interpretation of delta as a 17% bound on the shadow size"
+  kocherlakota2021:
+    citation: "Kocherlakota, Rezzolla, Falcke, et al. (EHT Collaboration) (2021), Phys. Rev. D 103, 104047"
+    doi: "10.1103/PhysRevD.103.104047"
+    arxiv: "2105.09343"
+    role: "bound on r_sh/M"
+  gebhardt2011:
+    citation: "Gebhardt, Adams, Richstone, et al. (2011), Astrophys. J. 729, 119"
+    doi: "10.1088/0004-637X/729/2/119"
+    arxiv: "1101.1954"
+    role: "original stellar-dynamical mass"
+  walsh2013:
+    citation: "Walsh, Barth, Ho & Sarzi (2013), Astrophys. J. 770, 86"
+    doi: "10.1088/0004-637X/770/2/86"
+    arxiv: "1304.7273"
+    role: "original gas-dynamical mass"
+  mertens2016:
+    citation: "Mertens, Lobanov, Walker & Hardee (2016), Astron. Astrophys. 595, A54"
+    doi: "10.1051/0004-6361/201628829"
+    arxiv: "1608.05063"
+    role: "jet viewing angle"
+  walker2018:
+    citation: "Walker, Hardee, Davies, Ly & Junor (2018), Astrophys. J. 855, 128"
+    doi: "10.3847/1538-4357/aaafcc"
+    arxiv: "1802.06166"
+    role: "jet viewing angle adopted by the EHT"
+source_access: "eht2019i and eht2019vi: text extracted from the arXiv PDFs (arxiv.org/pdf/1906.11238 and 1906.11243; no ar5iv rendering exists); all other references: ar5iv HTML renderings of the arXiv versions (ar5iv.labs.arxiv.org). Read by Claude on 2026-11-16. The journal versions were not compared. Titles, journals, volumes and article numbers of all references were confirmed with Crossref (api.crossref.org) on 2026-11-16."
+notes: >
+  Three caveats that a fit with this dataset inherits. (i) The measured quantity is the
+  emission-ring diameter; the step to theta_g uses GRMHD simulations in the Kerr metric,
+  so the bound is not model independent. (ii) delta compares mass-to-distance ratios; its
+  use as a bound on the shadow radius follows Psaltis et al. (2020) and Kocherlakota et
+  al. (2021). (iii) The result depends entirely on the mass prior: stellar dynamics gives
+  delta = -0.01 +- 0.17, gas dynamics delta = 0.78 +- 0.3. In the PDF text extraction the
+  asymmetric uncertainties of Tables 7 and 9 appear as 'value minus plus' (e.g. '3.62 0.34
+  0.60'); the order was fixed by comparison with Table 1 of Paper I, where M(stars) is
+  typeset as 6.2 (+1.1, -0.6).
+todo:
+  - "Human check of every number against the published ApJL versions, in particular the signs of the asymmetric uncertainties in Tables 7 and 9 of Paper VI (read from a PDF text extraction)."
+  - "No 2-sigma bound on r_sh/M was found in the papers read; only the 68% interval is stored, so shadow_likelihood='interval' needs shadow_level='1sigma'."
+  - "The three distance papers combined by the EHT (Bird et al. 2010; Blakeslee et al. 2009; Cantiello et al. 2018) were not read."

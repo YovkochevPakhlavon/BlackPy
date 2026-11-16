@@ -55,7 +55,13 @@ from blackpy.errors import (
 from blackpy.geometry.horizons import static_domain_core
 from blackpy.infer.priors import Gaussian, Isotropic, Prior, Uniform
 from blackpy.light.plasma import PlasmaModel, static_shadow_radius_core, with_plasma
-from blackpy.light.rotating import area_radius_core, mean_radius_core, require_separable
+from blackpy.light.rotating import (
+    BAMBI2019_FACTOR,
+    _shape_core,
+    check_delta_c_definition,
+    require_separable,
+    warn_if_definition_mismatch,
+)
 from blackpy.light.shadow import shadow_radius_core
 from blackpy.orbits.circular import direction_sign, require_equatorial_orbits
 from blackpy.orbits.qpo import QPOModel, get_qpo_model
@@ -93,8 +99,8 @@ class Problem:
     priors : list of Prior
         One prior per sampled parameter.
     kinds : list of str
-        ``"metric"``, ``"mass"``, ``"radius"`` or ``"nuisance"`` (the shadow
-        inclination) for each parameter.
+        ``"metric"``, ``"plasma"``, ``"mass"``, ``"radius"`` or
+        ``"nuisance"`` (a shadow inclination) for each parameter.
     fixed : dict
         Metric parameters held fixed, with their values.
     log_likelihood : callable
@@ -110,10 +116,11 @@ class Problem:
         Vectorised version for arrays of shape ``(n, ndim)``.
     data_table : list of dict
         One row per fitted datum: ``label``, ``dataset``, ``kind``
-        (``"qpo"``, ``"shadow"`` or ``"shadow_interval"``), and either
-        ``value``, ``err_minus``, ``err_plus`` (Gaussian or split-normal
-        datum) or ``lower``, ``upper`` (interval). Used by the goodness of
-        fit and by the posterior predictive check.
+        (``"qpo"``, ``"shadow"``, ``"shadow_interval"`` or
+        ``"circularity"``), and either ``value``, ``err_minus``,
+        ``err_plus`` (Gaussian or split-normal datum), ``lower``, ``upper``
+        (interval) or ``upper`` (circularity bound). Used by the goodness
+        of fit and by the posterior predictive check.
     """
 
     param_names: list[str]
@@ -189,6 +196,10 @@ def build_problem(
     require_black_hole: bool | None = None,
     shadow_size: str = "mean",
     plasma: PlasmaModel | None = None,
+    shared: Sequence[str] | None = None,
+    per_source: Sequence[str] | None = None,
+    shadow_mass_prior: str | Mapping[str, str] | None = None,
+    circularity: str | None = None,
 ) -> Problem:
     """Assemble parameters, priors and the joint log-likelihood.
 
@@ -208,7 +219,9 @@ def build_problem(
         registry mass measurement (Gaussian, truncated at zero) for the mass
         and ``Uniform(1, 50)`` for the radius. With a rotating metric and
         shadow data, ``"inclination"`` (degrees) is sampled as a nuisance
-        parameter; its default prior is ``Isotropic(0, 90)``.
+        parameter; its default prior is ``Isotropic(0, 90)``. Per-source
+        parameters (see ``per_source``) are named ``<name>_<source>``; a
+        prior under the bare name applies to every source without its own.
     fixed : mapping of str -> float
         Values of metric parameters that are not sampled (default: the
         parameter's default value). ``fixed={"inclination": 30.0}`` fixes
@@ -221,7 +234,7 @@ def build_problem(
     warn : bool
         Emit the integrity warnings (circular mass prior, ignored
         low-frequency QPO, static metric for a rotating source, data not
-        verified by a human).
+        verified by a human, circularity bound with another definition).
     direction : {"prograde", "retrograde"}
         Rotating metrics: orbit direction of the QPO-emitting matter.
         Counter-rotation can equally be described by a negative spin.
@@ -246,6 +259,34 @@ def build_problem(
         the plasma is opaque along the path get zero likelihood. A plasma
         parameter is usually degenerate with the metric parameters: the
         prior-dominance and degeneracy guards apply to it.
+    shared, per_source : sequence of str, optional
+        Metric (or plasma) parameters that have one value for all sources
+        (``shared``) or one value per dataset (``per_source``; the copies
+        are named ``<name>_<source>``, e.g. ``a_m87``). Metric parameters
+        are in units of each object's own mass, so a charge-like parameter
+        has no reason to be equal for two black holes. **With two or more
+        shadow datasets every sampled metric parameter must be listed in
+        one of the two**; the spin is per source unless listed in
+        ``shared``, and each shadow source has its own inclination
+        (``inclination_<source>``). In all other fits the default is
+        ``shared``, as in earlier versions.
+    shadow_mass_prior : str or mapping of str -> str, optional
+        Which mass prior of a shadow dataset the Gaussian bound on
+        ``r_sh/M`` assumes (a key of ``dataset.mass_priors``, e.g.
+        ``"gas_dynamics"``), for all shadow datasets or per source
+        (``{"m87": "gas_dynamics"}``). Default: the one the dataset's bound
+        was published with. A mass prior that is not independent of the
+        image (``"eht_ring"`` for M87*) triggers a
+        :class:`blackpy.errors.CircularInferenceWarning`.
+    circularity : str, optional
+        Use the circularity bound of the shadow datasets that have one
+        (rotating metrics): parameter values whose shadow has a deviation
+        from circularity above the bound get zero likelihood. The value is
+        the **name of the definition** of the deviation from circularity
+        (see :func:`blackpy.light.deviation_from_circularity`); there is no
+        default. If it differs from the definition the bound was derived
+        for, a :class:`blackpy.errors.CircularityDefinitionWarning` is
+        raised.
 
     Returns
     -------
@@ -292,18 +333,61 @@ def build_problem(
         require_black_hole = rotating
     if shadow_sets and rotating:
         require_separable(metric)
+    if circularity is not None:
+        check_delta_c_definition(circularity)
+        if not rotating:
+            raise ValueError(
+                f"circularity='{circularity}' was requested, but the shadow of the static "
+                f"metric '{metric.name}' is a circle for every observer: the bound cannot "
+                "constrain it. Use a rotating metric or drop the option."
+            )
+        if not any(
+            d.circularity is not None and d.circularity.upper is not None for d in shadow_sets
+        ):
+            raise ValueError(
+                "circularity was requested, but none of the shadow datasets carries a "
+                "circularity bound."
+            )
 
-    names, labels, prior_list, kinds = [], [], [], []
-    overlap = set(fixed) & set(priors) & set(metric.param_names)
-    if overlap:
-        raise ValueError(f"Parameters {sorted(overlap)} have both a prior and a fixed value.")
+    # ------------------------------------------------------------------ parameter layout
+    slugs = [_slug(d.id) for d in datasets]
+    shadow_slugs = [_slug(d.id) for d in shadow_sets]
+    multi_shadow = len(shadow_sets) >= 2
+    shared_set, per_source_set = set(shared or ()), set(per_source or ())
+    unknown = (shared_set | per_source_set) - set(metric.param_names)
+    if unknown:
+        raise ValueError(
+            f"shared/per_source name unknown parameters {sorted(unknown)}. Parameters of this "
+            f"model: {list(metric.param_names)}."
+        )
+    if shared_set & per_source_set:
+        raise ValueError(
+            f"Parameters {sorted(shared_set & per_source_set)} are listed both as shared and "
+            "as per_source."
+        )
+    spin = getattr(metric, "spin_parameter", None)
+    if multi_shadow and spin is not None and spin not in shared_set:
+        per_source_set.add(spin)
+    if per_source_set and len(datasets) < 2:
+        raise ValueError("per_source needs at least two datasets.")
+
+    def copy_name(name: str, slug: str) -> str:
+        return f"{name}_{slug}"
+
     uses_inclination = bool(shadow_sets) and rotating
-    unknown_fixed = set(fixed) - set(metric.param_names) - ({INCLINATION} if rotating else set())
+    inclination_names = {
+        slug: (copy_name(INCLINATION, slug) if multi_shadow else INCLINATION)
+        for slug in shadow_slugs
+    }
+    allowed_fixed = set(metric.param_names)
+    allowed_fixed |= {copy_name(n, s) for n in per_source_set for s in slugs}
+    if rotating:
+        allowed_fixed |= {INCLINATION, *inclination_names.values()}
+    unknown_fixed = set(fixed) - allowed_fixed
     if unknown_fixed:
         raise ValueError(f"'fixed' contains unknown metric parameters {sorted(unknown_fixed)}.")
-    if INCLINATION in fixed and INCLINATION in priors:
-        raise ValueError("'inclination' has both a prior and a fixed value.")
-    if not uses_inclination and (INCLINATION in fixed or INCLINATION in priors):
+    inclination_keys = {INCLINATION, *inclination_names.values()}
+    if not uses_inclination and (inclination_keys & (set(fixed) | set(priors))):
         raise ValueError(
             "'inclination' is only a parameter when a rotating metric is fitted to shadow data"
             + (
@@ -313,14 +397,59 @@ def build_problem(
                 "observer."
             )
         )
-    fixed_values, free_index = {}, {}
+
+    names, labels, prior_list, kinds = [], [], [], []
+    base_of: dict[str, str] = {}
+    #: layout[slug][parameter] = ("free", index into theta) or ("fixed", value)
+    layout: dict[str, dict[str, tuple]] = {slug: {} for slug in slugs}
+    fixed_values: dict[str, float] = {}
+    undecided = []
+
+    def add_parameter(name, label, prior, kind, base):
+        names.append(name)
+        labels.append(label)
+        prior_list.append(prior)
+        kinds.append(kind)
+        base_of[name] = base
+        return len(names) - 1
+
     for par in metric.parameters:
+        kind = "plasma" if par.name in plasma_names else "metric"
+        if par.name in per_source_set:
+            generic = priors.get(par.name)
+            for d, slug in zip(datasets, slugs, strict=True):
+                key = copy_name(par.name, slug)
+                if key in fixed and (key in priors):
+                    raise ValueError(f"Parameter '{key}' has both a prior and a fixed value.")
+                prior = priors.pop(key, None)
+                if prior is None and key not in fixed:
+                    prior = generic
+                if prior is not None:
+                    label = rf"{par.symbol}^{{\rm {d.object}}}"
+                    layout[slug][par.name] = (
+                        "free",
+                        add_parameter(key, label, prior, kind, par.name),
+                    )
+                else:
+                    value = fixed.get(key, fixed.get(par.name, par.default))
+                    if value is None:
+                        raise ValueError(
+                            f"Per-source parameter '{key}' has no prior, no fixed value and no "
+                            f"default. Add priors={{'{key}': ...}} or fixed={{'{key}': value}}."
+                        )
+                    layout[slug][par.name] = ("fixed", float(value))
+                    fixed_values[key] = float(value)
+            priors.pop(par.name, None)
+            continue
         if par.name in priors:
-            free_index[par.name] = len(names)
-            names.append(par.name)
-            labels.append(par.symbol)
-            prior_list.append(priors.pop(par.name))
-            kinds.append("plasma" if par.name in plasma_names else "metric")
+            if par.name in fixed:
+                raise ValueError(f"Parameters ['{par.name}'] have both a prior and a fixed value.")
+            if multi_shadow and par.name not in shared_set:
+                undecided.append(par.name)
+            entry = (
+                "free",
+                add_parameter(par.name, par.symbol, priors.pop(par.name), kind, par.name),
+            )
         else:
             value = fixed.get(par.name, par.default)
             if value is None:
@@ -328,11 +457,23 @@ def build_problem(
                     f"Metric parameter '{par.name}' has no prior, no fixed value and no default. "
                     f"Add priors={{'{par.name}': ...}} or fixed={{'{par.name}': value}}."
                 )
+            entry = ("fixed", float(value))
             fixed_values[par.name] = float(value)
+        for slug in slugs:
+            layout[slug][par.name] = entry
+    if undecided:
+        objects = [d.object for d in shadow_sets]
+        raise ValueError(
+            f"This fit combines the shadows of {objects}. The sampled parameter(s) {undecided} "
+            "are in units of each object's own mass, so they need not be equal for different "
+            "black holes: say explicitly whether each is common to all sources, "
+            f"shared={undecided}, or has one value per source, per_source={undecided} (the "
+            f"copies are then named e.g. '{undecided[0]}_{shadow_slugs[0]}')."
+        )
 
     generic_mass = priors.pop("M", None)
     generic_radius = priors.pop("r", None)
-    source_index, circular, ignored_low, used_low, rotating_sources = [], [], [], [], []
+    source_index, circular, ignored_low, used_low, rotating_sources = {}, [], [], [], []
     for d in qpo_sets:
         slug = _slug(d.id)
         if not d.has_frequencies:
@@ -358,25 +499,34 @@ def build_problem(
             (used_low if (use_low_frequency and d.is_triplet) else ignored_low).append(d.id)
         if not rotating and (d.low is not None or d.spin is not None):
             rotating_sources.append(d.id)
-        source_index.append((len(names), len(names) + 1))
-        names += [f"M_{slug}", f"r_{slug}"]
-        labels += [rf"M_{{\rm {d.object}}}/M_\odot", rf"r_{{\rm {d.object}}}/M"]
-        prior_list += [mass_prior, radius_prior]
-        kinds += ["mass", "radius"]
-    inclination_index, inclination_fixed = None, None
+        i_mass = add_parameter(
+            f"M_{slug}", rf"M_{{\rm {d.object}}}/M_\odot", mass_prior, "mass", f"M_{slug}"
+        )
+        i_radius = add_parameter(
+            f"r_{slug}", rf"r_{{\rm {d.object}}}/M", radius_prior, "radius", f"r_{slug}"
+        )
+        source_index[slug] = (i_mass, i_radius)
+
+    #: inclination[slug] = ("free", index) or ("fixed", degrees)
+    inclination: dict[str, tuple] = {}
     if uses_inclination:
-        if INCLINATION in fixed:
-            inclination_fixed = float(fixed[INCLINATION])
-            if not 0.0 <= inclination_fixed <= 180.0:
-                raise ValueError("The fixed inclination must lie between 0 and 180 degrees.")
-        else:
-            inclination_index = len(names)
-            names.append(INCLINATION)
-            labels.append(r"i\ [{}^\circ]")
-            prior_list.append(
-                priors.pop(INCLINATION, None) or Isotropic(*DEFAULT_INCLINATION_PRIOR)
-            )
-            kinds.append("nuisance")
+        generic_prior = priors.get(INCLINATION) if multi_shadow else None
+        for d, slug in zip(shadow_sets, shadow_slugs, strict=True):
+            key = inclination_names[slug]
+            if key in fixed and key in priors:
+                raise ValueError(f"'{key}' has both a prior and a fixed value.")
+            value = fixed.get(key, fixed.get(INCLINATION) if key not in priors else None)
+            if value is not None and key not in priors:
+                value = float(value)
+                if not 0.0 <= value <= 180.0:
+                    raise ValueError("The fixed inclination must lie between 0 and 180 degrees.")
+                inclination[slug] = ("fixed", value)
+                continue
+            prior = priors.pop(key, None) or generic_prior or Isotropic(*DEFAULT_INCLINATION_PRIOR)
+            label = r"i\ [{}^\circ]" if not multi_shadow else rf"i_{{\rm {d.object}}}\ [{{}}^\circ]"
+            inclination[slug] = ("free", add_parameter(key, label, prior, "nuisance", INCLINATION))
+        if multi_shadow:
+            priors.pop(INCLINATION, None)
     if priors:
         raise ValueError(
             f"Priors were given for unknown parameters {sorted(priors)}. "
@@ -386,20 +536,41 @@ def build_problem(
     if not names:
         raise ValueError("Nothing to sample: give a prior for at least one parameter.")
 
-    if shadow_sets:
-        reference = {
-            **fixed_values,
-            **{n: float(prior_list[i].ppf(0.5)) for n, i in free_index.items()},
-        }
-        if not metric.is_asymptotically_flat(**reference):
+    # ------------------------------------------------------------------ shadow data
+    def reference_parameters(slug):
+        out = {}
+        for name, (state, value) in layout[slug].items():
+            out[name] = float(prior_list[value].ppf(0.5)) if state == "free" else value
+        return out
+
+    for slug in shadow_slugs:
+        if not metric.is_asymptotically_flat(**reference_parameters(slug)):
             raise NotAsymptoticallyFlatError(
                 f"The shadow likelihood compares r_sh/M seen from infinity, but metric "
                 f"'{metric.name}' is not asymptotically flat."
             )
-    shadow_terms = []
-    for d in shadow_sets:
+    if isinstance(shadow_mass_prior, str):
+        chosen_mass_prior = {slug: shadow_mass_prior for slug in shadow_slugs}
+    else:
+        chosen_mass_prior = dict(shadow_mass_prior or {})
+        unknown = set(chosen_mass_prior) - set(shadow_slugs)
+        if unknown:
+            raise ValueError(
+                f"shadow_mass_prior names unknown shadow sources {sorted(unknown)}; shadow "
+                f"sources of this fit: {shadow_slugs}."
+            )
+    shadow_terms, circular_shadow = [], []
+    for d, slug in zip(shadow_sets, shadow_slugs, strict=True):
+        key = chosen_mass_prior.get(slug)
+        if key is not None and shadow_likelihood != "gaussian":
+            raise ValueError(
+                "shadow_mass_prior selects the Gaussian bound obtained with a given mass prior; "
+                "it cannot be combined with shadow_likelihood='interval'."
+            )
+        if d.mass_prior_is_independent(key) is False:
+            circular_shadow.append((d.id, key or "/".join(d.assumed_mass_priors)))
         if shadow_likelihood == "gaussian":
-            shadow_terms.append(("gaussian", *d.gaussian()))
+            shadow_terms.append(("gaussian", *d.gaussian(key)))
         else:
             if shadow_level not in d.bounds or None in d.bounds[shadow_level]:
                 raise BlackPyError(
@@ -415,6 +586,17 @@ def build_problem(
                 "from a QPO fit in the Kerr/Schwarzschild metric, or its origin is unknown). "
                 "Using it to constrain another metric with the same QPOs is circular inference; "
                 "pass your own prior or drop the source.",
+                CircularInferenceWarning,
+                stacklevel=3,
+            )
+        if circular_shadow:
+            detail = ", ".join(f"'{key}' of {dataset_id}" for dataset_id, key in circular_shadow)
+            warnings.warn(
+                f"The shadow bound in units of M rests on a mass prior that is not independent "
+                f"of the image: {detail}. That mass was obtained from the same horizon-scale "
+                "image by assuming a Kerr black hole, so using it to test another metric with "
+                "the shadow size is circular inference. Choose an independent mass prior with "
+                "shadow_mass_prior=... (see dataset.mass_priors).",
                 CircularInferenceWarning,
                 stacklevel=3,
             )
@@ -450,24 +632,7 @@ def build_problem(
                 stacklevel=3,
             )
 
-    qpo_obs = [
-        (
-            d.upper.value,
-            d.upper.err_minus,
-            d.upper.err_plus,
-            d.lower.value,
-            d.lower.err_minus,
-            d.lower.err_plus,
-        )
-        for d in qpo_sets
-    ]
-    low_obs = [
-        (d.low.value, d.low.err_minus, d.low.err_plus) if d.id in used_low else None
-        for d in qpo_sets
-    ]
-    param_order = metric.param_names
-    size_core = mean_radius_core if shadow_size == "mean" else area_radius_core
-
+    # ------------------------------------------------------------------ data table
     # One row per fitted datum, in the order in which ``model_values`` returns them.
     data_table = []
 
@@ -484,19 +649,28 @@ def build_problem(
             }
         )
 
-    for d, obs, low in zip(qpo_sets, qpo_obs, low_obs, strict=True):
+    low_obs = {}
+    for d in qpo_sets:
         slug = _slug(d.id)
-        gaussian_row(f"nu_upper[{slug}]", d, "qpo", obs[0], obs[1], obs[2], "Hz")
-        gaussian_row(f"nu_lower[{slug}]", d, "qpo", obs[3], obs[4], obs[5], "Hz")
-        if low is not None:
-            gaussian_row(f"nu_low[{slug}]", d, "qpo", *low, "Hz")
-    for d, (kind, a, b) in zip(shadow_sets, shadow_terms, strict=True):
+        gaussian_row(
+            f"nu_upper[{slug}]", d, "qpo", d.upper.value, d.upper.err_minus, d.upper.err_plus, "Hz"
+        )
+        gaussian_row(
+            f"nu_lower[{slug}]", d, "qpo", d.lower.value, d.lower.err_minus, d.lower.err_plus, "Hz"
+        )
+        low_obs[slug] = d.id in used_low
+        if low_obs[slug]:
+            gaussian_row(
+                f"nu_low[{slug}]", d, "qpo", d.low.value, d.low.err_minus, d.low.err_plus, "Hz"
+            )
+    circularity_bounds = {}
+    for d, slug, (kind, a, b) in zip(shadow_sets, shadow_slugs, shadow_terms, strict=True):
         if kind == "gaussian":
-            gaussian_row(f"r_sh[{_slug(d.id)}]", d, "shadow", a, b, b, "M")
+            gaussian_row(f"r_sh[{slug}]", d, "shadow", a, b, b, "M")
         else:
             data_table.append(
                 {
-                    "label": f"r_sh[{_slug(d.id)}]",
+                    "label": f"r_sh[{slug}]",
                     "dataset": d.id,
                     "kind": "shadow_interval",
                     "lower": float(a),
@@ -504,41 +678,83 @@ def build_problem(
                     "unit": "M",
                 }
             )
+        bound = d.circularity
+        if circularity is not None and bound is not None and bound.upper is not None:
+            if warn:
+                warn_if_definition_mismatch(
+                    circularity, bound.definition, f"The circularity bound of '{d.id}'"
+                )
+            circularity_bounds[slug] = float(bound.upper)
+            data_table.append(
+                {
+                    "label": f"delta_c[{slug}]",
+                    "dataset": d.id,
+                    "kind": "circularity",
+                    "upper": float(bound.upper),
+                    "definition": circularity,
+                    "bound_definition": bound.definition,
+                    "unit": "",
+                }
+            )
 
-    def metric_parameters(theta):
+    # ------------------------------------------------------------------ model
+    param_order = metric.param_names
+
+    def metric_parameters(theta, slug):
         if not param_order:
             return jnp.zeros((0,))
-        return jnp.stack(
-            [
-                theta[free_index[n]] if n in free_index else jnp.asarray(fixed_values[n])
-                for n in param_order
-            ]
-        )
+        values = []
+        for name in param_order:
+            state, value = layout[slug][name]
+            values.append(theta[value] if state == "free" else jnp.asarray(value))
+        return jnp.stack(values)
+
+    def shadow_values(theta, slug):
+        """Shadow size and (if requested) deviation from circularity of one source."""
+        p = metric_parameters(theta, slug)
+        if not rotating:
+            size = (
+                static_shadow_radius_core(metric, p)
+                if plasma is not None
+                else shadow_radius_core(metric, p)
+            )
+            return size, None
+        state, value = inclination[slug]
+        degrees = theta[value] if state == "free" else jnp.asarray(value)
+        observables, asymmetry = _shape_core(metric, p, jnp.radians(degrees), jnp.inf, n=128)
+        size = observables.mean_radius if shadow_size == "mean" else observables.area_radius
+        if circularity == "jp_asymmetry":
+            shape = asymmetry
+        elif circularity == "bambi2019":
+            shape = BAMBI2019_FACTOR * observables.delta_c
+        else:
+            shape = observables.delta_c
+        return size, shape
 
     def model_values(theta):
         """Model prediction for every row of ``data_table``."""
-        p = metric_parameters(theta)
         values = []
-        for (i_mass, i_radius), low in zip(source_index, low_obs, strict=True):
+        for d in qpo_sets:
+            slug = _slug(d.id)
+            p = metric_parameters(theta, slug)
+            i_mass, i_radius = source_index[slug]
             mass, radius = theta[i_mass], theta[i_radius]
             nu_u, nu_l = model.frequencies_core(metric, p, radius, mass, sign)
             values += [nu_u, nu_l]
-            if low is not None:
+            if low_obs[slug]:
                 values.append(model.low_frequency_core(metric, p, radius, mass, sign))
-        if shadow_terms:
-            if rotating:
-                inclination = (
-                    theta[inclination_index]
-                    if inclination_index is not None
-                    else jnp.asarray(inclination_fixed)
-                )
-                r_sh = size_core(metric, p, jnp.radians(inclination))
-            elif plasma is not None:
-                r_sh = static_shadow_radius_core(metric, p)
-            else:
-                r_sh = shadow_radius_core(metric, p)
-            values += [r_sh] * len(shadow_terms)
+        cache = {}
+        for slug in shadow_slugs:
+            key = (tuple(layout[slug].items()), inclination.get(slug))
+            if key not in cache:
+                cache[key] = shadow_values(theta, slug)
+            size, shape = cache[key]
+            values.append(size)
+            if slug in circularity_bounds:
+                values.append(shape)
         return jnp.stack(values)
+
+    distinct_layouts = {tuple(layout[slug].items()): slug for slug in slugs}
 
     def log_likelihood(theta):
         values = model_values(theta)
@@ -547,18 +763,28 @@ def build_problem(
             if row["kind"] == "shadow_interval":
                 inside = (values[k] >= row["lower"]) & (values[k] <= row["upper"])
                 total = total + jnp.where(inside, -math.log(row["upper"] - row["lower"]), -jnp.inf)
+            elif row["kind"] == "circularity":
+                total = total + jnp.where(values[k] <= row["upper"], 0.0, -jnp.inf)
             else:
                 total = total + _split_normal_logpdf(
                     values[k], row["value"], row["err_minus"], row["err_plus"]
                 )
         if require_black_hole:
-            p = metric_parameters(theta)
-            allowed = jnp.isfinite(static_domain_core(metric, p)[0])
-            if rotating:
-                allowed = allowed & metric.in_domain_array(p)
-            total = jnp.where(allowed, total, -jnp.inf)
+            for slug in distinct_layouts.values():
+                p = metric_parameters(theta, slug)
+                allowed = jnp.isfinite(static_domain_core(metric, p)[0])
+                if rotating:
+                    allowed = allowed & metric.in_domain_array(p)
+                total = jnp.where(allowed, total, -jnp.inf)
         return jnp.where(jnp.isfinite(total), total, -jnp.inf)
 
+    inclination_record = {
+        inclination_names[slug]: ("sampled" if state == "free" else value)
+        for slug, (state, value) in inclination.items()
+    }
+    single_inclination = None
+    if uses_inclination and not multi_shadow:
+        single_inclination = inclination_record[INCLINATION]
     description = {
         "metric": {
             "name": metric.name,
@@ -594,9 +820,20 @@ def build_problem(
         ],
         "shadow_likelihood": shadow_likelihood if shadow_sets else None,
         "shadow_level": shadow_level if shadow_sets and shadow_likelihood == "interval" else None,
+        "shadow_mass_priors": {
+            slug: chosen_mass_prior.get(slug) or list(d.assumed_mass_priors)
+            for d, slug in zip(shadow_sets, shadow_slugs, strict=True)
+        },
+        "circular_shadow_mass_priors": [list(item) for item in circular_shadow],
+        "circularity": None
+        if circularity is None
+        else {"definition": circularity, "bounds": circularity_bounds},
         "priors": {n: pr.to_dict() for n, pr in zip(names, prior_list, strict=True)},
         "data_table": data_table,
         "parameter_kinds": dict(zip(names, kinds, strict=True)),
+        "parameter_base": dict(base_of),
+        "shared": sorted(shared_set),
+        "per_source": sorted(per_source_set),
         "circular_mass_priors": circular,
         "ignored_low_frequency_qpos": ignored_low,
         "fitted_low_frequency_qpos": used_low,
@@ -604,9 +841,8 @@ def build_problem(
         "direction": "prograde" if sign > 0 else "retrograde",
         "require_black_hole": bool(require_black_hole),
         "shadow_size": (shadow_size + " radius") if uses_inclination else None,
-        "inclination_deg": inclination_fixed
-        if inclination_fixed is not None
-        else ("sampled" if uses_inclination else None),
+        "inclination_deg": single_inclination,
+        "inclinations_deg": inclination_record or None,
     }
     return Problem(
         param_names=names,
@@ -621,6 +857,31 @@ def build_problem(
         predict_batch=jax.jit(jax.vmap(model_values)),
         data_table=data_table,
     )
+
+
+def inclination_prior(dataset, *, low: float = 0.0, high: float = 90.0) -> Gaussian:
+    """Gaussian prior on the inclination (degrees) from a dataset's measured value.
+
+    The registry stores a measured inclination (for M87* the viewing angle of
+    the jet) but the likelihood never uses it on its own: equating the jet
+    axis with the spin axis of the black hole is an assumption. Pass the
+    result explicitly, e.g. ``priors={"inclination": inclination_prior(m87)}``.
+
+    Parameters
+    ----------
+    dataset : ShadowDataset or registry id
+    low, high : float
+        Truncation of the Gaussian, in degrees.
+    """
+    if isinstance(dataset, str):
+        dataset = load(dataset)
+    measured = getattr(dataset, "inclination", None)
+    if measured is None or not measured.is_complete:
+        raise BlackPyError(
+            f"Dataset '{dataset.id}' has no measured inclination with an uncertainty. Pass your "
+            "own prior, e.g. Gaussian(mean, sigma, low=0, high=90) in degrees."
+        )
+    return Gaussian(measured.value, measured.sigma, low=low, high=high)
 
 
 def simulate_qpo_dataset(

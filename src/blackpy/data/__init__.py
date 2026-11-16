@@ -13,6 +13,7 @@ checked them.
 from blackpy.data.registry import available, load, load_file, parse_dataset, registry_path
 from blackpy.data.registry import list_datasets as list  # noqa: A004
 from blackpy.data.schema import (
+    CircularityBound,
     Dataset,
     MassPrior,
     Measurement,
@@ -24,6 +25,7 @@ from blackpy.data.schema import (
 )
 
 __all__ = [
+    "CircularityBound",
     "Dataset",
     "MassPrior",
     "Measurement",

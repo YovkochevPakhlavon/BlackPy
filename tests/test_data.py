@@ -13,6 +13,7 @@ import blackpy as bp
 from blackpy.data import MassPrior, Measurement, QPODataset, RegistryError, ShadowDataset
 
 EXPECTED = {
+    "eht/m87",
     "eht/sgra",
     "qpo/gro_j1655_40",
     "qpo/xte_j1859_226",
@@ -61,9 +62,9 @@ def test_typed_objects_and_ordering():
     assert isinstance(gro.upper, Measurement) and gro.upper.unit == "Hz"
     assert gro.upper.value > gro.lower.value > gro.low.value
     assert gro.mass_prior.unit == "Msun" and gro.mass_prior.independent is True
-    for dataset_id in EXPECTED - {"eht/sgra"}:
+    for dataset_id in EXPECTED:
         d = bp.data.load(dataset_id)
-        if d.has_frequencies:
+        if isinstance(d, QPODataset) and d.has_frequencies:
             assert d.upper.value > d.lower.value
 
 
@@ -172,6 +173,6 @@ def test_open_questions_are_loaded_and_listed(capsys):
     """Schema only: unresolved questions about published values travel with the dataset."""
     xte = bp.data.load("qpo/xte_j1859_226")
     assert len(xte.open_questions) == 1 and "uncertainties" in xte.open_questions[0]
-    assert bp.data.load("eht/sgra").open_questions == ()
+    assert bp.data.load("qpo/gro_j1655_40").open_questions == ()
     bp.data.list()
     assert "OPEN QUESTION:" in capsys.readouterr().out

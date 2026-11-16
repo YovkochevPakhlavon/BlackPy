@@ -930,11 +930,20 @@ paper and with papers that adopted its exclusion region.
 
 **Which definition does a published "10%" bound refer to?** It depends on
 the paper, and it must be recorded with the bound (the registry field
-`circularity.definition`, section 20). In particular the EHT M87\* papers do
-not define \(\Delta C\) at all: Paper VI measures the fractional spread of
-the ring *diameter* over position angles, which is none of the three
-quantities above, so any use of the EHT statement with a shadow-contour
-\(\Delta C\) triggers the warning.
+`circularity.definition`, section 20). The EHT statement for M87\* is in
+Paper I (ApJL 875, L1, sections 7 and 8): the axis ratio of the emission
+ring is below 4:3, which "corresponds to a 10% deviation from circularity in
+terms of root-mean-square distance from an average radius". This is a
+fractional rms (an ellipse with axis ratio 4:3 has fractional rms 0.101), so
+the bound is recorded with the definition `"fractional_rms"`, with two
+caveats: it refers to the emission ring, not to the shadow boundary, and it
+is derived from an axis ratio. Paper VI (section 7.4) measures yet another
+quantity, the fractional spread (standard deviation over mean) of the ring
+diameter along different orientations. Bambi et al. (2019) compare the same
+"10%" with the quantity of their Fig. 1, which is four times the fractional
+rms; using `"bambi2019"` with the EHT bound therefore triggers the warning.
+With the matching definition the EHT bound excludes no Kerr black hole
+(largest Kerr value 0.050).
 
 Tests (`tests/test_circularity.py`): relations between the definitions; the
 Johannsen–Psaltis quantity against a direct polygon computation
@@ -1169,3 +1178,86 @@ correlation (Pearson or Spearman) between a plasma parameter and a metric
 parameter reaches 0.9; both are tested. Relevance: for Sgr A\* and M87\* at
 230 GHz the plasma frequency near the horizon is far below the observing
 frequency, so the effect matters only at low radio frequencies.
+
+## 20. Several shadow sources: M87\* and the role of the mass prior
+
+### 20.1 From the M87\* image to a bound on \(r_{\rm sh}/M\). Status: transcribed, chain documented
+
+The registry entry `eht/m87` records each step with its location. Sources
+read: EHT Collaboration (2019), Paper I (ApJL 875, L1) and Paper VI (ApJL
+875, L6), from the arXiv PDFs; Psaltis et al. (2020), Phys. Rev. Lett. 125,
+141104; Kocherlakota et al. (2021), Phys. Rev. D 103, 104047; Gebhardt et
+al. (2011); Walsh et al. (2013); Mertens et al. (2016); Walker et al. (2018).
+
+1. **Measured:** the diameter of the emission ring, \(d = 42 \pm 3\,\mu\)as
+   (Paper I, Table 1). This is not the shadow.
+2. **Calibrated:** the angular gravitational radius
+   \(\theta_g = GM/(c^2D) = d/\alpha\), with \(\alpha\) calibrated on GRMHD
+   simulations *in the Kerr metric* (Paper I, section 7, Table 1).
+3. **Compared** with an independent mass-to-distance ratio
+   \(\theta_{\rm dyn}\) through (Paper VI, Eq. (31))
+   \[ \delta \equiv \frac{\theta_g}{\theta_{\rm dyn}} - 1 . \]
+   The result depends on the mass prior (Paper VI, section 9.5 and
+   Table 9): consistent with zero for the stellar-dynamical mass, and
+   \(+0.78\) for the gas-dynamical one.
+4. **Interpreted** as the fractional deviation of the shadow radius from
+   the Schwarzschild value, \(r_{\rm sh}/M = 3\sqrt3\,(1 + \delta)\) (Psaltis
+   et al. 2020; Kocherlakota et al. 2021, Eqs. (13)–(14)).
+
+Consequences built into the code:
+
+- A shadow bound in units of \(M\) always assumes a mass prior. Each
+  `ShadowDataset` lists its `mass_priors`, each with `independent`
+  (true/false), and names the ones its default bound assumes
+  (`assumed_mass_priors`). `shadow_mass_prior="gas_dynamics"` selects the
+  bound obtained with another prior. If no \(\delta\) was published for the
+  chosen prior it is computed from step 3 with the stored \(\theta_g\) and
+  \(\theta_{\rm dyn}\), the symmetrised relative uncertainties being added in
+  quadrature (a Gaussian approximation).
+- A mass obtained from the image itself (`eht_ring` for M87\*) is not
+  independent: steps 2 and 3 then compare the image with itself. Using it
+  raises a `CircularInferenceWarning`.
+- The stored inclination of M87\* is the viewing angle of the *jet*
+  (Mertens et al. 2016, Eq. (4)). Equating it with the spin axis is an
+  assumption, so the likelihood never uses it by itself;
+  `blackpy.infer.inclination_prior(dataset)` turns it into a prior on
+  request.
+- The circularity bound carries its definition (section 17) and is applied
+  only when `circularity="<definition>"` is given: parameter values with a
+  larger deviation get zero likelihood. It is a bound, not a measurement,
+  so it has no pull and adds no degree of freedom (section 18).
+
+For Sgr A\* the registry now also stores the Keck (Do et al. 2019) and
+VLTI (GRAVITY Collaboration 2022) masses and distances whose \(\delta\)
+values Vagnozzi et al. (2023) average, with the angular gravitational radii
+of EHT Sgr A\* Paper VI (2022). The numbers quoted for the Keck analysis
+differ slightly between the three papers; all are stored with their
+locations (an open question in the file).
+
+### 20.2 Shared and per-source parameters
+
+Metric parameters are dimensionless, in units of each object's own mass: a
+charge-to-mass ratio or a deformation has no reason to be equal for two
+black holes, whereas a coupling constant of a theory, expressed in suitable
+units, might be. BlackPy does not decide. With two or more shadow datasets
+every sampled metric parameter must be listed in `shared=[...]` or in
+`per_source=[...]`; otherwise the fit is refused with a message that states
+the choice. Per-source copies are named `<name>_<source>`. The spin is per
+source unless it is listed in `shared`, and each shadow source has its own
+inclination `inclination_<source>` (isotropic prior by default). The black
+hole domain is applied to the parameters of every source. With one shadow
+dataset nothing changes with respect to version 0.2.
+
+The joint log-likelihood is the sum over the rows of the data table; row
+\(k\) of source \(s\) is compared with the model evaluated with the
+parameter vector of that source.
+
+Tests (`tests/test_shadow_sources.py`): schema of both registry files
+(structure only, no numbers); the deviation for a chosen mass prior against
+a hand computation on a synthetic file; refusal without an explicit choice;
+the joint likelihood for static and rotating metrics against hand
+computations; the circular-inference and circularity-definition warnings; a
+simulated two-source dataset recovers the injected parameters. Reproduced
+in `examples/11_m87_and_sgra_shadows.py`: the Reissner–Nordström shadow
+leaves the 68% interval of M87\* at \(Q/M = 0.904\); Kocherlakota et al.
+(2021) quote \(q \lesssim 0.90\).

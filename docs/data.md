@@ -35,6 +35,12 @@ d = bp.data.load("qpo/xte_j1550_564")
 | `intended_models` | QPO models used in the source papers |
 | `alternatives` | other published measurements, for reference |
 | `bounds`, `fractional_deviation` | shadow datasets: interval bounds and the Gaussian summary |
+| `assumed_mass_priors`, `mass_priors` (optional) | shadow datasets: the mass measurements of the source, each with `independent` (is it independent of the horizon-scale image?), `theta_g` and, where published, the `fractional_deviation` obtained with it; and the keys the default bound assumes |
+| `measured` (optional) | shadow datasets: what the experiment measured (ring diameter, image-based `theta_g`), for the record |
+| `distance`, `inclination` (optional) | shadow datasets: measurements with sources; the inclination is never used as a prior automatically |
+| `circularity` (optional) | shadow datasets: `upper`, the `definition` of the deviation from circularity the bound was derived for, and what it `applies_to` |
+| `other_values`, `preferred_reason` (optional, on any measurement) | other published values of the same quantity that disagree with the main one, each with its `location`, and why the main one is preferred |
+| `open_questions` (optional) | unresolved questions about published values (cannot be closed by re-reading the paper) |
 | `references` | citation, DOI, arXiv id, role |
 | `source_access`, `notes`, `todo` | provenance and open issues |
 

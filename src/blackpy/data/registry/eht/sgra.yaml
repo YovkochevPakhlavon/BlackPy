@@ -2,7 +2,7 @@ schema_version: 1
 id: eht/sgra
 object: Sgr A*
 data_type: shadow_bound
-dataset_version: "1"
+dataset_version: "2"
 verified_by_human: false
 description: >
   Bounds on the shadow radius of Sgr A* in units of its mass, derived by Vagnozzi et al.
@@ -25,13 +25,123 @@ fractional_deviation:
   unit: ""
   source: vagnozzi2023
   location: "Eq. (5): delta ~ -0.060 +- 0.065, with r_sh/M = 3 sqrt(3) (delta + 1)"
+assumed_mass_priors: [keck, vlti]
+mass_priors:
+  keck:
+    value: 3.964
+    err_minus: 0.054
+    err_plus: 0.054
+    unit: "1e6 Msun"
+    method: "orbit of the star S0-2 (Keck astrometry and spectroscopy), assuming general relativity"
+    independent: true
+    source: do2019
+    location: "Main text (results) and Supplementary text ('fit 2'): 'If we assume GR is true, then M_BH = (3.964 +- 0.047 +- 0.026) x 1e6 Msun and R_0 = 7,946 +- 50 +- 32 pc' (statistical, then systematic from a jackknife analysis)"
+    note: "Independent of the EHT image. The stored uncertainty is the quadrature sum of the statistical (0.047) and systematic (0.026) errors, computed by BlackPy."
+    preferred_reason: "These are the values printed in the paper that was read. The EHT Collaboration and Vagnozzi et al. quote slightly different numbers for the same analysis; they are kept below."
+    other_values:
+      - value: 3.951
+        err_minus: 0.047
+        err_plus: 0.047
+        source: eht2022vi
+        location: "eht2022vi, Sec. 2.1: 'M = (3.951 +- 0.047) x 1e6 Msun' with 'R_0 = (7935 +- 50) pc', attributed to the posterior of Do et al. (2019) that assumes general relativity; the same mass is in Table 1 of vagnozzi2023"
+        note: "Not found in the text of Do et al. (2019) as rendered by ar5iv, which gives 3.964 and 7946 pc for that fit."
+      - value: 3.984
+        err_minus: 0.064
+        err_plus: 0.064
+        source: do2019
+        location: "do2019, main text and Table 1: 'M_BH = (3.984 +- 0.058 +- 0.026) x 1e6 Msun and R_0 = 7,971 +- 59 +- 32 pc', for the fit with the redshift parameter free"
+        note: "Fit that does not assume general relativity; uncertainties added in quadrature by BlackPy."
+    theta_g:
+      value: 4.92
+      err_minus: 0.032
+      err_plus: 0.032
+      unit: muas
+      source: eht2022vi
+      location: "eht2022vi, Sec. 2.1: 'theta_g = (4.92 +- 0.03 +- 0.01) muas (Keck)'"
+      note: "Statistical and systematic errors added in quadrature by BlackPy."
+    fractional_deviation:
+      value: -0.04
+      err_minus: 0.10
+      err_plus: 0.09
+      unit: ""
+      source: vagnozzi2023
+      location: "vagnozzi2023, section 'Methodology', list before Eq. (5): 'Keck: delta = -0.04 +0.09 -0.10', quoting eht2022vi (Table 2 there lists -0.04 +0.09 -0.10)"
+  vlti:
+    value: 4.297
+    err_minus: 0.042
+    err_plus: 0.042
+    unit: "1e6 Msun"
+    method: "orbits of the stars S2, S29, S38 and S55 (VLTI/GRAVITY astrometry and spectroscopy)"
+    independent: true
+    source: gravity2022
+    location: "Sec. 6 (Conclusions): 'R_0 = (8277 +- 9) pc and M = (4.297 +- 0.012) x 1e6 Msun (statistical errors, see Gravity Coll. 2021 for a discussion of the systematics that are ~30 pc for R_0 and ~40,000 Msun for M)'"
+    note: "Independent of the EHT image. The stored uncertainty is the quadrature sum of the statistical error (0.012) and the systematic error 0.040 quoted in eht2022vi, Sec. 2.1 ('M = (4.297 +- 0.012 +- 0.040) x 1e6 Msun'), computed by BlackPy. vagnozzi2023 (Table 1) attributes these numbers to Abuter et al. (2020), which is the earlier paper below."
+    preferred_reason: "The numbers that Vagnozzi et al. (2023, Table 1) and the EHT Collaboration use are those of GRAVITY Collaboration (2022), although Vagnozzi et al. cite the 2020 paper; the 2020 values are kept below."
+    other_values:
+      - value: 4.261
+        err_minus: 0.012
+        err_plus: 0.012
+        source: gravity2020
+        location: "gravity2020, Appendix E, table 'Best-fit orbit parameters': M = 4.261 +- 0.012 x 1e6 Msun, R_0 = 8246.7 +- 9.3 pc (statistical)"
+        note: "Earlier GRAVITY result (detection of the Schwarzschild precession of S2)."
+    theta_g:
+      value: 5.125
+      err_minus: 0.022
+      err_plus: 0.022
+      unit: muas
+      source: eht2022vi
+      location: "eht2022vi, Sec. 2.1: 'theta_g = (5.125 +- 0.009 +- 0.020) muas (VLTI)'"
+      note: "Statistical and systematic errors added in quadrature by BlackPy."
+    fractional_deviation:
+      value: -0.08
+      err_minus: 0.09
+      err_plus: 0.09
+      unit: ""
+      source: vagnozzi2023
+      location: "vagnozzi2023, section 'Methodology', list before Eq. (5): 'VLTI: delta = -0.08 +0.09 -0.09', quoting eht2022vi (Table 2 there lists -0.08 +0.09 -0.09)"
+distance:
+  value: 8.277
+  err_minus: 0.034
+  err_plus: 0.034
+  unit: kpc
+  source: gravity2022
+  location: "Sec. 6 (Conclusions): 'R_0 = (8277 +- 9) pc' (statistical); systematic error 33 pc from eht2022vi, Sec. 2.1 ('R_0 = (8277 +- 9 +- 33) pc')"
+  note: "Uncertainties added in quadrature by BlackPy. The mass and the distance from stellar orbits are strongly correlated; a consistent pair must be taken from the same analysis."
+  preferred_reason: "Smallest uncertainty; the Keck distance, which goes with the Keck mass, differs by about 4% and is kept below."
+  other_values:
+    - value: 7.946
+      err_minus: 0.059
+      err_plus: 0.059
+      source: do2019
+      location: "do2019, main text and Supplementary text ('fit 2'): 'R_0 = 7,946 +- 50 +- 32 pc' assuming general relativity"
+      note: "Keck distance (goes with the mass prior 'keck'); errors added in quadrature by BlackPy. eht2022vi, Sec. 2.1, quotes 7935 +- 50 pc for the same analysis and vagnozzi2023, Table 1, prints 7.953 +- 0.050 +- 0.032 kpc."
 references:
   vagnozzi2023:
     citation: "Vagnozzi, Roy, Tsai, Visinelli, et al. (2023), Class. Quantum Grav. 40, 165007"
     doi: "10.1088/1361-6382/acd97b"
     arxiv: "2205.07787"
     role: "shadow-radius bounds"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+  eht2022vi:
+    citation: "Event Horizon Telescope Collaboration (2022), Astrophys. J. Lett. 930, L17 (Sgr A* Paper VI)"
+    doi: "10.3847/2041-8213/ac6756"
+    arxiv: "2311.09484"
+    role: "fractional deviations per mass prior, angular gravitational radii"
+  do2019:
+    citation: "Do, Hees, Ghez, et al. (2019), Science 365, 664"
+    doi: "10.1126/science.aav8137"
+    arxiv: "1907.10731"
+    role: "Keck mass and distance"
+  gravity2022:
+    citation: "GRAVITY Collaboration (2022), Astron. Astrophys. 657, L12"
+    doi: "10.1051/0004-6361/202142465"
+    arxiv: "2112.07478"
+    role: "VLTI mass and distance"
+  gravity2020:
+    citation: "GRAVITY Collaboration (2020), Astron. Astrophys. 636, L5"
+    doi: "10.1051/0004-6361/202037813"
+    arxiv: "2004.07187"
+    role: "earlier VLTI mass and distance (the paper cited by Vagnozzi et al.)"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared. Mass priors, distance and per-prior deviations (dataset version 2): do2019, gravity2020, gravity2022, eht2022vi and vagnozzi2023 read from their ar5iv HTML renderings on 2026-11-16 by Claude; bibliographic data of do2019, gravity2020, gravity2022 and eht2022vi confirmed with Crossref on 2026-11-16; the journal versions were not compared"
 notes: >
   The arXiv text gives 4.55 <~ r_sh/M <~ 5.22 (1 sigma, Eq. 7) and 4.21 <~ r_sh/M <~ 5.56
   (2 sigma, Eq. 8). These differ in the last digit of the lower limits from the values
@@ -39,5 +149,8 @@ notes: >
   description). They are consistent with Eq. (6) of the paper: 3 sqrt(3) (1 - 0.125) =
   4.547 and 3 sqrt(3) (1 - 0.19) = 4.209. The Gaussian likelihood uses Eq. (5).
 bibliography_check: "Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14."
+open_questions:
+  - "Which Keck numbers are right? Do et al. (2019), as read from ar5iv, give M = 3.964 x 1e6 Msun and R_0 = 7946 pc for the fit that assumes general relativity, whereas EHT Sgr A* Paper VI (Sec. 2.1) quotes 3.951 x 1e6 Msun and 7935 pc for it, and Vagnozzi et al. (2023, Table 1) print 3.951 and 7.953 kpc. The differences (0.3% in mass) are far below the 6.5% uncertainty of the shadow bound, so the default likelihood is unaffected."
 todo:
   - "Human check of Eqs. (5)-(8) against the published CQG version (lower limits 4.55/4.21 vs 4.54/4.20)."
+  - "Human check of the mass priors and distances added in dataset version 2 against the published papers; the number of the GRAVITY (2020) orbit table in the journal version was not determined."

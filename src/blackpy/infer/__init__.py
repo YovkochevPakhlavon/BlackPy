@@ -4,6 +4,7 @@ from blackpy.infer.fit import SAMPLERS, Fit
 from blackpy.infer.likelihood import (
     Problem,
     build_problem,
+    inclination_prior,
     simulate_qpo_dataset,
     simulate_shadow_dataset,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "Problem",
     "Uniform",
     "build_problem",
+    "inclination_prior",
     "prior_from_dict",
     "simulate_qpo_dataset",
     "simulate_shadow_dataset",
