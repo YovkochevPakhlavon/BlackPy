@@ -77,7 +77,7 @@ for metric, params in cases:
     print(f"{label:<32} {float(c.b_c):9.5f} {float(c.a_bar):9.5f} {float(c.b_bar):9.5f}")
 print("  (extremal Reissner-Nordstrom: Tsukamoto 2017 gives b_c = 4, a = sqrt 2 = 1.41421,")
 print(
-    f"   b = 2 sqrt 2 ln[4 (2 - sqrt 2)] - pi = {2 * math.sqrt(2) * math.log(4 * (2 - math.sqrt(2))) - math.pi:.5f})\n"
+    f"   b = 2 sqrt 2 ln[4 (2 - sqrt 2)] - pi = {2 * math.sqrt(2) * math.log(4 * (2 - math.sqrt(2))) - math.pi:.5f})\n"  # noqa: E501
 )
 
 # ----------------------------------------------------------------- 3. Sgr A* and M87*

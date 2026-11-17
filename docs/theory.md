@@ -1421,3 +1421,182 @@ is refused with `NotSeparableError`; nothing is special-cased. For generic
 deviations the surface \(N^2 = 0\) depends on \(\theta\); it is a sphere if
 \(\delta a_{20} + \delta a_{21} + \delta k_{21} = 0\) (the paper's condition
 \(a_{20} + a_{21} + k_{21} = 0\)), which `horizon_profile` reports.
+
+## 22. Fisher-matrix forecasts
+
+**Status: standard; derived for the likelihood of sections 11 and 16.** For
+independent Gaussian data with model values \(m_k(\theta)\) and priors
+\(\pi_i\),
+
+\[
+F_{ij} = \sum_k \frac{1}{\sigma_k^2}\frac{\partial m_k}{\partial\theta_i}
+         \frac{\partial m_k}{\partial\theta_j}
+         - \delta_{ij}\frac{\partial^2\ln\pi_i}{\partial\theta_i^2},
+\qquad \mathrm{Cov} = F^{-1} .
+\]
+
+The first term is minus the Hessian of \(\ln\mathcal{L}\) when the data
+equal the model at the fiducial point, so only the uncertainties of a
+dataset matter, not its central values. The prior term is \(1/s^2\) for a
+Gaussian of width \(s\), zero for a uniform prior, \(-1/\theta^2\) for a
+log-uniform one and \((\pi/180)^2/\sin^2 i\) for the isotropic inclination
+prior (degrees). The Jacobian \(\partial m_k/\partial\theta_i\) is obtained
+by forward-mode automatic differentiation of the same functions the
+likelihood uses, root finding included; no finite differences.
+
+**Traceability.** The whole log-likelihood is twice differentiable by
+forward-mode autodiff for QPO pairs, QPO triplets and shadow data, with
+static and rotating metrics: minus its autodiff Hessian equals \(F\) from
+the Jacobian to \(10^{-8}\) (tested). Reverse-mode differentiation does not
+work, because the safeguarded Newton iteration is a `while_loop`; this is
+why the optional gradient-based sampler of the specification was not added
+(a design note is in `DESIGN_NOTES.md`).
+
+**Degenerate directions.** \(F\) is diagonalised in units of the prior
+widths (half the central 68% interval of each prior). An eigenvalue below
+\(10^{-8}\) of the largest is a degenerate direction: it is reported as an
+eigenvector in parameter names, and every parameter with a component along
+it gets an infinite forecast uncertainty. A singular matrix is a result,
+not an error. This complements the correlation-based guard of section 16,
+which needs samples and misses non-monotonic degeneracies.
+
+**Limits (stated in the docstring, warned about at run time).** Gaussian
+approximation at the fiducial point; invalid where a prior boundary
+truncates the posterior (`ForecastWarning` if the fiducial value is within
+one forecast \(\sigma\) of a boundary); meaningless for parameters that the
+data alone constrain less than the prior does (`PriorDominatedWarning`).
+
+Tests (`tests/test_forecast.py`): a linear Gaussian model, covariance exact
+to \(10^{-10}\); a singular case with its degenerate direction; the Hessian
+identity above; a Kerr triplet, where the forecast \(\sigma\) of spin, mass
+and radius equal the emcee posterior values within 1% (example 13:
+0.002255 vs 0.002266 for the spin); the Kerr spin from a shadow size, which
+must warn.
+
+## 23. Gravitational lensing (static metrics)
+
+**No data exist for the strong-deflection observables** (relativistic
+images have not been resolved), so this part produces predictions, not
+constraints. Rotating metrics are not covered.
+
+### 23.1 Exact deflection angle. Status: transcribed formula, derived numerical scheme
+
+For closest approach \(r_0\) (Bozza 2002, Phys. Rev. D 66, 103001,
+Eqs. (6)–(7); with a plasma, Perlick, Tsupko & Bisnovatyi-Kogan 2015,
+Eq. (20)):
+
+\[
+\alpha(r_0) = 2\int_{r_0}^\infty \frac{dr}{\sqrt{g\,h\,[H(r)/H(r_0) - 1]}} - \pi,
+\qquad H = \frac{h}{f}\left(1 - fX\right),
+\]
+
+with \(X = \omega_p^2/\omega_0^2\) (\(X = 0\) in vacuum) and
+\(H(r_0) = (L/E)^2\). Following Tsukamoto (2017), Phys. Rev. D 95, 064035,
+Eqs. (28)–(44), the variable \(z = 1 - r_0/r\) turns it into
+\(\int_0^1 2r_0\,G^{-1/2}dz\) with
+\(G = [H/H_0 - 1]\,g\,h\,(1-z)^4 = c_1z + c_2z^2 + \dots\). The integrand
+has a \(z^{-1/2}\) singularity that becomes logarithmic as \(c_1 \to 0\)
+(photon sphere). BlackPy integrates \(2r_0/\sqrt{c_1z + c_2z^2}\) in closed
+form,
+
+\[
+\int_0^1\frac{dz}{\sqrt{c_1z + c_2z^2}} =
+\frac{2}{\sqrt{c_1}}\times
+\begin{cases}
+\operatorname{arcsinh}\sqrt{k}/\sqrt{k}, & k = c_2/c_1 > 0,\\
+\arcsin\sqrt{-k}/\sqrt{-k}, & k < 0,
+\end{cases}
+\]
+
+(the first case is Tsukamoto's Eq. (44); the second is needed in the weak
+field, where \(c_2 < 0\)), and the bounded remainder numerically
+(Gauss–Legendre in \(s = \sqrt z\)). One more precaution is needed:
+\(H(r)/H(r_0) - 1\) is the difference of nearly equal numbers for small
+\(z\), so for \(z < 10^{-3}\) the difference between \(G\) and its two
+leading terms is taken from the Taylor coefficients \(c_3, c_4\). All
+coefficients come from nested forward-mode autodiff. The impact parameter
+is \(b = \sqrt{H(r_0)}/n_\infty\), the distance of the asymptote from the
+centre.
+
+Checks: Schwarzschild
+\(\alpha = 4M/b + \tfrac{15\pi}{4}(M/b)^2 + \tfrac{128}{3}(M/b)^3 +
+\tfrac{3465\pi}{64}(M/b)^4\) and Reissner–Nordström
+\(A_2 = \tfrac{3\pi}{4}(5 - q^2)\), \(A_3 = \tfrac{128}{3} - 16q^2\)
+(Keeton & Petters 2005, Phys. Rev. D 72, 104006, Eqs. (24), (25), (52)),
+with residuals of the size of the next term from \(b = 30\) to \(10^6\).
+
+### 23.2 Weak deflection from the Gauss–Bonnet theorem. Status: derived from Gibbons & Werner (2008)
+
+Gibbons & Werner (2008), Class. Quantum Grav. 25, 235009, Eq. (5):
+\(\alpha = -\iint_{D}K\,dS\) over the region of the optical manifold
+outside the ray, with the straight line \(r = b/\sin\phi\) as boundary to
+leading order (their Eq. (14)). For the optical metric
+\(dt^2 = E\,dr^2 + \mathcal{G}\,d\phi^2\), \(E = 1/(fg)\),
+\(\mathcal{G} = h/f\), the curvature form is
+\(K\,dS = -\partial_r[E^{-1/2}\partial_r\sqrt{\mathcal{G}}]\,dr\,d\phi\), so
+the radial integral is exact (the bracket tends to 1 at infinity):
+
+\[ \alpha_{\rm GB}(b) = \int_0^\pi\left[1 - \sqrt{fg}\,\frac{d}{dr}\sqrt{\frac{h}{f}}\right]_{r=b/\sin\phi}d\phi . \]
+
+Schwarzschild: \(4M/b\) at first order (their result); at second order the
+straight-line boundary gives \(\tfrac{3\pi}{4}(M/b)^2\) instead of the exact
+\(\tfrac{15\pi}{4}(M/b)^2\). It is a first-order method, used as an
+independent check of the exact integral (tested for Schwarzschild,
+Reissner–Nordström and Bardeen).
+
+### 23.3 Strong deflection limit. Status: transcribed (Tsukamoto 2017; Bozza 2002)
+
+\[ \alpha(b) = -\bar a\ln\left(\frac{b}{b_c} - 1\right) + \bar b + O\big((b - b_c)\ln(b - b_c)\big) \]
+
+With \(A = f\), \(B = 1/g\), \(C = h\) at the photon sphere \(r_m\)
+(Tsukamoto 2017, Eqs. (54)–(55)):
+
+\[
+\bar a = \sqrt{\frac{2B_mA_m}{C_m''A_m - C_mA_m''}}, \qquad
+\bar b = \bar a\ln\left[r_m^2\left(\frac{C_m''}{C_m} - \frac{A_m''}{A_m}\right)\right]
+         + I_R(r_m) - \pi,
+\]
+\[ I_R(r_m) = \int_0^1\left[\frac{2r_m}{\sqrt{G(z)}} - \frac{2r_m}{\sqrt{c_2}\,z}\right]dz . \]
+
+BlackPy evaluates them as \(\bar a = r_m/\sqrt{c_2}\) and
+\(\bar b = \bar a\ln(r_m^2H_m''/H_m) + I_R - \pi\), identical in vacuum
+(at the photon sphere \(H''/H = C''/C - A''/A\)) and valid with a plasma.
+
+Observables for a lens at distance \(D_{OL}\) (Bozza 2002, Eqs. (85), (89),
+(90)): \(\theta_\infty = b_c/D_{OL}\),
+\(s = \theta_\infty e^{(\bar b - 2\pi)/\bar a}\), \(r = e^{2\pi/\bar a}\),
+quoted as \(r_m = 2.5\log_{10}r\). The weak-field Einstein ring is
+\(\theta_E = \sqrt{4GM D_{LS}/(c^2D_{OL}D_{OS})}\).
+
+Checks:
+
+- Schwarzschild: \(\bar a = 1\),
+  \(\bar b = \ln[216(7 - 4\sqrt3)] - \pi = -0.40023\) (Bozza, Eqs. (47)–(50)),
+  reproduced to \(10^{-9}\);
+- Reissner–Nordström: Tsukamoto's exact \(\bar a\), \(\bar b\), \(b_c\) (his
+  section III.2), including the extremal values \(b_c = 4\),
+  \(\bar a = \sqrt2\), \(\bar b = 2\sqrt2\ln[4(2 - \sqrt2)] - \pi\), to
+  \(2\times10^{-8}\); and every entry of Bozza's Table 1 for
+  \(q = Q/2M = 0.1 \dots 0.4\) (\(\bar a\) = 1.005, 1.02, 1.052, 1.123;
+  \(\bar b\) = −0.3993, −0.3972, −0.3965, −0.4136) to the printed digits;
+- the exact integral approaches the limit as \(b \to b_c\): the difference
+  is \(2.5\times10^{-2}\), \(3\times10^{-3}\), \(4\times10^{-5}\),
+  \(7\times10^{-8}\) at \(b/b_c - 1 = 10^{-2}, 10^{-3}, 10^{-5}, 10^{-8}\);
+  at Bozza's outermost image (\(u - u_m = 0.003264\) in units of \(2M\))
+  the exact angle is \(2\pi\) and the limit is off by 0.061% (he quotes
+  "about 0.06%");
+- Bozza's Table 1 observables for \(M = 2.8\times10^6M_\odot\) at 8.5 kpc:
+  \(\theta_\infty = 16.90\,\mu\)as (printed 16.87), \(s = 0.0211\),
+  \(r_m = 6.82\).
+
+### 23.4 Deflection in a homogeneous plasma. Status: transcribed
+
+Weak field (Bisnovatyi-Kogan & Tsupko 2010, Mon. Not. R. Astron. Soc. 404,
+1790, Eq. (38)), with \(b\) the geometric impact parameter:
+
+\[ \hat\alpha = \frac{R_S}{b}\left(1 + \frac{1}{1 - \omega_e^2/\omega^2}\right) . \]
+
+The exact angle of section 23.1 with \(X = \omega_e^2/\omega^2\) reproduces
+it with a relative error of order \(M/b\) (0.3% at \(b = 1000M\)), reduces
+to the vacuum angle for \(X = 0\), and approaches its own strong deflection
+limit (all tested).
