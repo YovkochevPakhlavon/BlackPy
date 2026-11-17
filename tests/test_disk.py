@@ -73,8 +73,8 @@ def test_radiative_efficiency(schwarzschild, kerr, rn):
 @pytest.mark.parametrize(
     "a",
     [
-        0.0,
-        0.9,
+        pytest.param(0.0, marks=pytest.mark.slow),
+        pytest.param(0.9, marks=pytest.mark.slow),
         pytest.param(0.5, marks=pytest.mark.slow),
         pytest.param(0.998, marks=pytest.mark.slow),
         pytest.param(-0.7, marks=pytest.mark.slow),

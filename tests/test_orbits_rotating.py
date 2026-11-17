@@ -90,6 +90,7 @@ def test_retrograde_orbits_equal_prograde_orbits_of_opposite_spin(kerr):
         ob.isco(kerr, direction="sideways", a=0.5)
 
 
+@pytest.mark.slow
 def test_kerr_isco_equals_bardeen_press_teukolsky(kerr):
     """Mandatory validation: Kerr ISCO = BPT formula for a in [-0.999, 0.999] to 1e-10."""
     a = np.linspace(-0.999, 0.999, 1999)

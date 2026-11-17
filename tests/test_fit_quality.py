@@ -152,6 +152,7 @@ def test_simulated_shadow_dataset_and_shadow_pulls(rn, kerr):
     assert quality.n_data == 0 and quality.dof == -1 and "top-hat" in quality.notes[0]
 
 
+@pytest.mark.slow
 def test_residual_plot(rn):
     import matplotlib
 

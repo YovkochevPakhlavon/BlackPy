@@ -292,6 +292,7 @@ def test_johannsen_source_is_not_assumed_physical(johannsen):
     assert geo.effective_source(johannsen, a=0.5).kind == "vacuum"  # Kerr limit
 
 
+@pytest.mark.slow
 def test_report_for_rotating_metrics(kerr, johannsen):
     text = geo.report(kerr, a=0.9)
     for fragment in (

@@ -99,6 +99,7 @@ def test_rz_with_zero_parameters_is_schwarzschild(order, ppn, schwarzschild):
         np.testing.assert_allclose(function(rz, radii), function(schwarzschild, radii), rtol=1e-12)
 
 
+@pytest.mark.slow
 def test_rz_horizon_radius_in_units_of_the_mass():
     """r_0 = 2 / (1 + epsilon) in units of the ADM mass M (RZ Eq. (14))."""
     rz = mt.RezzollaZhidenko(order=2)
@@ -140,6 +141,7 @@ def test_continued_fraction_from_series():
     assert series_to_continued_fraction([0.0, 1.0, 2.0]) == [0.0, 0.0, 0.0]
 
 
+@pytest.mark.slow
 def test_rz_coefficients_round_trip():
     """The helper recovers the coefficients of an RZ metric (any order, PPN terms free)."""
     rz = mt.RezzollaZhidenko(order=3, ppn="free")
@@ -164,6 +166,7 @@ def test_rz_coefficients_round_trip():
     assert found.beta == pytest.approx(1.0 + 2.0 * (0.05 - 0.03 * e) / e**2, abs=1e-8)
 
 
+@pytest.mark.slow
 def test_rz_coefficients_of_reissner_nordstrom(rn):
     r"""RN is represented exactly at lowest order: epsilon = a_0 = Q^2 / r_0^2.
 

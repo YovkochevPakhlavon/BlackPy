@@ -80,6 +80,7 @@ def test_rn_epicyclic_frequency_against_independent_formula(rn):
     np.testing.assert_allclose(got, fn(radii, 0.6), rtol=1e-11)
 
 
+@pytest.mark.slow
 def test_general_f_g_h_metric_against_isotropic_schwarzschild():
     """Schwarzschild in isotropic coordinates has f != g and h != r^2 but the same
     coordinate-invariant observables."""

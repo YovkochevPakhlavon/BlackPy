@@ -38,6 +38,7 @@ def power_law():
 # ----------------------------------------------------------------------------- vacuum limit
 
 
+@pytest.mark.slow
 def test_zero_plasma_reproduces_vacuum(schwarzschild, rn, bardeen, kerr, homogeneous, power_law):
     """omega_p -> 0 gives the vacuum results to 1e-12 (mandatory)."""
     for plasma in (homogeneous, power_law):
@@ -60,6 +61,7 @@ def test_zero_plasma_reproduces_vacuum(schwarzschild, rn, bardeen, kerr, homogen
             )
 
 
+@pytest.mark.slow
 def test_kerr_separable_plasma_reduces_to_kerr_in_vacuum(kerr, homogeneous):
     """The Kerr separable-plasma case reduces to Kerr in vacuum (mandatory)."""
     separable = lt.SeparablePlasma(
@@ -127,6 +129,7 @@ def test_schwarzschild_homogeneous_plasma(schwarzschild, homogeneous):
     assert np.all(np.diff(np.asarray(sizes)) > 0.0)
 
 
+@pytest.mark.slow
 def test_schwarzschild_power_law_plasma(schwarzschild):
     """PTB Eqs. (57)-(60): exact k = 2 case and the low-density expansion."""
     # k = 2: the photon sphere stays at 3M exactly, so b_c^2 = h_pl(3)^2 = 27 - beta_0.
@@ -245,6 +248,7 @@ def test_kerr_spherical_light_rays_in_a_plasma(kerr):
     assert float(first.mean_radius) > float(vacuum.mean_radius)  # n < 1 at the observer
 
 
+@pytest.mark.slow
 def test_general_path_reproduces_the_static_formulas(rn, hayward, homogeneous, power_law):
     """Static metrics sent through the rotating (separable) code with the plasma hooks."""
     cases = (
@@ -382,6 +386,7 @@ def test_shadow_likelihood_with_plasma(rn, kerr, power_law, homogeneous):
         build_problem(kerr, kerr_data, priors={"a": Uniform(0.0, 0.9)}, plasma=power_law)
 
 
+@pytest.mark.slow
 def test_plasma_parameter_is_covered_by_the_integrity_guards(rn):
     """Plasma and charge both shrink the shadow: degenerate, or prior dominated (mandatory)."""
     plasma = lt.PowerLawPlasma(k=1.0)

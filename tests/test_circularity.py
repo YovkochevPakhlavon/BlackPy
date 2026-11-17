@@ -26,6 +26,7 @@ def delta_c(kerr, a, degrees, definition):
     )
 
 
+@pytest.mark.slow
 def test_definitions_are_related_as_documented(kerr):
     a, inc = 0.9, math.radians(70.0)
     observables = bp.light.shadow_observables(kerr, inc, a=a)
@@ -48,7 +49,15 @@ def test_definitions_are_related_as_documented(kerr):
         bp.light.deviation_from_circularity(kerr, inc, a=a, definition="eht")
 
 
-@pytest.mark.parametrize("a, degrees", [(0.6, 90.0), (0.9, 90.0), (0.95, 50.0), (0.998, 75.0)])
+@pytest.mark.parametrize(
+    "a, degrees",
+    [
+        pytest.param(0.6, 90.0, marks=pytest.mark.slow),
+        (0.9, 90.0),
+        pytest.param(0.95, 50.0, marks=pytest.mark.slow),
+        pytest.param(0.998, 75.0, marks=pytest.mark.slow),
+    ],
+)
 def test_jp_asymmetry_against_polygon_computation(kerr, a, degrees):
     """Johannsen & Psaltis (2010), Eqs. (3)-(8), evaluated directly on a fine polygon."""
     contour = bp.light.shadow_contour(kerr, math.radians(degrees), a=a, n=6000)

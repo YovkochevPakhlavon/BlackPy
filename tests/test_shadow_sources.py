@@ -342,6 +342,7 @@ def test_inclination_is_a_prior_only_on_request(kerr):
         inclination_prior(bp.data.load("eht/sgra"))
 
 
+@pytest.mark.slow
 def test_circularity_bound_needs_its_definition(kerr, rn):
     data = ring()  # bound 0.1, derived for 'fractional_rms'
     priors = {"a": Uniform(0.0, 0.999)}
@@ -382,6 +383,7 @@ def test_circularity_bound_needs_its_definition(kerr, rn):
         )
 
 
+@pytest.mark.slow
 def test_simulated_two_source_dataset_recovers_the_injected_parameters(rn):
     """Joint shadow fit of two sources (mandatory): shared and per-source charge."""
     with warnings.catch_warnings():

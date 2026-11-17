@@ -180,6 +180,7 @@ def test_static_metric_for_a_rotating_source_warns(kerr, rn):
         build_problem(rn, data, "RP", {"Q": Uniform(0, 1)}, use_low_frequency=True)
 
 
+@pytest.mark.slow
 def test_rotating_shadow_likelihood(kerr, schwarzschild, rn):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UnverifiedDataWarning)

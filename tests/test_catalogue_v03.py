@@ -95,6 +95,7 @@ def test_simpson_visser(simpson_visser, schwarzschild):
 # ----------------------------------------------------------------------------- Kerr-Sen
 
 
+@pytest.mark.slow
 def test_kerr_sen(kerr_sen, kerr, gmghs):
     """Sen (1992) against KRZ (2016) Eq. (6); Kerr and GMGHS limits; horizons; separability."""
     ks = kerr_sen
@@ -155,7 +156,13 @@ def test_kerr_sen(kerr_sen, kerr, gmghs):
 # ----------------------------------------------------------------------------- rotating regular
 
 
-@pytest.mark.parametrize("which", ["Bardeen", "Hayward"])
+@pytest.mark.parametrize(
+    "which",
+    [
+        pytest.param("Bardeen", marks=pytest.mark.slow),
+        pytest.param("Hayward", marks=pytest.mark.slow),
+    ],
+)
 def test_rotating_regular_black_holes(which, bardeen, hayward, kerr):
     """Bambi & Modesto (2013), Eq. (14) with m(r) of Eqs. (15) and (26)."""
     if which == "Bardeen":

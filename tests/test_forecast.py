@@ -120,7 +120,7 @@ def test_singular_fisher_matrix_reports_the_degenerate_direction():
     [
         "qpo pair",
         "qpo triplet",
-        "shadow static",
+        pytest.param("shadow static", marks=pytest.mark.slow),
         pytest.param("shadow rotating", marks=pytest.mark.slow),
     ],
 )
@@ -161,6 +161,7 @@ def test_log_likelihood_is_twice_differentiable_end_to_end(case, rn, kerr, kerr_
     np.testing.assert_allclose(hessian, result.fisher_data, rtol=1e-8, atol=1e-9 * scale)
 
 
+@pytest.mark.slow
 def test_forecast_interface_and_boundary_warning(rn):
     data = simulate_shadow_dataset(rn, name="img", sigma=0.05, Q=0.6)
     with warnings.catch_warnings():
@@ -186,6 +187,7 @@ def test_forecast_interface_and_boundary_warning(rn):
         forecast(rn, data, {"Q": 1.5}, priors={"Q": Uniform(0.0, 2.0)}, warn=False)  # no shadow
 
 
+@pytest.mark.slow
 def test_prior_dominated_bounded_parameter_is_warned_about(kerr):
     """The shadow size hardly depends on the Kerr spin: the forecast says so (mandatory)."""
     data = simulate_shadow_dataset(kerr, name="img", sigma=0.3, inclination=30.0, a=0.5)

@@ -88,6 +88,7 @@ def test_kerr_contour_agrees_with_bardeen(kerr, a, inclination_deg):
     assert contour.r_p.max() == pytest.approx(float(r_max), rel=1e-12)
 
 
+@pytest.mark.slow
 def test_contour_flattens_with_spin_for_an_edge_on_observer(kerr):
     spins = np.array([0.0, 0.3, 0.6, 0.9, 0.99, 0.998])
     obs = lt.shadow_observables(kerr, math.pi / 2, a=spins)
@@ -136,6 +137,7 @@ def test_kerr_mean_radius_depends_weakly_on_spin_and_inclination(kerr):
 # ----------------------------------------------------------------------------- observables
 
 
+@pytest.mark.slow
 def test_observables_against_direct_polygon_computation(kerr, kerr_newman):
     for metric, pars, inclination in (
         (kerr, {"a": 0.95}, 1.2),
@@ -216,6 +218,7 @@ def test_kerr_newman_and_generated_metrics(kerr, kerr_newman, rn, hayward):
     assert float(same.mean_radius) == pytest.approx(float(reference.mean_radius), rel=1e-10)
 
 
+@pytest.mark.slow
 def test_johannsen_spherical_photon_orbits_solve_the_radial_equation(johannsen, kerr):
     """Independent check with the radial potential printed in Johannsen (2013), Eq. (23),
     for photons (mu = 0):  R = P^2 - Delta [(xi - a)^2 + eta],
