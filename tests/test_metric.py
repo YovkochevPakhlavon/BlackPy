@@ -16,6 +16,8 @@ EXTRA = {
     "Bardeen": {"q": 0.5},
     "Hayward": {"l": 0.6},
     "Schwarzschild": {},
+    "GMGHS": {"Q": 0.8},  # added in v0.3
+    "SimpsonVisser": {"ell": 1.2},  # added in v0.3
 }
 
 
