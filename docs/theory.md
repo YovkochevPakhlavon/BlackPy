@@ -1600,3 +1600,75 @@ The exact angle of section 23.1 with \(X = \omega_e^2/\omega^2\) reproduces
 it with a relative error of order \(M/b\) (0.3% at \(b = 1000M\)), reduces
 to the vacuum angle for \(X = 0\), and approaches its own strong deflection
 limit (all tested).
+
+## 24. Thin accretion disks
+
+**Sources:** Page & Thorne (1974), Astrophys. J. 191, 499 ("PT"), read from
+the scanned journal version at the NASA ADS (the text was extracted from a
+scan; see the note on the prefactor below). Novikov & Thorne (1973, in
+*Black Holes*, Les Houches) was not accessible.
+
+**Radiative efficiency.** \(\eta = 1 - E(r_{\rm in})\), with \(E = -u_t\) of
+the circular geodesic at the inner edge, by default the ISCO. For Kerr
+(PT Eq. (15g), \(x^2 = r/M\)):
+\(E = (1 - 2x^{-2} + a x^{-3})/\sqrt{1 - 3x^{-2} + 2a x^{-3}}\).
+Schwarzschild: \(1 - \sqrt{8/9} = 0.0572\); prograde Kerr tends to
+\(1 - 1/\sqrt3 = 0.4226\) as \(a \to 1\) (approached slowly: 0.340 at
+\(a = 0.999\)).
+
+**Flux. Status: transcribed (PT Eqs. (11b), (12)); the metric factor is
+derived.** PT write the metric near the equator as
+\(ds^2 = -e^{2\nu}dt^2 + e^{2\psi}(d\phi - \omega dt)^2 + e^{2\mu}dr^2 + dz^2\)
+(their Eq. (1)) and find
+
+\[
+F(r) = \frac{\dot M_0}{4\pi}e^{-(\nu+\psi+\mu)}f, \qquad
+f = -\frac{\Omega_{,r}}{(E - \Omega L)^2}\int_{r_{\rm in}}^r(E - \Omega L)\,L_{,r}\,dr .
+\]
+
+Comparing with BlackPy's components at \(\theta = \pi/2\):
+\(e^{2\psi} = g_{\phi\phi}\), \(e^{2\mu} = g_{rr}\), and the lapse
+\(e^{2\nu} = (g_{t\phi}^2 - g_{tt}g_{\phi\phi})/g_{\phi\phi}\), so
+
+\[ e^{\nu+\psi+\mu} = \sqrt{(g_{t\phi}^2 - g_{tt}g_{\phi\phi})\,g_{rr}}, \]
+
+which is \(\sqrt{fh/g}\) for a static metric and \(r\) for Kerr (PT
+Eq. (15d)). The vertical coordinate \(z\) of PT is proper height, so the
+result does not depend on \(g_{\theta\theta}\). \(L_{,r}\) and
+\(\Omega_{,r}\) come from autodiff, the integral from Gauss–Legendre
+quadrature in \(\ln r\). Units: \(F M^2/\dot M_0\). The effective
+temperature profile is \(F^{1/4}\) (\(\sigma T_{\rm eff}^4 = F\)),
+returned divided by its maximum; the radius of maximum flux is the zero of
+\(dF/dr\) (autodiff) outside the inner edge.
+
+**Kerr closed form (PT Eqs. (14), (15n)).** With \(x_0 = \sqrt{r_{\rm ms}}\)
+and \(x_{1,2,3}\) the roots of \(x^3 - 3x + 2a = 0\),
+
+\[
+f = \frac{3}{2M}\frac{1}{x^2(x^3 - 3x + 2a)}\Bigl[x - x_0 - \tfrac32 a\ln\frac{x}{x_0}
+ - \sum_{i}\frac{3(x_i - a)^2}{x_i(x_i - x_j)(x_i - x_k)}\ln\frac{x - x_i}{x_0 - x_i}\Bigr] .
+\]
+
+The factor 3 of the prefactor is lost in the scanned text; it was fixed by
+the Newtonian limit \(F \to 3\dot M_0/(8\pi r^3)\), which the general
+formula reproduces independently. With it, the general formula agrees with
+the closed form to \(10^{-9}\) for spins \(-0.7 \dots 0.998\) from
+\(1.001\,r_{\rm ISCO}\) to \(1000\,r_{\rm ISCO}\), which confirms the
+remaining terms read from the scan.
+
+**Inner edge.** The ISCO. A metric with no ISCO (e.g. Reissner–Nordström
+with \(Q \ge 1.125\)) or with several marginally stable orbits that are
+inner edges of stable regions is refused; the user can pass `r_in`
+explicitly.
+
+Checks (`tests/test_disk.py`): efficiencies against PT Eq. (15g) at the
+Bardeen–Press–Teukolsky ISCO up to \(a = 0.9999\), retrograde = opposite
+spin, monotonic approach to \(1 - 1/\sqrt3\); the Kerr flux against
+Eq. (15n) on a grid of radii and spins, including the radius and value of
+the maximum; zero flux at the inner edge; \(F r^3 \to 3/(8\pi)\) with a
+correction \(\propto r^{-1/2}\); the general (rotating) code through
+`as_axisymmetric()` equals the static code to \(10^{-10}\).
+
+**Not provided:** continuum-fitting and iron-line likelihoods. They need the
+image of the disk on the sky (light bending, Doppler and gravitational
+shifts), i.e. ray tracing, which is outside BlackPy's scope.
