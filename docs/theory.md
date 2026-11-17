@@ -1672,3 +1672,55 @@ correction \(\propto r^{-1/2}\); the general (rotating) code through
 **Not provided:** continuum-fitting and iron-line likelihoods. They need the
 image of the disk on the sky (light bending, Doppler and gravitational
 shifts), i.e. ray tracing, which is outside BlackPy's scope.
+
+## 25. Catalogue metrics added in version 0.3
+
+Each entry is one file in `src/blackpy/metric/catalogue/`, with its
+reference and tests in `tests/test_catalogue_v03.py`.
+
+**GMGHS** (`GMGHS`, static). Gibbons & Maeda (1988) and Garfinkle, Horowitz
+& Strominger (1991) **were not accessible** (pre-arXiv). The metric is the
+\(a = 0\) limit of Sen's Einstein-frame metric (Sen 1992, hep-th/9204046,
+read), which Kocherlakota et al. (2021, footnote 2) identify with this
+solution. With \(M = 1\), Sen's Eqs. (17)–(18) give \(m = 1 - Q^2/2\) and
+\(m\sinh^2(\alpha/2) = M - m = Q^2/2 \equiv b\), hence
+
+\[ ds^2 = -\frac{\rho - 2m}{\rho + 2b}dt^2 + \frac{\rho + 2b}{\rho - 2m}d\rho^2 + \rho(\rho + 2b)\,d\Omega^2 , \]
+
+the form of Rezzolla & Zhidenko (2014, section IV) with \(\mu = m\). Here
+\(h \ne \rho^2\). Checks: Schwarzschild at \(Q = 0\); horizon \(\rho = 2m\);
+photon-orbit impact parameter and ISCO frequency of RZ Eqs. (37), (43) to
+\(10^{-10}\).
+
+**Simpson–Visser** (`SimpsonVisser`, static). Simpson & Visser (2019),
+JCAP 02, 042 (arXiv:1812.07114, read), Eq. (2.1):
+\(f = g = 1 - 2/\sqrt{r^2 + \ell^2}\), \(h = r^2 + \ell^2\) (their \(a\) is
+called `ell`). Checks against their section 7: horizon
+\(\sqrt{4 - \ell^2}\), photon sphere \(\sqrt{9 - \ell^2}\), ISCO
+\(\sqrt{36 - \ell^2}\), none of them in \(r > 0\) beyond \(\ell = 2, 3, 6\);
+the wormhole configurations are reported as horizonless. Derived: the
+shadow radius is \(3\sqrt3\) for every \(\ell < 3\).
+
+**Kerr–Sen** (`KerrSen`, rotating). Sen (1992), Einstein-frame metric
+(his Eq. (16) in the arXiv numbering) with \(M = 1\):
+\(\Sigma = \rho^2 + a^2\cos^2\theta + 2b\rho\),
+\(g_{tt} = -(\rho^2 + a^2\cos^2\theta - 2m\rho)/\Sigma\),
+\(g_{t\phi} = -2\rho a\sin^2\theta/\Sigma\),
+\(g_{\rho\rho} = \Sigma/(\rho^2 + a^2 - 2m\rho)\), \(g_{\theta\theta} = \Sigma\),
+\(g_{\phi\phi} = [(\rho^2+a^2)(\rho^2+a^2\cos^2\theta) + 2m\rho a^2\sin^2\theta
++ 4b\rho(\rho^2+a^2) + 4b^2\rho^2]\sin^2\theta/\Sigma\). Checks: equal to the
+form of KRZ (2016) Eq. (6) to \(10^{-12}\); Kerr at \(Q = 0\); GMGHS at
+\(a = 0\); horizons \(\rho_\pm = m \pm \sqrt{m^2 - a^2}\) (Sen Eq. (20));
+null geodesics separate (tested numerically, not assumed); declared domain
+\(|a| \le 1 - Q^2/2\).
+
+**Rotating Bardeen and rotating Hayward** (`RotatingBardeen`,
+`RotatingHayward`). Bambi & Modesto (2013), Phys. Lett. B 721, 329
+(arXiv:1302.6075, read): the Kerr metric with \(M \to m(r)\), their
+Eq. (14) with Eqs. (26) (Bardeen, \(m = (r^2/(r^2+q^2))^{3/2}\)) and (15)
+(Hayward, \(m = r^3/(r^3 + g^3)\), \(g^3 = 2l^2\) for BlackPy's `l`). Built
+with `rotating_from_static`, which for these seeds gives exactly that
+metric (tested to \(10^{-12}\)). They are **generated models**; the
+docstrings say so. Declared domain \(|a| \le 1\): necessary for a horizon
+because \(m(r) \le 1\) implies \(\Delta \ge r^2 - 2r + a^2\), not
+sufficient; the likelihood also requires an event horizon.

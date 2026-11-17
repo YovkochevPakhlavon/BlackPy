@@ -9,15 +9,20 @@ from blackpy.metric.axisymmetric import StationaryAxisymmetric, SymbolicFormAxis
 from blackpy.metric.base import Metric, Parameter, StaticSpherical, SymbolicForm
 from blackpy.metric.catalogue import (
     CATALOGUE,
+    GMGHS,
     ROTATING_CATALOGUE,
     Bardeen,
     Hayward,
     Johannsen,
     Kerr,
     KerrNewman,
+    KerrSen,
     ReissnerNordstrom,
+    RotatingBardeen,
+    RotatingHayward,
     Schwarzschild,
     SchwarzschildDeSitter,
+    SimpsonVisser,
 )
 from blackpy.metric.parametrized import (
     KRZ,
@@ -29,6 +34,11 @@ from blackpy.metric.parametrized import (
 from blackpy.metric.rotating import rotating_from_static
 
 __all__ = [
+    "SimpsonVisser",
+    "RotatingHayward",
+    "RotatingBardeen",
+    "KerrSen",
+    "GMGHS",
     "CATALOGUE",
     "ROTATING_CATALOGUE",
     "RZCoefficients",
