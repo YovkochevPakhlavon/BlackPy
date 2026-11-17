@@ -94,8 +94,8 @@ def test_shadow_shrinks_with_charge(rn, bardeen, hayward):
 
 
 def test_future_light_stubs_raise():
-    with pytest.raises(NotImplementedError, match="roadmap"):
-        lt.deflection_angle(None, 5.0)
+    # Lensing is implemented since v0.3 (tests/test_lensing.py).
+    assert lt.deflection_angle is bp.lensing.deflection_angle
     # Plasma is implemented since v0.3 (tests/test_plasma.py); the reserved names still
     # import from their old location.
     from blackpy.light import future

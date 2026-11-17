@@ -53,6 +53,17 @@ T_SUN: float = GM_SUN / C**3
 #: Gravitational radius G*M_sun/c^2 [m].
 R_SUN_GRAV: float = GM_SUN / C**2
 
+#: Astronomical unit [m] (exact; IAU 2012 Resolution B2). Verified against
+#: ``scipy.constants.au`` in the test-suite.
+AU: float = 149_597_870_700.0
+
+#: Parsec [m]: 648000/pi au (exact; IAU 2015 Resolution B2). Verified against
+#: ``scipy.constants.parsec`` in the test-suite.
+PARSEC: float = 648_000.0 / math.pi * AU
+
+#: One microarcsecond in radians.
+MICROARCSECOND: float = math.pi / (180.0 * 3600.0 * 1.0e6)
+
 
 def gravitational_radius_m(mass_msun):
     """Gravitational radius G M / c^2 in metres.
