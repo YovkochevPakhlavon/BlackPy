@@ -4,7 +4,8 @@
 
 BlackPy takes a black hole metric, computes its standard observables, and
 constrains its parameters with observational data: quasi-periodic
-oscillations (QPOs) of X-ray binaries and the EHT shadow size of Sgr A\*.
+oscillations (QPOs) of X-ray binaries and the EHT shadow sizes of Sgr A\* and
+M87\*.
 
 Hundreds of papers a year repeat the same pipeline by hand: propose a metric,
 compute the ISCO, photon sphere, shadow and epicyclic frequencies, then run an
@@ -24,7 +25,7 @@ bp.geometry.horizons(rn, Q=0.5).radii        # (0.134, 1.866)
 New here? Read [How BlackPy works](how_it_works.md), then follow the
 [tutorial](tutorial.md).
 
-## What version 0.2 covers
+## What version 0.3 covers
 
 Static, spherically symmetric metrics
 \( ds^2 = -f(r)\,dt^2 + dr^2/g(r) + h(r)\,d\Omega^2 \) and stationary,
@@ -34,17 +35,21 @@ in units \(G = c = 1\):
 
 | Module | Content |
 |---|---|
-| `blackpy.metric` | `StaticSpherical` and `StationaryAxisymmetric` from sympy expressions or JAX callables; catalogue: Schwarzschild, Reissner–Nordström, Schwarzschild–de Sitter, Bardeen, Hayward, Kerr, Kerr–Newman, Johannsen; rotating generator `rotating_from_static` |
+| `blackpy.metric` | `StaticSpherical` and `StationaryAxisymmetric` from sympy expressions or JAX callables; catalogue: Schwarzschild, Reissner–Nordström, Schwarzschild–de Sitter, Bardeen, Hayward, GMGHS, Simpson–Visser, Kerr, Kerr–Newman, Kerr–Sen, Johannsen, rotating Bardeen and Hayward; Rezzolla–Zhidenko and KRZ parametrisations; rotating generator `rotating_from_static` |
 | `blackpy.geometry` | all horizons with classification, ergosurface, Kretschmann scalar, effective stress-energy and its type (vacuum, perfect fluid, anisotropic fluid, neither), energy conditions |
 | `blackpy.orbits` | circular orbits (prograde and retrograde), ISCO, marginally bound orbit, radial and vertical epicyclic frequencies, nodal precession, QPO models (RP, ER, TD, WD and variants) |
-| `blackpy.light` | photon spheres, critical impact parameters, shadows: circles for static metrics, contours and shape observables for rotating metrics with separable null geodesics |
-| `blackpy.data` | registry of QPO and shadow data with sources and verification status |
-| `blackpy.infer` | priors, likelihoods (QPO pairs and triplets, shadow size), emcee and dynesty, Bayes factors, integrity warnings, reproducibility bundles |
-| `blackpy.plot` | profile plots, corner plots, LaTeX tables |
+| `blackpy.light` | photon spheres, critical impact parameters, shadows (circles for static metrics, contours and shape observables for separable rotating metrics), deviation from circularity in three named definitions, shadows in a plasma |
+| `blackpy.lensing` | exact and weak deflection angles, strong deflection limit and relativistic-image observables (static metrics; predictions only) |
+| `blackpy.disk` | radiative efficiency and Page–Thorne flux of thin disks (predictions only) |
+| `blackpy.data` | registry of QPO and shadow data (Sgr A\*, M87\*) with sources, mass priors and verification status |
+| `blackpy.infer` | priors, likelihoods (QPO pairs and triplets, shadow sizes of several sources, plasma), emcee and dynesty, Bayes factors, goodness of fit and posterior predictive checks, Fisher forecasts, integrity warnings, reproducibility bundles |
+| `blackpy.plot` | profile plots, shadow contours, corner plots, residual plots, LaTeX tables |
 
-Not in version 0.2 (interfaces reserved, they raise `NotImplementedError`):
-ray tracing for non-separable metrics, the RZ and KRZ parametrisations,
-plasma, lensing, quasinormal modes, thermodynamics, S2 orbit data.
+Not in version 0.3 (interfaces reserved, they raise `NotImplementedError` or
+refuse with a message): ray tracing for non-separable metrics, lensing by
+rotating metrics, continuum-fitting and iron-line likelihoods, quasinormal
+modes and thermodynamics (not scheduled: no data would use them), S2 orbit
+data.
 
 ## Design principle: symbolic in, numeric core
 

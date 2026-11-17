@@ -44,6 +44,24 @@ d = bp.data.load("qpo/xte_j1550_564")
 | `references` | citation, DOI, arXiv id, role |
 | `source_access`, `notes`, `todo` | provenance and open issues |
 
+## Changes in version 0.3
+
+Read by Claude on 2026-11-15 to 2026-11-17 from the arXiv versions (EHT
+M87\* Papers I and VI from the arXiv PDFs). **None has been verified by a
+human.**
+
+| Dataset | Change | Source and location |
+|---|---|---|
+| `qpo/gro_j1655_40` (version 3) | Table 3 values of spin 0.286 ± 0.003, mass 5.307 ± 0.066, radius 5.677 ± 0.035 are the main entries; the text values (0.290, 5.31, 5.68) are kept under `other_values` | Motta et al. (2014), Table 3; abstract, Sec. 4.1 and 5 |
+| `qpo/xte_j1859_226` (version 3) | open question: published RPM uncertainties 2.7 times larger than propagation gives | Motta et al. (2022) |
+| `eht/sgra` (version 2) | mass priors `keck` (3.964 ± 0.054 × 10⁶ M☉) and `vlti` (4.297 ± 0.042 × 10⁶ M☉) with \(\theta_g\) and \(\delta\) per prior; distance 8.277 ± 0.034 kpc | Do et al. (2019); GRAVITY Collaboration (2022); EHT Sgr A\* Paper VI, Sec. 2.1; Vagnozzi et al. (2023) |
+| `eht/m87` (new) | 68% bound 4.31–6.08 on \(r_{\rm sh}/M\); \(\delta = -0.01 \pm 0.17\) (stellar dynamics); ring diameter 42 ± 3 µas; \(\theta_g = 3.8 \pm 0.4\) µas; masses from stellar dynamics (independent), gas dynamics (independent, in tension) and the EHT ring (**not** independent); distance 16.8 ± 0.8 Mpc; jet inclination 17.2 ± 3.3°; circularity < 0.10 (`fractional_rms`) | EHT (2019) Papers I and VI; Kocherlakota et al. (2021), Eq. (14); Gebhardt et al. (2011); Walsh et al. (2013); Mertens et al. (2016) |
+
+The M87\* entry records the chain from the measured ring to a bound on the
+shadow size (theory section 20). A fit uses the stellar-dynamics bound by
+default; `shadow_mass_prior=` selects another, and the image-based mass
+triggers a `CircularInferenceWarning`.
+
 ## Status of version 0.2
 
 All values below were read from the arXiv versions of the papers (ar5iv HTML

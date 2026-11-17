@@ -14,6 +14,16 @@
 ::: blackpy.metric.catalogue.schwarzschild_de_sitter.SchwarzschildDeSitter
 ::: blackpy.metric.catalogue.bardeen.Bardeen
 ::: blackpy.metric.catalogue.hayward.Hayward
+::: blackpy.metric.catalogue.gmghs.GMGHS
+::: blackpy.metric.catalogue.simpson_visser.SimpsonVisser
+::: blackpy.metric.catalogue.kerr_sen.KerrSen
+::: blackpy.metric.catalogue.rotating_regular.RotatingBardeen
+::: blackpy.metric.catalogue.rotating_regular.RotatingHayward
+::: blackpy.metric.parametrized.RezzollaZhidenko
+::: blackpy.metric.parametrized.rz_coefficients
+::: blackpy.metric.parametrized.RZCoefficients
+::: blackpy.metric.parametrized.KRZ
+::: blackpy.metric.parametrized.krz_deviations
 ::: blackpy.metric.interpolated.spline
 
 ## Geometry
@@ -65,6 +75,34 @@
 ::: blackpy.light.rotating.shadow_observables
 ::: blackpy.light.rotating.critical_impact_parameters
 ::: blackpy.light.rotating.photon_region
+::: blackpy.light.rotating.deviation_from_circularity
+::: blackpy.light.plasma.shadow_in_plasma
+::: blackpy.light.plasma.shadow_angular_radius_in_plasma
+::: blackpy.light.plasma.photon_spheres_in_plasma
+::: blackpy.light.plasma.photon_sphere_in_plasma
+::: blackpy.light.plasma.with_plasma
+::: blackpy.light.plasma.PlasmaModel
+::: blackpy.light.plasma.HomogeneousPlasma
+::: blackpy.light.plasma.PowerLawPlasma
+::: blackpy.light.plasma.PlasmaProfile
+::: blackpy.light.plasma.SeparablePlasma
+
+## Lensing
+
+::: blackpy.lensing.deflection.deflection_angle
+::: blackpy.lensing.deflection.deflection_angle_at
+::: blackpy.lensing.deflection.closest_approach
+::: blackpy.lensing.deflection.weak_deflection_angle
+::: blackpy.lensing.strong.strong_deflection_limit
+::: blackpy.lensing.strong.strong_deflection_angle
+::: blackpy.lensing.strong.strong_field_observables
+::: blackpy.lensing.strong.einstein_ring_angle
+
+## Thin disks
+
+::: blackpy.disk.radiative_efficiency
+::: blackpy.disk.page_thorne_flux
+::: blackpy.disk.inner_edge
 
 ## Data
 
@@ -75,6 +113,7 @@
 ::: blackpy.data.schema.ShadowDataset
 ::: blackpy.data.schema.Measurement
 ::: blackpy.data.schema.MassPrior
+::: blackpy.data.schema.CircularityBound
 
 ## Inference
 
@@ -83,6 +122,12 @@
 ::: blackpy.infer.result.BayesFactor
 ::: blackpy.infer.likelihood.build_problem
 ::: blackpy.infer.likelihood.simulate_qpo_dataset
+::: blackpy.infer.likelihood.simulate_shadow_dataset
+::: blackpy.infer.likelihood.inclination_prior
+::: blackpy.infer.quality.GoodnessOfFit
+::: blackpy.infer.quality.PosteriorPredictive
+::: blackpy.infer.forecast.forecast
+::: blackpy.infer.forecast.Forecast
 ::: blackpy.infer.priors.Uniform
 ::: blackpy.infer.priors.Gaussian
 ::: blackpy.infer.priors.LogUniform
@@ -93,6 +138,8 @@
 ::: blackpy.plot.profiles.profile
 ::: blackpy.plot.posterior.corner
 ::: blackpy.plot.posterior.latex_table
+::: blackpy.plot.posterior.residuals
+::: blackpy.plot.shadows.shadow
 
 ## Constants and numerics
 

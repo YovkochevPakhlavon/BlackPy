@@ -4,6 +4,74 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/).
 
+## [0.3.0] - 2026-11-17
+
+Fit quality, plasma, a second shadow source, parametrised metrics, forecasts,
+lensing, thin disks. The v0.2 API is unchanged except where noted under
+"Changed".
+
+### Added
+- **Fit quality** (`blackpy.infer`): `FitResult.goodness_of_fit()` (pulls,
+  chi-square, degrees of freedom = data + Gaussian priors - parameters;
+  "undefined" when there are none), `FitResult.posterior_predictive(n, seed)`
+  (Gelman, Meng & Stern 1996), `PoorFitWarning`, fit quality in
+  `print(result)` and in Bayes factors, `Fit.goodness_of_fit(**theta)`,
+  `simulate_shadow_dataset`, `blackpy.plot.residuals`.
+- **Plasma** (`blackpy.light`): `HomogeneousPlasma`, `PowerLawPlasma`,
+  `PlasmaProfile`, `SeparablePlasma`, `with_plasma`, `shadow_in_plasma`,
+  `photon_spheres_in_plasma`; rotating metrics for the separable class of
+  Perlick & Tsupko (2017) only; `PlasmaPropagationError`;
+  `Fit(..., plasma=...)`.
+- **Second shadow source**: registry entry `eht/m87` (ring diameter,
+  angular gravitational radius, fractional deviation, two dynamical masses
+  and the image-based one, distance, jet inclination, circularity bound with
+  its definition); Sgr A\* masses and distances (`eht/sgra` version 2).
+  Joint shadow fits with `shared=[...]` / `per_source=[...]`, per-source spin
+  and inclination, `shadow_mass_prior`, `circularity="<definition>"`,
+  `inclination_prior`.
+- **Parametrised metrics**: `RezzollaZhidenko(order, ppn)`,
+  `rz_coefficients` (RZ coefficients of any static metric), `KRZ` with
+  deviation parameters from Kerr, `krz_deviations`.
+- **Forecasts**: `blackpy.infer.forecast` (Fisher matrix by autodiff,
+  degenerate directions, `ForecastWarning`).
+- **Lensing** (`blackpy.lensing`, static metrics): exact deflection angle,
+  Gauss–Bonnet weak deflection, strong deflection limit and observables,
+  Einstein ring, deflection in a plasma. Predictions only.
+- **Thin disks** (`blackpy.disk`): radiative efficiency, Page–Thorne flux,
+  temperature profile, radius of maximum flux.
+- **Catalogue**: GMGHS, Simpson–Visser (static); Kerr–Sen, rotating Bardeen,
+  rotating Hayward (rotating).
+- `blackpy.light.deviation_from_circularity` with three named definitions
+  (`fractional_rms`, `jp_asymmetry`, `bambi2019`),
+  `CircularityDefinitionWarning`; `blackpy.plot.shadow`.
+- Registry schema: `other_values` / `preferred_reason` on any measurement,
+  `open_questions` on any dataset, shadow-dataset fields listed above
+  (`schema_version` unchanged: no field changed meaning).
+- Constants `AU`, `PARSEC`, `MICROARCSECOND`.
+- `CONTRIBUTING.md`; examples 09 to 15; `pytest-xdist` in the dev extra.
+
+### Changed
+- `qpo/gro_j1655_40` (dataset version 3): the main spin, mass and radius are
+  those of Table 3 of Motta et al. (2014); the text values are kept under
+  `other_values`. `qpo/xte_j1859_226` (version 3): open question on the
+  published uncertainties.
+- Joint fits of two or more shadow datasets require an explicit
+  `shared` / `per_source` choice for every sampled metric parameter.
+- `shadow_contour(...).r_p` of a non-rotating metric holds the photon-sphere
+  radius (0.2 returned a placeholder 3.0).
+- `blackpy.thermo` and `blackpy.qnm` stay stubs; their messages now say the
+  features are not scheduled (no data would use them).
+- The reserved names `light.PlasmaModel`, `light.shadow_in_plasma`,
+  `light.deflection_angle`, `metric.future.rezzolla_zhidenko` and
+  `metric.future.konoplya_rezzolla_zhidenko` now refer to the
+  implementations.
+- CI: quick subset on Linux, macOS and Windows; full suite on Linux.
+
+### Documented
+- The Hawking–Ellis classification was checked against Martín-Moruno &
+  Visser (2018); no change was needed.
+- Two errors in Konoplya, Rezzolla & Zhidenko (2016) (theory section 21.2).
+
 ## [0.2.0] - 2026-11-15
 
 Rotating (stationary, axisymmetric) black holes. The v0.1 API is unchanged.

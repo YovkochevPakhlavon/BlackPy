@@ -163,8 +163,43 @@ correlated with another metric parameter; the correlation is in
 ```python
 bp.plot.profile(rn, "isco", Q=np.linspace(0, 1, 200))
 bp.plot.profile([(rn, {"Q": q}), (bp.metric.Bardeen(), {"q": q})], "shadow_radius")
+bp.plot.shadow(kerr, math.pi / 2, a=[0.0, 0.5, 0.9], annotate_delta_c="fractional_rms")
 bp.plot.corner(result)
+bp.plot.residuals(result)                     # pulls and posterior predictive ranges
 print(bp.plot.latex_table(result))
+```
+
+## 8. Added in version 0.3
+
+```python
+# Does the model fit at all?
+print(result.goodness_of_fit())               # pulls, chi2, degrees of freedom (may be "undefined")
+check = result.posterior_predictive(2000, seed=0)   # PoorFitWarning if p < 0.05
+
+# Deviation from circularity: always name the definition.
+bp.light.deviation_from_circularity(kerr, math.radians(60), a=0.9, definition="fractional_rms")
+
+# Shadows in a plasma (rotating metrics: separable distributions only).
+plasma = bp.light.PowerLawPlasma(k=1.5)
+bp.light.shadow_in_plasma(bp.metric.Schwarzschild(), plasma, omega_p=0.8)
+
+# Two shadow sources: say what is shared.
+Fit(rn, ["eht/sgra", "eht/m87"], priors={"Q": Uniform(0, 1)}, per_source=["Q"])
+
+# Parametrised metrics.
+rz = bp.metric.RezzollaZhidenko(order=2)
+bp.metric.rz_coefficients(bp.metric.Bardeen(), q=0.5)      # map any static metric to RZ
+krz = bp.metric.KRZ()                                      # orbits and QPOs; shadow refused
+
+# Forecast before fitting.
+bp.infer.forecast(kerr, data, {"a": 0.3, "M_src": 6.0, "r_src": 5.7}, "RP",
+                  {"a": Uniform(0, 0.998), "r": Uniform(2, 20)})
+
+# Predictions without data: lensing and thin disks.
+bp.lensing.strong_deflection_limit(rn, Q=0.5)              # a_bar, b_bar, b_c
+bp.lensing.strong_field_observables(rn, dataset="eht/sgra", mass_prior="vlti", Q=0.5)
+bp.disk.radiative_efficiency(kerr, a=0.9)
+bp.disk.page_thorne_flux(kerr, a=0.9).r_max
 ```
 
 Complete scripts are in the `examples/` folder; the [tutorial](tutorial.md)

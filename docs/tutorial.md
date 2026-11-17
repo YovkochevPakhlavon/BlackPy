@@ -2,7 +2,7 @@
 
 This page follows one example from start to finish. The complete script is
 `examples/08_tutorial_new_metric.py`; every output shown here was produced by
-it (BlackPy 0.2.0, about 40 seconds).
+it (BlackPy 0.3.0, about 40 seconds).
 
 Units: \(G = c = 1\), lengths in units of the black hole mass \(M\).
 
@@ -137,6 +137,7 @@ FitResult (emcee, 8192 samples)
   M_gro_j1655_40           = 5.3266 +0.304 -0.312   [posterior ~ prior: NOT a constraint]
   r_gro_j1655_40           = 5.656 +0.306 -0.271
   converged: True
+  fit quality: chi2 = 3.79e-20; no degrees of freedom: goodness of fit is undefined (3 data + 1 Gaussian prior(s) - 4 parameters = 0)
   corr(a, beta) = -0.992 (rank -0.991)   [strongly degenerate]
 ```
 
@@ -153,6 +154,15 @@ be read:
   times larger;
 - the mass line is marked "posterior ~ prior": the QPOs add nothing to the
   mass once \(\beta\) is free.
+
+The "fit quality" line says something just as important: three frequencies
+and one mass measurement, fitted with four parameters, leave **no degrees of
+freedom**. The fit is exact whatever the data, so it cannot tell whether
+this metric describes the source at all; BlackPy reports the goodness of fit
+as undefined instead of quoting a p-value. With degrees of freedom left,
+`print(result.goodness_of_fit())` lists the pull of every datum and
+`result.posterior_predictive()` checks the fit against replicated data
+(a `PoorFitWarning` flags a model that fails; see example 09).
 
 ## Step 5. Compare with Kerr and plot
 

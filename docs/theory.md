@@ -1614,7 +1614,7 @@ the circular geodesic at the inner edge, by default the ISCO. For Kerr
 \(E = (1 - 2x^{-2} + a x^{-3})/\sqrt{1 - 3x^{-2} + 2a x^{-3}}\).
 Schwarzschild: \(1 - \sqrt{8/9} = 0.0572\); prograde Kerr tends to
 \(1 - 1/\sqrt3 = 0.4226\) as \(a \to 1\) (approached slowly: 0.340 at
-\(a = 0.999\)).
+\(a = 0.999\), 0.403 at \(a = 0.99999\)).
 
 **Flux. Status: transcribed (PT Eqs. (11b), (12)); the metric factor is
 derived.** PT write the metric near the equator as

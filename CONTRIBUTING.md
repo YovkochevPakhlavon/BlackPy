@@ -20,7 +20,7 @@ Python 3.10 or newer. Work only inside the project's `.venv`.
 ## Tests and linter
 
 ```bash
-.venv/bin/python -m pytest -m "not slow" -n 4 --dist loadfile   # quick subset, under 2 minutes
+.venv/bin/python -m pytest -m "not slow" -n 4 --dist loadfile   # quick subset, about 2 minutes
 .venv/bin/python -m pytest -n 4 --dist loadfile                 # full suite (slow tests included)
 .venv/bin/python -m pytest -m "not slow"                        # the same without pytest-xdist
 .venv/bin/ruff check src tests examples

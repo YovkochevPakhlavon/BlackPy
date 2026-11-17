@@ -13,7 +13,8 @@ src/blackpy/
   errors.py           exceptions and warning classes
   metric/             base.py (Metric, StaticSpherical), axisymmetric.py
                       (StationaryAxisymmetric), rotating.py (Azreg-Ainou generator),
-                      catalogue/ (one file per metric), interpolant, stubs
+                      catalogue/ (one file per metric), parametrized.py (RZ, KRZ),
+                      interpolant, stubs
   geometry/           horizons (both classes), curvature (static closed forms + dispatch),
                       axisymmetric.py (4D autodiff curvature, source classification),
                       symbolic.py (static tensors, 4D tensors with time limit),
@@ -21,10 +22,13 @@ src/blackpy/
   orbits/             circular.py (static formulas + dispatch + public API),
                       axisymmetric.py (general rotating formulas), frequencies, QPO models,
                       rpm.py (Ingram & Motta analytic solution)
-  light/              photon spheres and shadow (static), rotating.py (separable shadows),
-                      plasma/lensing stubs
+  light/              photon spheres and shadow (static), rotating.py (separable shadows,
+                      Delta C definitions), plasma.py (v0.3)
+  lensing/            deflection angles, strong deflection limit (v0.3)
+  disk.py             thin-disk efficiency and Page-Thorne flux (v0.3)
   data/               schema, loader, registry/*.yaml
-  infer/              priors, likelihood, Fit (emcee/dynesty), results
+  infer/              priors, likelihood, Fit (emcee/dynesty), results,
+                      quality.py (fit quality), forecast.py (Fisher) (v0.3)
   plot/               profiles, corner, LaTeX tables
   qnm.py, thermo.py   stubs
 ```
@@ -247,7 +251,8 @@ trustworthy, or widens the set of metrics that can be fitted.
 | Event horizon when `g^rr = 0` depends on theta | solve `g^rr + g^thth (dH/dtheta)^2 = 0`; `horizon_profile` reports the case | later |
 
 The v0.2 version of this table also listed plasma, lensing and the RZ/KRZ
-parametrisations; what happened to them in v0.3 is recorded in section 8.
+parametrisations; all three were implemented in v0.3 (lensing for static
+metrics only).
 
 All observable functions take the abstract `Metric` as first argument, so new
 metric classes can be added without changing the public API.
@@ -281,69 +286,58 @@ metric classes can be added without changing the public API.
   thermodynamics". QNMs and thermodynamics were later removed from v0.3 on
   purpose (section 6); see section 8 for the v0.3 status.
 
-## 8. Status of the v0.3 work (2026-11-17; stopped early: usage limit)
+## 8. Status at the end of the v0.3 work (2026-11-17)
 
-The work follows `BLACKPY_v0.3_PROMPT.md` in priority order. **The version
-number is still 0.2.0 and nothing has been released.**
+The whole specification `BLACKPY_v0.3_PROMPT.md` (Part A, B1 to B8) is
+implemented and committed, one commit per part or smaller (`git log`).
+Version 0.3.0. Results, tolerances, papers read and limitations are in
+`VERIFICATION_v0.3.md`.
 
-**Done and committed** (one commit per part; see `git log`):
+**Not done, by decision:**
 
-- **Part A** (A1 to A8): three named definitions of the deviation from
-  circularity (`"bambi2019"` is empirically 4 x the fractional rms); registry
-  `other_values` / `preferred_reason` / `open_questions`; Hawking-Ellis
-  classification checked against a source; `blackpy.plot.shadow`;
-  `pytest-xdist` and slow markers; CI layout; stubs for thermodynamics and
-  QNMs say "not scheduled"; `CONTRIBUTING.md`.
-- **B1** goodness of fit and posterior predictive checks
-  (`infer/quality.py`, `PoorFitWarning`, `plot.residuals`, example 09).
-- **B2** shadows in plasma (`light/plasma.py`, example 10).
-- **B3** M87* registry entry, Sgr A* masses and distances, shared /
-  per-source parameters, mass-prior choice, circularity bound (example 11).
-- **B4** Rezzolla-Zhidenko and KRZ metrics, `rz_coefficients`
-  (`metric/parametrized.py`, example 12). Two errors found in the KRZ paper
-  are documented in `docs/theory.md`, section 21.2.
-- **B5** Fisher forecasts (`infer/forecast.py`, `tests/test_forecast.py`,
-  example 13). The log-likelihood is twice differentiable by forward-mode
-  autodiff for QPO pairs, triplets and shadows; reverse mode does not pass
-  through the root finder's `while_loop`.
+- The optional gradient-based (NUTS) sampler of B5. The log-likelihood is
+  differentiable only in forward mode (the safeguarded Newton iteration is a
+  `while_loop`, which reverse-mode autodiff cannot traverse). A NUTS sampler
+  would need either gradients by `jax.jacfwd` (cost proportional to the
+  number of parameters, acceptable for the 3 to 6 parameters of typical
+  fits) or implicit differentiation of the root finders (`jax.custom_jvp`
+  on `refine_root` with the implicit-function theorem), which would also
+  enable reverse mode. The sampler itself (BlackJAX or NumPyro) would be an
+  optional extra `blackpy-gr[nuts]`, imported lazily; every integrity guard
+  works on samples and would apply unchanged. Not attempted because it adds
+  a dependency and the specification says to skip it in case of doubt.
+- Lensing by rotating metrics (equatorial plane): "if time allows" in the
+  specification; not attempted.
 
-**Left to do:**
+**Left for later sessions:**
 
-- B5: theory section 22 (the formulas are in the module docstring of
-  `infer/forecast.py`); the optional NUTS sampler was **not** attempted.
-  Design note for it: the likelihood supports forward-mode derivatives only,
-  so a gradient-based sampler needs either `jax.jacfwd` gradients (cost
-  proportional to the number of parameters, acceptable here) or implicit
-  differentiation of the root finders; a new optional dependency
-  (`blackjax` or `numpyro`) would have to be justified here first.
-- **B6** lensing, **B7** thin disks, **B8** catalogue metrics: not started.
-  `light.deflection_angle` is still a stub.
-- **Deliverables, none done yet:** version 0.3.0 in `_version.py`;
-  `CHANGELOG.md`; README; `CITATION.cff`; tutorial; `docs/how_it_works.md`
-  and `docs/api.md` (new functions are not listed there); the status
-  section of `docs/data.md`; `VERIFICATION_v0.3.md`; the update of
-  `CLAUDE.md` (version, out-of-scope list, new guards `PoorFitWarning`,
-  `CircularityDefinitionWarning`, `ForecastWarning`, explicit
-  shared/per-source choice, new commands with `-n 4 --dist loadfile`).
-- **Not verified:** the full suite (slow tests included) has not been run
-  since Part A; each part's own test files were run, and the quick subset
-  was last timed after A5 (95 s) and will be longer now. `mkdocs build
-  --strict` was not run after the documentation changes. Examples 09 to 13
-  were run when written; examples 01 to 08 were not re-run after B3
-  changed `build_problem`.
+- Human verification of every registry value (all `verified_by_human:
+  false`), including the new M87\* and Sgr A\* entries.
+- CI has never run (nothing is pushed); Linux and Windows are untested.
+- Open questions recorded in the registry files and in `VERIFICATION_v0.3.md`
+  (section 7).
 
-Material for `VERIFICATION_v0.3.md` that exists only here and in commit
-messages: papers read (Bambi et al. 2019; Shaikh et al. arXiv:2102.04299;
-Johannsen & Psaltis 2010; Martin-Moruno & Visser 2017, 2018; Motta et al.
-2014, 2022; Gelman, Meng & Stern 1996 in full; Meng 1994 abstract only;
-Perlick, Tsupko & Bisnovatyi-Kogan 2015; Perlick & Tsupko 2017, 2022; EHT
-M87* Papers I and VI from the arXiv PDFs; Psaltis et al. 2020; Kocherlakota
-et al. 2021; Gebhardt et al. 2011; Walsh et al. 2013; Walker et al. 2018;
-Mertens et al. 2016; Do et al. 2019; GRAVITY 2020, 2022; EHT Sgr A* Paper
-VI; Vagnozzi et al. 2023; Rezzolla & Zhidenko 2014; Konoplya, Rezzolla &
-Zhidenko 2016). Not read: Hawking & Ellis (book); Meng 1994 (body); the
-three M87 distance papers; Fig. 1 of Rezzolla & Zhidenko (not in ar5iv).
-Points of the specification that turned out differently: the Bambi et al.
-figure is none of the three normalisations proposed (A1); the RZ paper does
-not treat Reissner-Nordstrom (B4), its coefficients were derived; the EHT
-circularity statement is in Paper I and is a fractional rms (B3).
+## 9. Decisions added in v0.3
+
+31. **Degrees of freedom** = fitted Gaussian data + informative Gaussian
+    priors - free parameters (theory section 18). Interval likelihoods and
+    bounds have no pull and are not counted.
+32. **Poor-fit threshold 0.05** on the posterior predictive p-value of the
+    chi-square discrepancy, computed as the posterior mean of the classical
+    p-value (no simulation noise); measured false-alarm rate 1 in 100.
+33. **Plasma as a metric wrapper.** `with_plasma(metric, plasma)` returns an
+    object with the metric's interface plus one hook; the separable-shadow
+    code adds the plasma term to \(W g^{tt}\). No shadow code was duplicated.
+34. **Parameter layout for several sources.** `build_problem` keeps a table
+    `layout[source][parameter] = free index or fixed value`, so shared and
+    per-source parameters, per-source inclinations and the data table use
+    one mechanism.
+35. **KRZ keeps the full Kerr polar function** \(K_2\) (theory section
+    21.2), because the printed lowest-order truncation is Kerr only on the
+    equator.
+36. **Lensing integrals**: the singular part in closed form, the remainder by
+    Gauss-Legendre in \(\sqrt z\), and a Taylor branch for \(z < 10^{-3}\)
+    against cancellation (theory section 23.1).
+37. **Catalogue names**: the Simpson-Visser length scale is `ell` (the
+    paper's `a`) so that `rotating_from_static` can add a spin; the
+    power-law plasma index is `k` (Bardeen already has `q`).

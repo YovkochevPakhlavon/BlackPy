@@ -1,0 +1,375 @@
+# Verification report: BlackPy 0.3.0
+
+Date: 2026-11-17. Machine: Apple M2, macOS 27.2 (arm64), Python 3.13.5,
+JAX 0.12.0.1, NumPy 2.5.4, SciPy 1.18.1, sympy 1.14.0, emcee 3.1.6,
+dynesty 3.2.0. Same format as `VERIFICATION_v0.2.md`, which remains valid
+for everything not mentioned here.
+
+## 1. Summary
+
+| Check | Result |
+|---|---|
+| Full test-suite (`pytest -n 4 --dist loadfile`, slow tests included) | **308 passed, 0 failed**, 785 s (13 min) with four workers |
+| Quick subset (`-m "not slow" -n 4 --dist loadfile`) | 236 passed, 120 to 131 s in three consecutive runs (target: under 2 minutes; met in the first run only, see section 5) |
+| Tests in total | 308 (v0.2: 208); 72 marked slow |
+| `ruff check` and `ruff format --check` on `src`, `tests`, `examples` | passed |
+| `mkdocs build --strict` | passed |
+| Examples 01 to 15 | all fifteen ran to completion (5 to 78 s each) |
+| Registry values verified by a human | **none** (all `verified_by_human: false`) |
+
+Everything reported here was run in the project's `.venv` on this machine.
+CI has **not** been run (nothing was pushed): Linux and Windows are untested.
+
+Commits of this work (`git log --oneline af96d4d..`): A1+A3, A2, A4, A5+A6,
+A7+A8, B1 (two), B2, B3, B4, B5, B6 (two), B7, B8 (two), release. Nothing
+was pushed and no remote was created.
+
+## 2. Tests
+
+Tolerances are relative unless stated otherwise. "Mandatory" marks the
+validation items of the specification.
+
+### 2.1 Part A
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_circularity.py::test_definitions_are_related_as_documented` | three definitions; `bambi2019` = 4 x fractional rms; vectorised; zero without rotation; grows with spin and inclination | 1e-14 | pass |
+| `::test_jp_asymmetry_against_polygon_computation` (4 cases) | Johannsen & Psaltis Eqs. (3)-(8) on a 6000-point polygon | 2e-5 | pass |
+| `::test_jp_asymmetry_agrees_with_the_fit_formula_of_the_paper` | their Eq. (10), A/M = 0.36 a^3 sin^(3/2) i | 15% (a fit) | pass |
+| `::test_bambi2019_reproduces_the_published_exclusion_curve` (**mandatory**) | 0.1 contour vs the black curve of Fig. 1 of Bambi et al. (2019), read from the figure's pixels: a = 0.92, 0.95, 0.97, 0.99 | 1.5 deg (6 pixels); edge-on spin 0.01 | pass (0.2-0.6 deg) |
+| `::test_other_normalisations_do_not_reproduce_the_published_curve` | Eq. (5) as printed, 2x it and the unnormalised rms all miss the figure | - | pass |
+| `::test_bound_with_another_definition_warns` | `CircularityDefinitionWarning` | - | pass |
+| `test_data.py::test_conflicting_published_values_are_stored_with_a_preference` | `other_values`, `preferred_reason`, schema errors | schema only | pass |
+| `test_data.py::test_open_questions_are_loaded_and_listed` | `open_questions` | schema only | pass |
+| `test_plot.py::test_shadow_contours` | `plot.shadow`: spins, inclinations, metric parameters, band, recentring, explicit Delta C definition | 1e-12 | pass |
+| `test_light.py::test_future_light_stubs_raise` (rewritten) | thermodynamics and QNM stubs say "not scheduled" and point to the roadmap | - | pass |
+
+Compile-heavy tests were marked `slow` to keep the quick subset near two
+minutes: eight v0.2 tests in A5 and, at the end of the work, seven more
+v0.2 tests and 15 new ones (the tables mark new tests "slow" only where they
+were slow from the start; `pytest --collect-only -m slow` lists all 72).
+Marking changes no test; the full-suite run reported in section 1 was made
+before the last markers were added and includes all 308 tests either way. v0.2 tests changed: `test_future_light_stubs_raise` (stubs
+became implementations), `test_remaining_metric_stubs_raise` (RZ, KRZ),
+`test_registry_contains_initial_targets` and `test_typed_objects_and_ordering`
+(new dataset `eht/m87`), `test_registry_dataset_versions_are_recorded`
+(dataset version of `eht/sgra` read from the file), `EXTRA` in
+`test_metric.py` (new static catalogue entries).
+
+### 2.2 B1: goodness of fit (`test_fit_quality.py`, `test_infer.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_pulls_and_chi2_match_hand_computation` (**mandatory**) | pulls and chi2 at a fixed point from the Schwarzschild closed forms, 1 dof | 1e-10 | pass |
+| `test_two_frequency_fit_has_no_degrees_of_freedom` (**mandatory**) | dof = 0: "undefined", no p-value, no warning; bundle round trip | - | pass |
+| `test_wrong_model_triggers_poor_fit_warning` (**mandatory**) | Schwarzschild fitted to a Kerr (a = 0.9) triplet with a tight mass prior: chi2 > 100 for 1 dof, `PoorFitWarning`; Kerr on the same data does not warn | - | pass |
+| `test_poor_fit_warning_is_rare_under_the_true_model` (slow, **mandatory**) | false-alarm rate over 60 simulated fits <= 5%; p-values concentrated near 0.5 | binomial | pass (1 in 100 in a separate run of 100 fits) |
+| `test_fit_quality_is_the_same_for_both_samplers` (slow, **mandatory**) | emcee and dynesty: same best fit, dof, p-values within sampling error | 0.06 | pass |
+| `test_bayes_factor_warns_when_the_favoured_model_fails` (slow) | Bayes factor carries `PoorFitWarning` | - | pass |
+| `test_simulated_shadow_dataset_and_shadow_pulls`, `test_split_normal_noise_model`, `test_residual_plot` | shadow simulator, split-normal replication, plot | 1e-12 | pass |
+
+### 2.3 B2: plasma (`test_plasma.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_zero_plasma_reproduces_vacuum` (**mandatory**) | photon sphere, shadow at infinity and finite distance, angular radius; Schwarzschild, RN, Bardeen | 1e-12 | pass |
+| `test_kerr_separable_plasma_reduces_to_kerr_in_vacuum` (**mandatory**) | contours and observables, homogeneous and separable profiles | 1e-12 | pass |
+| `test_schwarzschild_homogeneous_plasma` (**mandatory**) | photon sphere from PTB Eq. (33), shadow PTB Eq. (46), limit at infinity | 1e-11 | pass |
+| `test_schwarzschild_power_law_plasma` (**mandatory**) | k = 2 exact; PTB Eqs. (58)-(59) with error ~ beta_0^2; PT Eq. (78) sign change at r_O = 6 | 1e-11; 3 beta_0^2 | pass |
+| `test_schwarzschild_theta_dependent_plasma` | PT Eqs. (69)-(72): circular shadow whose size depends on the observer's angle | 1e-10 | pass |
+| `test_kerr_spherical_light_rays_in_a_plasma` | PT Eqs. (39)-(40); PT Eq. (36) | 1e-10 | pass |
+| `test_general_path_reproduces_the_static_formulas` | rotating code with plasma hooks = static code | 1e-11 | pass |
+| `test_refusals`, `test_user_profile` | non-separable plasma, opaque plasma, misuse | - | pass |
+| `test_shadow_likelihood_with_plasma` | likelihood by hand; opaque = zero likelihood | 1e-10 | pass |
+| `test_plasma_parameter_is_covered_by_the_integrity_guards` (**mandatory**) | `DegeneracyWarning` (rank correlation < -0.9) and `PriorDominatedWarning` for the plasma parameter | - | pass |
+
+### 2.4 B3: second shadow source (`test_shadow_sources.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_m87_entry_documents_what_is_measured` | schema only: ring, theta_g, three mass priors with `independent`, distance, inclination, circularity with definition | - | pass |
+| `test_sgra_keeps_loading_and_gains_mass_and_distance` | unchanged Gaussian; new mass priors, distance | schema only | pass |
+| `test_shadow_schema_and_deviation_for_a_chosen_mass_prior` | deviation computed from theta_g, by hand; schema errors | 1e-12 | pass |
+| `test_two_shadow_sources_need_an_explicit_choice` | refusal without `shared`/`per_source`; likelihood by hand | 1e-10 | pass |
+| `test_rotating_sources_have_their_own_spin_and_inclination` | per-source spin and inclination; domain per source | 1e-8 | pass |
+| `test_mass_prior_choice_and_circular_inference` | `shadow_mass_prior`; `CircularInferenceWarning` for the image-based mass | - | pass |
+| `test_inclination_is_a_prior_only_on_request`, `test_circularity_bound_needs_its_definition` | jet inclination never used by default; bound applied with its definition, warning otherwise | - | pass |
+| `test_simulated_two_source_dataset_recovers_the_injected_parameters` (**mandatory**) | per-source and shared charges recovered | 1.5 sigma | pass |
+
+### 2.5 B4: Rezzolla-Zhidenko and KRZ (`test_parametrized.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_rz_with_zero_parameters_is_schwarzschild` (**mandatory**) | metric, horizon, photon sphere, shadow, ISCO, mb orbit, frequencies | 1e-12 | pass |
+| `test_rz_horizon_radius_in_units_of_the_mass` | r0 = 2/(1 + epsilon); A > 0 condition; b_i do not enter photon orbits or ISCO | 1e-12 | pass |
+| `test_rz_coefficients_round_trip`, `test_continued_fraction_from_series` | helper inverts the expansion | 2e-8 | pass |
+| `test_rz_coefficients_of_reissner_nordstrom` (**mandatory**) | epsilon = a0 = Q^2/r0^2, all a_i = b_i = 0 (derived; RN is not treated in the paper) | 1e-9 | pass |
+| `test_rz_coefficients_of_the_dilaton_black_hole_match_the_paper` (**mandatory**) | RZ Eqs. (30)-(31) for b/mu = 0.25, 0.5, 1 | 1e-9 (a_2: 5e-6) | pass |
+| `test_rz_observables_converge_with_the_order` (slow, **mandatory**) | RZ Eqs. (37), (43); convergence orders 1-4 (theory section 21.1) | factor 3 per order | pass |
+| `test_krz_with_zero_deviations_has_the_kerr_components` / `_observables` (**mandatory**) | all components on a grid; horizons, ergosurface, ISCO, photon orbits, frequencies | 1e-12 | pass |
+| `test_krz_coefficients_of_kerr_as_printed_in_the_paper` | printed lowest-order form is Kerr on the equator only | 1e-13 / > 1e-4 | pass |
+| `test_krz_lowest_order_reproduces_the_rotating_dilaton_black_hole` (slow, **mandatory**) | KRZ Appendix A.2 vs the exact Kerr-Sen metric: ISCO frequency and energy; printed w_01 sign fails | 1.5e-4 to 3e-3 | pass |
+| `test_krz_deformed_metric_orbits_work_and_shadow_is_refused` (slow) | orbits, QPOs, triplet likelihood; `NotSeparableError`; horizon sphericity condition | - | pass |
+
+### 2.6 B5: forecasts (`test_forecast.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_linear_gaussian_problem_is_exact` (**mandatory**) | covariance of a linear Gaussian model | 1e-10 | pass |
+| `test_singular_fisher_matrix_reports_the_degenerate_direction` | degenerate eigenvector in parameter names; infinite sigma; prior lifts it | 1e-9 | pass |
+| `test_log_likelihood_is_twice_differentiable_end_to_end` (4 cases) | -Hessian of ln L = J^T J / sigma^2 for QPO pair, triplet, static and rotating shadow | 1e-8 | pass |
+| `test_forecast_interface_and_boundary_warning` | sigma by hand; `ForecastWarning` near a boundary | 1e-9 | pass |
+| `test_prior_dominated_bounded_parameter_is_warned_about` (**mandatory**) | Kerr spin from a shadow size | - | pass |
+| `test_forecast_agrees_with_the_emcee_posterior` (slow, **mandatory**) | Kerr triplet: forecast sigma and correlations vs emcee | sampling error + 3% | pass |
+
+### 2.7 B6: lensing (`test_lensing.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_weak_deflection_series` (**mandatory**) | 4M/b and higher orders, Keeton & Petters Eqs. (24)-(25), RN Eq. (52) | size of the next term | pass |
+| `test_gauss_bonnet_weak_deflection` | Gibbons & Werner: 4M/b at first order; RN, Bardeen | 4/b | pass |
+| `test_strong_deflection_limit_of_schwarzschild` (**mandatory**) | a = 1, b = ln[216(7 - 4 sqrt 3)] - pi = -0.4002, u_m = 3 sqrt 3 | 1e-9 | pass |
+| `test_exact_deflection_approaches_the_strong_deflection_limit` (**mandatory**) | difference ~ delta ln delta; Bozza's 0.06% at the outermost image | - | pass |
+| `test_reissner_nordstrom_strong_deflection_coefficients` (**mandatory**) | Tsukamoto's exact formulas incl. Q = 1; Bozza's Table 1 | 2e-8; printed digits | pass |
+| `test_strong_field_observables_of_the_galactic_centre` | Bozza's Table 1 observables; lens from the registry; Einstein ring | 3e-3 | pass |
+| `test_deflection_in_a_homogeneous_plasma` | Bisnovatyi-Kogan & Tsupko Eq. (38) | 30/(b(1 - x)) | pass |
+| `test_closest_approach_and_deflection_at`, `test_lensing_refusals`, `test_parsec_and_astronomical_unit_match_scipy` | | | pass |
+
+### 2.8 B7: thin disks (`test_disk.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_radiative_efficiency` (**mandatory**) | Schwarzschild 1 - sqrt(8/9); Kerr from PT Eq. (15g) up to a = 0.9999; monotonic approach to 1 - 1/sqrt 3 | 1e-10 | pass |
+| `test_flux_matches_the_page_thorne_kerr_closed_form` (5 spins, **mandatory**) | PT Eq. (15n) from 1.001 to 1000 r_ISCO; radius and value of the maximum | 1e-9 | pass |
+| `test_flux_vanishes_at_the_inner_edge_and_falls_as_r_cubed` (**mandatory**) | zero at the ISCO; F r^3 -> 3/(8 pi) with r^(-1/2) correction | 2% | pass |
+| `test_general_path_reproduces_the_static_one` (slow) | `as_axisymmetric()` | 1e-10 | pass |
+| `test_refusals` | no ISCO; two inner edges; explicit `r_in`; reflection asymmetry | - | pass |
+
+### 2.9 B8: catalogue (`test_catalogue_v03.py`)
+
+| Test | What is checked | Tolerance | Result |
+|---|---|---|---|
+| `test_gmghs` | Schwarzschild limit; horizon; RZ Eqs. (37), (43) | 1e-10 | pass |
+| `test_simpson_visser` | r_H, r_photon, r_ISCO of the paper's section 7; horizonless wormholes; shadow 3 sqrt 3 (derived) | 1e-10 | pass |
+| `test_kerr_sen` | Sen (1992) = KRZ Eq. (6); Kerr and GMGHS limits; Sen's horizons; separability tested | 1e-12 | pass |
+| `test_rotating_regular_black_holes` (2) | Bambi & Modesto Eq. (14); static and Kerr limits; horizon | 1e-12 | pass |
+
+## 3. Formulas and their sources
+
+"Read" means read in this work (2026-11-15 to 2026-11-17), from the ar5iv
+HTML rendering of the arXiv version unless stated otherwise. Derivations
+are in `docs/theory.md`, sections 17 to 25.
+
+| Formula | Source | Status |
+|---|---|---|
+| Delta C, fractional rms | Bambi et al. (2019) Eq. (5); Shaikh et al. (arXiv:2102.04299) Eq. (28) | read |
+| Johannsen-Psaltis asymmetry | Johannsen & Psaltis (2010) Eqs. (3)-(8), (10) | read |
+| `bambi2019` = 4 x fractional rms | Fig. 1 of Bambi et al. (2019), read from the figure's pixels | **empirical** |
+| EHT circularity statement | EHT M87* Paper I, Sec. 7, 8 (arXiv PDF) | read |
+| Hawking-Ellis types | Martín-Moruno & Visser (2018), CQG 35, 125003, Sec. 2 | read; Hawking & Ellis (1973) **not accessed** |
+| Type I energy conditions | Martín-Moruno & Visser, arXiv:1702.05915, Sec. 2.1 | read |
+| Posterior predictive p-value, chi2 discrepancy | Gelman, Meng & Stern (1996), Statistica Sinica 6, 733, Eqs. (5)-(9), Sec. 2.3; Rubin's comment p. 790 | read (full PDF) |
+| Frequency of p <= alpha below 2 alpha | Meng (1994), Ann. Stat. 22, 1142 | **abstract only** (Crossref) |
+| Degrees of freedom convention | derived (theory section 18) | derived |
+| Plasma: H, photon sphere, shadow | Perlick, Tsupko & Bisnovatyi-Kogan (2015) Eqs. (14)-(20), (32), (43), (46), (57)-(59) | read |
+| Separable plasma on Kerr | Perlick & Tsupko (2017) Eqs. (26), (36), (39)-(40), (66)-(72), (78) | read |
+| Plasma in the BlackPy separability framework; ZAMO screen with plasma; n at infinity | derived (theory section 19.2) | derived |
+| M87* chain ring -> theta_g -> delta -> r_sh/M | EHT Papers I (Table 1, Sec. 7) and VI (Eqs. (31)-(32), Sec. 9.5, Tables 7, 9); Psaltis et al. (2020); Kocherlakota et al. (2021) Eqs. (13)-(14) | read |
+| Deviation from theta_g for a chosen mass prior | EHT Paper VI Eq. (31); Gaussian error propagation | transcribed + derived |
+| RZ parametrisation | Rezzolla & Zhidenko (2014) Eqs. (1)-(19), (29)-(31), (37), (43) | read |
+| RN in RZ form | derived | derived |
+| KRZ | Konoplya, Rezzolla & Zhidenko (2016) Eqs. (6), (7), (16)-(28), (30), (53)-(54), (60), (86)-(89), Table 3 | read; two corrections (theory 21.2) |
+| Fisher matrix | standard; prior curvatures derived | derived |
+| Exact deflection angle | Bozza (2002) Eqs. (6)-(7); Tsukamoto (2017) Eqs. (28)-(44) | read; arcsin branch and Taylor branch derived |
+| Gauss-Bonnet weak deflection | Gibbons & Werner (2008) Eqs. (5), (14) | read; general radial integral derived |
+| Weak-deflection series | Keeton & Petters (2005) Eqs. (24)-(25), (52) | read |
+| Strong deflection limit | Tsukamoto (2017) Eqs. (54)-(55), (63)-(80); Bozza (2002) Eqs. (36)-(50), (77)-(92), Table 1 | read |
+| Plasma deflection (weak) | Bisnovatyi-Kogan & Tsupko (2010) Eqs. (34)-(38) | read |
+| Einstein ring | standard lens equation | **from memory** (marked in the docstring as standard) |
+| Thin-disk flux | Page & Thorne (1974) Eqs. (11b), (12), (14), (15) | read (scanned journal version, NASA ADS); prefactor 3/(2M) of (15n) fixed by the Newtonian limit because the "3" is lost in the scan |
+| e^(nu+psi+mu) for BlackPy's components | derived | derived |
+| GMGHS | a = 0 limit of Sen (1992); RZ section IV; Kocherlakota et al. footnote 2 | read; originals **not accessed** |
+| Simpson-Visser | Simpson & Visser (2019) Eq. (2.1), Sec. 7 | read (arXiv PDF) |
+| Kerr-Sen | Sen (1992) Einstein-frame metric, Eqs. (17)-(20) | read |
+| Rotating Bardeen / Hayward | Bambi & Modesto (2013) Eqs. (14), (15), (26) | read |
+| AU, parsec | IAU definitions; checked against `scipy.constants` | test |
+
+Bibliographic data (journal, volume, page or article number, year) were
+confirmed with Crossref for: Bozza (2002); Tsukamoto (2017); Keeton &
+Petters (2005); Gibbons & Werner (2008); Bisnovatyi-Kogan & Tsupko (2010);
+Rezzolla & Zhidenko (2014); Konoplya, Rezzolla & Zhidenko (2016); Perlick,
+Tsupko & Bisnovatyi-Kogan (2015); Perlick & Tsupko (2017); Martín-Moruno &
+Visser (2018); Meng (1994); EHT M87* Papers I and VI; Psaltis et al.
+(2020); Kocherlakota et al. (2021); Gebhardt et al. (2011); Walsh et al.
+(2013); Walker et al. (2018); Mertens et al. (2016); Do et al. (2019);
+GRAVITY Collaboration (2020, 2022); EHT Sgr A* Paper VI. Gelman, Meng &
+Stern (1996) from the PDF itself.
+
+### 3.1 References marked † in the specification
+
+| Reference in the specification | Checked? | Outcome |
+|---|---|---|
+| Gelman, Meng & Stern 1996† | yes | Statistica Sinica 6, 733-807: correct. Read in full |
+| Meng 1994† | yes | Ann. Stat. 22, 1142-1160 (Crossref): correct. Abstract only |
+| EHT 2019 Papers I and VI† | yes | ApJL 875, L1 and L6: correct. Read (arXiv PDFs) |
+| Psaltis et al. 2020† | yes | PRL 125, 141104: correct. Read |
+| Kocherlakota et al. 2021† | yes | PRD 103, 104047: correct. Read |
+| Rezzolla & Zhidenko 2014, PRD 90, 084009, arXiv:1407.3086† | yes | correct. Read |
+| Konoplya, Rezzolla & Zhidenko 2016, PRD 93, 064015, arXiv:1602.02378† | yes | correct. Read |
+| Page & Thorne 1974, ApJ 191, 499† | yes | correct. Read (scan) |
+| Novikov & Thorne 1973† | no | Les Houches book chapter; not accessible |
+
+Unmarked references of the specification: Bambi et al. (2019, PRD 100,
+044057, arXiv:1904.12983) correct, read; Johannsen & Psaltis (2010) read;
+arXiv:2102.04299 read (Eq. (28) as stated); Motta et al. (2014) read
+(Table 3 = 0.286, text = 0.290, as stated); Perlick, Tsupko &
+Bisnovatyi-Kogan (2015), Perlick & Tsupko (2017, 2022) read; Bozza (2002)
+read; Tsukamoto (2017) read (arXiv:1612.08251); Bisnovatyi-Kogan & Tsupko
+read (2010 paper, arXiv:1006.2321); Hawking & Ellis (1973) **not accessed**
+(a paper that reproduces the classification was read instead, as the
+specification allows).
+
+## 4. Registry values (new or changed)
+
+Read by Claude on 2026-11-15 to 2026-11-17. **Every entry still needs a
+human check**; `verified_by_human` is `false` everywhere.
+
+| Dataset | Field | Value | Read from | Status |
+|---|---|---|---|---|
+| `qpo/gro_j1655_40` (v3) | `spin` | 0.286 ± 0.003 (main), 0.290 ± 0.003 (`other_values`) | Motta et al. (2014) Table 3; abstract, Sec. 4.1, Fig. 3, Sec. 5 | read; preferred = Table 3 (equals the exact RPM solution) |
+| | `published_fit.mass` | 5.307 ± 0.066 (main), 5.31 ± 0.07 | Table 3; text | read |
+| | `published_fit.radius` | 5.677 ± 0.035 (main), 5.68 ± 0.04, 5.68 ± 0.03 | Table 3; Sec. 4.1; Sec. 5 | read |
+| `qpo/xte_j1859_226` (v3) | `open_questions` | uncertainty factor 2.7 | Motta et al. (2022) | text only |
+| `eht/sgra` (v2) | `mass_priors.keck` | 3.964 ± 0.054 × 10⁶ M☉ (0.047 ⊕ 0.026); also 3.951 ± 0.047 and 3.984 ± 0.064 | Do et al. (2019); EHT Sgr A* VI Sec. 2.1 | read; discrepancy between papers recorded |
+| | `mass_priors.vlti` | 4.297 ± 0.042 × 10⁶ M☉ (0.012 ⊕ 0.040); also 4.261 ± 0.012 | GRAVITY (2022) Sec. 6; EHT VI Sec. 2.1; GRAVITY (2020) App. E | read |
+| | theta_g, delta per prior | 4.92 ± 0.032 / 5.125 ± 0.022 µas; -0.04 (+0.09/-0.10) / -0.08 ± 0.09 | EHT VI Sec. 2.1; Vagnozzi et al. (2023) | read |
+| | `distance` | 8.277 ± 0.034 kpc; also 7.946 ± 0.059 kpc | GRAVITY (2022); Do et al. (2019) | read |
+| `eht/m87` (new) | `bounds.1sigma` | 4.31-6.08 | Kocherlakota et al. (2021) Eq. (14) | read |
+| | `fractional_deviation` | -0.01 ± 0.17 | EHT VI Sec. 9.5 | read |
+| | `mass_priors` | stellar 6.14 (+1.07/-0.62), gas 3.45 (+0.85/-0.26), EHT ring 6.5 ± 0.7 × 10⁹ M☉ (not independent); originals 6.6 ± 0.4 and 3.5 (+0.9/-0.7) at 17.9 Mpc | EHT VI Table 9; EHT I Table 1; Gebhardt et al. (2011); Walsh et al. (2013) | read; signs of asymmetric errors from a PDF extraction (todo) |
+| | theta_g per prior, delta per prior | 3.62 (+0.60/-0.34), 2.05 (+0.48/-0.16), 3.8 ± 0.4 µas; -0.01 ± 0.17, 0.78 ± 0.3 | EHT VI Table 9, Sec. 9.5 | read |
+| | `measured` | ring 42 ± 3 µas; theta_g 3.8 ± 0.4 µas | EHT I Table 1 | read |
+| | `distance` | 16.8 ± 0.8 Mpc | EHT I | read; the three distance papers not read |
+| | `inclination` | 17.2 ± 3.3° (jet); 17° adopted by the EHT | Mertens et al. (2016) Eq. (4); Walker et al. (2018) | read |
+| | `circularity` | < 0.10, `fractional_rms`, emission ring | EHT I Sec. 7 | read |
+
+No 2-sigma bound for M87* was found in the papers read (`todo` in the file).
+
+## 5. Benchmarks
+
+Timings on the Apple M2 (four performance and four efficiency cores).
+With `-n auto` (eight workers) the quick subset took 163 s, slower than
+with four workers, because the efficiency cores are slow. The remaining
+quick-subset time is dominated by JAX compilation in each worker; 30 more
+compile-heavy tests (new and old) were moved to `slow` to get here, and
+cutting further would remove the only quick test of several features.
+The spread between runs (120 to 131 s) comes from the machine warming up
+during consecutive runs.
+
+| Quantity | Time |
+|---|---|
+| Quick subset, 4 workers (`-n 4 --dist loadfile`) | 120 to 131 s (v0.2, one process: 262 s; after A5: 95 s) |
+| Full suite, 4 workers | 785 s (v0.2, one process: 520 s) |
+| Fit-quality check added to every `Fit.run` (best fit + 4000 predictive draws), Kerr triplet, 4960 samples | 0.03 s (the emcee run itself: 3.8 s) |
+| Fisher forecast, Kerr triplet, 3 parameters | 0.8 s including compilation; 0.67 s repeated (example 13) |
+| Fisher Hessian of a rotating shadow likelihood (Kerr-Newman, 3 parameters) | 86 s in the test (nested forward-mode through the shadow) |
+| Exact deflection angle | 0.16 ms for one impact parameter (Python call included); 0.0004 ms each for 10^4 values |
+| Page-Thorne flux profile, Kerr, 200 radii plus the maximum | 13.7 s for the first call (compilation), milliseconds when repeated |
+| False-alarm study of `PoorFitWarning`, 100 Kerr triplet fits | 335 s |
+
+## 6. Known limitations
+
+1. **No human verification of the data** (unchanged). Treat every registry
+   number as provisional; the M87* asymmetric uncertainties were read from
+   a PDF text extraction.
+2. **Posterior predictive p-values are conservative** (not uniform under the
+   true model). A value near 0.5 does not certify a fit.
+3. **Degrees of freedom** are exact only for models linear in their
+   parameters; a parameter on a prior boundary or unconstrained by the data
+   uses less than one.
+4. **Plasma**: cold, non-magnetised, pressureless only; rotating metrics only
+   for the separable class. The ZAMO-with-plasma screen coordinates are
+   derived, not taken from a paper (PT 2017 use another observer).
+5. **The M87* bound is not model independent**: the ring-to-theta_g
+   calibration uses GRMHD simulations in the Kerr metric.
+6. **KRZ**: lowest order only, with the full Kerr K_2 (a member of the
+   family, but not the truncation printed in the paper). Shadows refused.
+7. **Fisher forecasts**: Gaussian approximation; reverse-mode autodiff is not
+   available through the root finders.
+8. **Lensing**: static metrics only; predictions only. The strong deflection
+   limit assumes one unstable photon sphere outside the horizon.
+9. **Thin disks**: no ray tracing, hence no spectra and no likelihood.
+10. **Simpson-Visser wormholes**: the region r < 0 (the other universe) and
+    the throat at r = 0 are not covered; a photon sphere at the throat is not
+    found.
+11. **GMGHS**: the original papers were not read; the metric comes from the
+    static limit of Sen (1992).
+12. **Rotating Bardeen and Hayward**: generated models; the declared spin
+    bound |a| <= 1 is necessary, not sufficient.
+13. Windows and Linux are untested; CI has not run.
+
+## 7. Points in the specification that I think are wrong or need a decision
+
+1. **A1, "jp_asymmetry: 2 × rms"; "bambi2019: which of fractional, ×2, or
+   unnormalised rms".** None of the three proposed normalisations reproduces
+   Fig. 1 of Bambi et al. (2019); four times the fractional rms does, to the
+   accuracy of the figure. The text of that paper is looser than its figure
+   ("a = 0.95: θ ≳ 45°" vs 54° in the figure). The EHT M87* statement
+   ("10% ... root-mean-square distance from an average radius", Paper I)
+   is a fractional rms: with that definition it excludes no Kerr black hole,
+   so the published Kerr exclusion region rests on a factor 4 whose origin
+   is unknown.
+2. **A1, "the EHT M87* papers"**: the circularity statement is in Paper I,
+   not VI; Paper VI measures a different quantity (spread of the diameter).
+3. **B3, "a published bound on δ ... say which mass prior it assumed"**: the
+   bound exists only for the stellar-dynamics prior; the gas-dynamics mass
+   gives δ = 0.78 ± 0.3, a 2.6σ tension with any Schwarzschild-like shadow.
+   The choice of mass prior decides the result.
+4. **B4, "KRZ ... in the form and truncation the paper recommends"**: that
+   truncation is not Kerr off the equator (theory 21.2), contrary to "all
+   deviation parameters zero reproduces Kerr to 1e-12 in every observable".
+   BlackPy keeps the exact Kerr polar function instead. Also, the printed
+   w_01 of the rotating dilaton black hole has the wrong sign.
+5. **B4, "RZ coefficients of Reissner–Nordström ... printed in the paper"**:
+   the RZ paper does not treat RN. The coefficients were derived (RN is
+   exact at lowest order with a_0 = ε) and the dilaton black hole, which the
+   paper does treat, was used for the comparison with printed values.
+6. **B4, "converge ... at the rate the paper reports"**: the paper reports
+   orders of magnitude at a few orders, read off a figure that could not be
+   accessed; BlackPy's rates agree with the text at orders 1 and 3 and are
+   one order slower for one statement (theory 21.1).
+7. **B5, NUTS**: reverse-mode gradients are not available through the root
+   finders; the optional sampler was not attempted (design note in
+   `DESIGN_NOTES.md`, section 8).
+8. **B7, "test at high but not extremal spin against the closed form"**: the
+   approach to 1 - 1/√3 = 0.423 is very slow (0.340 at a = 0.999, 0.382 at
+   0.9999, 0.403 at 0.99999); the test checks monotonic approach from below.
+9. **B8, GMGHS**: the original papers are not accessible; the entry is based
+   on Sen (1992) at a = 0. Strictly, the "one file, its reference read in
+   this session" rule is satisfied only through that identification.
+10. **"A realistic v0.3.0 is Part A plus B1 to B4"**: all parts were done, but
+    lensing by rotating metrics and the NUTS sampler were left out.
+
+## 8. Commands
+
+```bash
+cd /Users/pahlavon/Desktop/BlackPy
+source .venv/bin/activate
+
+python -m pytest -n 4 --dist loadfile                  # full suite
+python -m pytest -m "not slow" -n 4 --dist loadfile    # quick subset
+python -m pytest -s -k poor_fit_warning_is_rare        # prints the false-alarm count
+python -m pytest -s -k coverage                        # prints the v0.2 coverage test
+
+for f in examples/[0-9]*.py; do python "$f"; done      # all examples (01 to 15)
+python examples/09_fit_quality.py         # goodness of fit, posterior predictive check
+python examples/10_plasma_shadows.py      # shadows in a plasma
+python examples/11_m87_and_sgra_shadows.py   # M87*, joint fits, published charge bound
+python examples/12_parametrised_metrics.py   # RZ coefficients, published RZ bound
+python examples/13_fisher_forecast.py     # forecasts
+python examples/14_lensing.py             # deflection, strong deflection limit
+python examples/15_thin_disks.py          # efficiency, Page-Thorne flux
+
+ruff check src tests examples && ruff format --check src tests examples
+python -m mkdocs build --strict
+```

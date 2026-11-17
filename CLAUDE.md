@@ -20,7 +20,7 @@ Read `DESIGN_NOTES.md` for the reasoning behind the decisions listed here.
 | Dependencies | numpy, scipy, matplotlib, corner, pyyaml, emcee, dynesty, jax, sympy. Anything else must be justified in `DESIGN_NOTES.md` |
 | Tooling | pyproject.toml (hatchling), pytest, ruff, GitHub Actions CI, MkDocs |
 | Language | English everywhere (code, comments, docs, commits) |
-| Version | 0.2.0 (single source: `src/blackpy/_version.py`) |
+| Version | 0.3.0 (single source: `src/blackpy/_version.py`) |
 
 ## Design principle: "symbolic in, numeric core"
 
@@ -87,11 +87,16 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
 - For rotating metrics the horizon functions use `g^rr` and the lapse
   squared; the surface `g^rr = 0` is the event horizon only if it does not
   depend on theta, and the code must report whether it does.
-- Out-of-scope features (plasma, weak/strong lensing, QNMs, thermodynamics,
-  S2 orbits, non-separable ray tracing, RZ/KRZ parametrisations) are stubs
-  that raise `NotImplementedError` with a roadmap message. Do not implement
-  them silently or half-way. Nodal precession stays refused for
-  `StaticSpherical` metrics (it vanishes identically).
+- Out-of-scope features (QNMs and thermodynamics, which are not scheduled
+  because no data would use them; S2 orbits; non-separable ray tracing, and
+  with it lensing by rotating metrics and continuum-fitting / iron-line
+  likelihoods) are stubs that raise `NotImplementedError` or refuse with a
+  message. Do not implement them silently or half-way. Nodal precession
+  stays refused for `StaticSpherical` metrics (it vanishes identically).
+- Plasma shadows of rotating metrics exist only for the separable class of
+  Perlick & Tsupko (2017); other plasma distributions are refused, never
+  approximated. Lensing and thin-disk results are predictions: they must
+  not enter a likelihood without data and, for disks, ray tracing.
 
 ## Coding standards
 
@@ -118,9 +123,14 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
 - Every dataset carries `verified_by_human: false` until the project owner
   has checked it against the paper and flipped the flag by hand. Claude must
   never set it to `true`.
-- Mass priors must record whether they are independent of QPO modelling
-  (`independent: true/false`). Using a non-independent mass prior triggers a
-  `CircularInferenceWarning`; do not silence it.
+- Mass priors must record whether they are independent of the data they are
+  combined with (`independent: true/false`): of QPO modelling for a QPO
+  source, of the horizon-scale image for a shadow source. Using a
+  non-independent mass prior triggers a `CircularInferenceWarning`; do not
+  silence it.
+- A quantity printed with different values in the same paper keeps all of
+  them (`other_values`, each with its location) and says which is preferred
+  and why (`preferred_reason`). Unresolved questions go to `open_questions`.
 - Tests must not depend on unverified registry numbers (only on schema and
   loading). Reproductions of published constraints go to `examples/`.
 - Published spins and fit results (`spin`, `published_fit`) are stored for
@@ -140,22 +150,37 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
   (`SpinIgnoredWarning`);
 - spin strongly degenerate with another metric parameter
   (`DegeneracyWarning`; the posterior correlation is always recorded in
-  `diagnostics["spin_correlations"]`).
+  `diagnostics["spin_correlations"]`); the same for plasma parameters
+  (`diagnostics["plasma_correlations"]`);
+- a model that does not fit (`PoorFitWarning`: posterior predictive p-value
+  below 0.05), also attached to a Bayes factor whose favoured model fails;
+  with zero or negative degrees of freedom the goodness of fit is reported
+  as undefined, never as a p-value;
+- a circularity bound combined with a definition of Delta C other than the
+  one it was derived for (`CircularityDefinitionWarning`); every use of
+  Delta C names its definition explicitly;
+- a shadow bound resting on a mass that is not independent of the image
+  (`CircularInferenceWarning`);
+- joint fits of several shadow sources refuse to run until every sampled
+  metric parameter is declared `shared` or `per_source`;
+- Fisher forecasts near a prior boundary (`ForecastWarning`) or for
+  prior-dominated parameters (`PriorDominatedWarning`).
 
 ## Commands (macOS / Linux; on Windows use `.venv\Scripts\` instead of `.venv/bin/`)
 
 ```bash
 python3 -m venv .venv                      # once
 .venv/bin/python -m pip install -e ".[dev,docs]"
-.venv/bin/python -m pytest                 # full suite (includes slow tests, about 9 min)
-.venv/bin/python -m pytest -m "not slow"   # quick suite (about 4.5 min)
+.venv/bin/python -m pytest -n 4 --dist loadfile                  # full suite (slow tests included)
+.venv/bin/python -m pytest -m "not slow" -n 4 --dist loadfile    # quick subset
+.venv/bin/python -m pytest -m "not slow"                         # without pytest-xdist
 .venv/bin/ruff check src tests examples && .venv/bin/ruff format --check src tests examples
 .venv/bin/python -m mkdocs build --strict  # documentation
 ```
 
 ## Workflow
 
-- Read `DESIGN_NOTES.md` section 7 first: it records what is done and what
+- Read `DESIGN_NOTES.md` section 8 first: it records what is done and what
   is left.
 - Build bottom-up: constants, metric, geometry, orbits, light, data, infer, plot.
 - Run the tests after each module; commit small, meaningful changes.

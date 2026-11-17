@@ -27,10 +27,11 @@ flowchart LR
 |---|---|---|
 | metric | `blackpy.metric` | Holds the metric functions, their parameters (names, defaults, bounds, roles) and compiled-function caches |
 | geometry | `blackpy.geometry` | Answers "what spacetime is this?": horizons, ergosurface, curvature scalars, effective stress-energy and its type, energy conditions |
-| observables | `blackpy.orbits`, `blackpy.light` | Circular orbits, ISCO, epicyclic frequencies, QPO models; photon spheres and regions, shadows |
+| observables | `blackpy.orbits`, `blackpy.light` | Circular orbits, ISCO, epicyclic frequencies, QPO models; photon spheres and regions, shadows (also in a plasma) |
+| predictions | `blackpy.lensing`, `blackpy.disk` | Deflection angles and relativistic images; thin-disk efficiency and flux. No data exist for them, so they do not enter a likelihood |
 | data | `blackpy.data` | Loads measurements from YAML files that record where every number was read |
-| inference | `blackpy.infer` | Builds the joint likelihood, runs emcee or dynesty, computes Bayes factors, and warns when a result should not be trusted |
-| plots | `blackpy.plot` | Profile plots, corner plots, LaTeX tables |
+| inference | `blackpy.infer` | Builds the joint likelihood, runs emcee or dynesty, computes Bayes factors, checks the fit quality, forecasts with the Fisher matrix, and warns when a result should not be trusted |
+| plots | `blackpy.plot` | Profile plots, shadow contours, corner plots, residual plots, LaTeX tables |
 
 ## 2. "Symbolic in, numeric core"
 
@@ -138,6 +139,11 @@ result = fit.run(seed=1)
    masses) and orbital radius `r_<source>` (units of \(M\)). The mass prior
    defaults to the *independent* (dynamical) mass in the registry. Shadow
    data with a rotating metric add the inclination as a nuisance parameter.
+   With several shadow sources you must say which metric parameters are
+   common to all of them (`shared=[...]`) and which have one value per
+   source (`per_source=[...]`, named `<name>_<source>`): a charge-to-mass
+   ratio need not be the same for two black holes. A plasma
+   (`plasma=PowerLawPlasma()`) adds its own parameters.
 3. **Likelihood.** For a proposed parameter vector: frequencies of the
    chosen QPO model at that radius and mass, compared with the measured
    peaks (split normal for asymmetric errors); for a triplet and a rotating
@@ -150,12 +156,22 @@ result = fit.run(seed=1)
 5. **Guards.** Before returning, BlackPy checks and warns about: a mass
    prior that itself came from a QPO fit (circular inference); a posterior
    indistinguishable from its prior (not a constraint); an unconverged
-   chain; a static metric fitted to a rotating source; spin strongly
-   degenerate with another metric parameter.
-6. **Result.** Samples, summary, diagnostics, and a record of everything
+   chain; a static metric fitted to a rotating source; spin (or a plasma
+   parameter) strongly degenerate with a metric parameter; a circularity
+   bound used with a definition it was not derived for.
+6. **Fit quality.** The best-fit point, the pull of every datum, the
+   chi-square and the number of degrees of freedom (which can be zero:
+   then the goodness of fit is "undefined"), and a posterior predictive
+   check. A model that does not reproduce the data triggers a
+   `PoorFitWarning`, also when a Bayes factor favours it.
+7. **Result.** Samples, summary, diagnostics, and a record of everything
    needed to repeat the run (versions, seed, priors, dataset hashes), saved
    as one `.npz` file. `fit.bayes_factor(null={...})` compares with a nested
    model.
+
+Before collecting data, `blackpy.infer.forecast(...)` estimates what a
+dataset would constrain from the Fisher matrix (the same model functions,
+differentiated by autodiff), and names the directions it cannot constrain.
 
 ## 7. How to add a new metric
 
@@ -200,7 +216,10 @@ See [Data registry](data.md) for the schema.
 
 ## 9. What BlackPy does not do
 
-Ray tracing for non-separable metrics (use Gradus.jl), plasma, weak and
-strong lensing, quasinormal modes, thermodynamics and S2-orbit data are
-outside version 0.2. Their interfaces exist and raise `NotImplementedError`
-with a pointer to the roadmap in `DESIGN_NOTES.md`.
+- Ray tracing: shadows of non-separable metrics (use Gradus.jl), lensing by
+  rotating metrics, images of accretion disks. For the same reason there are
+  no continuum-fitting or iron-line likelihoods.
+- Quasinormal modes and thermodynamics: not scheduled, because no data
+  would use them in a likelihood (see the roadmap in `DESIGN_NOTES.md`).
+  Their interfaces exist and raise `NotImplementedError`.
+- S2-orbit data.
