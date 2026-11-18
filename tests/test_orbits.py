@@ -38,7 +38,11 @@ def test_schwarzschild_orbit_quantities(schwarzschild):
         float(ob.specific_energy(schwarzschild, 6.0)), math.sqrt(8 / 9), rel_tol=1e-14
     )
     assert np.isnan(ob.angular_velocity(schwarzschild, 2.5))  # inside the photon sphere
-    assert not bool(ob.circular_orbit_exists(schwarzschild, 3.0))
+    # No timelike circular orbit inside the photon orbit r = 3, one just outside it. At
+    # r = 3 itself the existence condition is 0 = 0 and its sign is round-off (it differs
+    # between JAX versions), so the boundary point is not tested.
+    assert not bool(ob.circular_orbit_exists(schwarzschild, 3.0 - 1e-6))
+    assert bool(ob.circular_orbit_exists(schwarzschild, 3.0 + 1e-6))
 
 
 def test_schwarzschild_epicyclic_relations(schwarzschild):
@@ -211,7 +215,7 @@ def test_isco_performance(rn):
     Budget: 0.05 ms per evaluation after compilation (the design target is
     0.01 ms; the budget is looser so that slow CI machines do not fail).
     Measured timings are printed (run pytest with ``-s``) and recorded in
-    VERIFICATION.md.
+    verification/v0.1.md.
     """
     import time
 

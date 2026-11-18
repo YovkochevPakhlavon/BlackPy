@@ -22,6 +22,7 @@ Three fits of the GRO J1655-40 QPOs (registry data, not verified by a human):
 Run:  python examples/09_fit_quality.py        (about 30 seconds)
 """
 
+import os
 import warnings
 from pathlib import Path
 
@@ -34,6 +35,22 @@ import matplotlib.pyplot as plt  # noqa: E402
 import blackpy as bp  # noqa: E402
 from blackpy.errors import PoorFitWarning  # noqa: E402
 from blackpy.infer import Fit, Uniform  # noqa: E402
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 out = Path(__file__).parent / "output"
 out.mkdir(exist_ok=True)
@@ -52,13 +69,15 @@ for ax, (title, (metric, priors)) in zip(axes, cases.items(), strict=True):
     print(f"=== {title} " + "=" * (60 - len(title)))
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        fit = Fit(metric, DATA, qpo_model="RP", priors=priors, nsteps=4000, max_steps=16000)
+        fit = Fit(
+            metric, DATA, qpo_model="RP", priors=priors, nsteps=steps(4000), max_steps=steps(16000)
+        )
         result = fit.run(seed=9)
     poor = [w for w in caught if issubclass(w.category, PoorFitWarning)]
     other = sorted({w.category.__name__ for w in caught if w not in poor})
     print(result)
     print(result.goodness_of_fit())
-    print(result.posterior_predictive(4000, seed=0, warn=False))
+    print(result.posterior_predictive(steps(4000), seed=0, warn=False))
     print(f"PoorFitWarning raised: {bool(poor)}; other warnings: {other}\n")
     bp.plot.residuals(result, ax=ax)
     ax.set_title(f"{title}\n{ax.get_title()}", fontsize="medium")

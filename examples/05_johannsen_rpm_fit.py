@@ -20,6 +20,7 @@ warnings; they are printed, not silenced.
 Run:  python examples/05_johannsen_rpm_fit.py        (about half a minute)
 """
 
+import os
 import warnings
 from pathlib import Path
 
@@ -30,6 +31,22 @@ matplotlib.use("Agg")
 import blackpy as bp  # noqa: E402
 from blackpy.errors import DegeneracyWarning, UnverifiedDataWarning  # noqa: E402
 from blackpy.infer import Fit, Uniform  # noqa: E402
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 out = Path(__file__).parent / "output"
 out.mkdir(exist_ok=True)
@@ -53,7 +70,7 @@ priors = {**kerr_priors, "alpha13": Uniform(-4.0, 4.0)}
 warnings.simplefilter("always", DegeneracyWarning)
 warnings.simplefilter("once", UnverifiedDataWarning)
 
-kerr_fit = Fit(kerr, DATA, qpo_model="RP", priors=kerr_priors, sampler="emcee", nsteps=6000)
+kerr_fit = Fit(kerr, DATA, qpo_model="RP", priors=kerr_priors, sampler="emcee", nsteps=steps(6000))
 kerr_result = kerr_fit.run(seed=1)
 print("Kerr, emcee\n", kerr_result, "\n", sep="")
 
@@ -63,14 +80,16 @@ emcee_fit = Fit(
     qpo_model="RP",
     priors=priors,
     sampler="emcee",
-    nsteps=8000,
-    max_steps=64000,
+    nsteps=steps(8000),
+    max_steps=steps(64000),
 )
 emcee_result = emcee_fit.run(seed=2)
 print("Johannsen (alpha13 free), emcee\n", emcee_result, sep="")
 print(emcee_fit.bayes_factor(null={"alpha13": 0.0}), "\n")
 
-dynesty_fit = Fit(johannsen, DATA, qpo_model="RP", priors=priors, sampler="dynesty", nlive=400)
+dynesty_fit = Fit(
+    johannsen, DATA, qpo_model="RP", priors=priors, sampler="dynesty", nlive=live(400)
+)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", RuntimeWarning)  # dynesty's own efficiency hints
     dynesty_result = dynesty_fit.run(seed=3)

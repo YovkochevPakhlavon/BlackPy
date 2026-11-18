@@ -17,6 +17,7 @@ a human*, so this is an example, not a test.
 Run:  python examples/04_sgra_shadow_constraints.py
 """
 
+import os
 import warnings
 
 import numpy as np
@@ -25,6 +26,22 @@ from scipy.optimize import brentq
 import blackpy as bp
 from blackpy.errors import UnverifiedDataWarning
 from blackpy.infer import Fit, Uniform
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 sgra = bp.data.load("eht/sgra")
 print(f"Sgr A* r_sh/M bounds: 1 sigma {sgra.bounds['1sigma']}, 2 sigma {sgra.bounds['2sigma']}")
@@ -53,7 +70,9 @@ for metric, name in ((bp.metric.Bardeen(), "q"), (bp.metric.Hayward(), "l")):
 # The same constraint as a posterior: Gaussian likelihood on r_sh/M, flat prior on Q.
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UnverifiedDataWarning)  # acknowledged above
-    fit = Fit(rn, sgra, priors={"Q": Uniform(0.0, 1.0)}, sampler="emcee", nwalkers=32, nsteps=3000)
+    fit = Fit(
+        rn, sgra, priors={"Q": Uniform(0.0, 1.0)}, sampler="emcee", nwalkers=32, nsteps=steps(3000)
+    )
 result = fit.run(seed=0)
 q68, q95 = np.percentile(result["Q"], [68.27, 95.45])
 print(f"\nPosterior with a flat prior on Q in [0, 1]: Q < {q68:.2f} (68%), Q < {q95:.2f} (95%)")

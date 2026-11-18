@@ -12,10 +12,17 @@ license = { file = "LICENSE" }
 authors = [{ name = "Pahlavon Yovqochev" }]
 keywords = ["general relativity", "black holes", "QPO", "black hole shadow", "Bayesian inference", "JAX"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Scientific/Engineering :: Physics",
 ]
@@ -32,17 +39,24 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4", "pytest-xdist>=3.5", "ruff>=0.4"]
+dev = ["pytest>=7.4", "pytest-xdist>=3.5", "ruff>=0.4", "build>=1.2", "twine>=5.1"]
 docs = ["mkdocs>=1.5", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.24"]
 
 [project.urls]
 Repository = "https://github.com/YovkochevPakhlavon/BlackPy"
+Documentation = "https://yovkochevpakhlavon.github.io/BlackPy/"
+Changelog = "https://github.com/YovkochevPakhlavon/BlackPy/blob/main/CHANGELOG.md"
+Issues = "https://github.com/YovkochevPakhlavon/BlackPy/issues"
 
 [tool.hatch.version]
 path = "src/blackpy/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/blackpy"]
+exclude = ["**/.DS_Store", "**/__pycache__"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/site", "/build", "/dist", "/.github", "**/.DS_Store", "/BLACKPY_*_PROMPT.md", "/examples/output"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

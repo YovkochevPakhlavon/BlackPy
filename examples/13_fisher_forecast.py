@@ -15,6 +15,7 @@ likelihood uses.
 Run:  python examples/13_fisher_forecast.py        (about 40 seconds)
 """
 
+import os
 import time
 import warnings
 
@@ -30,6 +31,22 @@ from blackpy.infer import (
     simulate_qpo_dataset,
     simulate_shadow_dataset,
 )
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 kerr, johannsen = bp.metric.Kerr(), bp.metric.Johannsen()
 TRUTH = {"mass": 6.0, "r": 5.7, "a": 0.3}
@@ -54,7 +71,7 @@ forecast(kerr, data, fiducial, "RP", priors)
 elapsed_again = time.perf_counter() - start
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", BlackPyWarning)
-    result = Fit(kerr, data, "RP", priors, nsteps=4000, max_steps=16000).run(seed=1)
+    result = Fit(kerr, data, "RP", priors, nsteps=steps(4000), max_steps=steps(16000)).run(seed=1)
 print("Kerr RPM triplet (2 Hz on the twin peaks, 0.1 Hz on the type-C QPO), flat priors")
 print(predicted)
 print(f"  {'parameter':<10} {'forecast sigma':>15} {'emcee sigma':>13}")
@@ -118,4 +135,5 @@ print(
     "  expected constraint: the shadow size does not measure the spin, and the Gaussian\n"
     "  approximation has no meaning here. The warnings say so."
 )
-np.testing.assert_allclose(predicted.sigma["a"], result.summary()["a"]["std"], rtol=0.15)
+if not QUICK:  # the short quick-mode chain is too noisy for this check
+    np.testing.assert_allclose(predicted.sigma["a"], result.summary()["a"]["std"], rtol=0.15)

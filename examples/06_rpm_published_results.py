@@ -22,6 +22,7 @@ Run:  python examples/06_rpm_published_results.py        (about 20 seconds)
 """
 
 import math
+import os
 import warnings
 
 import numpy as np
@@ -29,6 +30,22 @@ import numpy as np
 import blackpy as bp
 from blackpy.errors import BlackPyWarning
 from blackpy.infer import Fit, Uniform
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 N_DRAWS = 200_000
 BETA = 1.0 / (2.0 * math.pi * bp.constants.T_SUN)  # c^3 / (2 pi G M_sun) in Hz
@@ -87,8 +104,8 @@ for dataset_id in ("qpo/gro_j1655_40", "qpo/xte_j1859_226"):
             qpo_model="RP",
             priors={"a": Uniform(0.0, 0.998), "M": Uniform(2.0, 20.0), "r": Uniform(2.0, 20.0)},
             sampler="emcee",
-            nsteps=4000,
-            max_steps=16000,
+            nsteps=steps(4000),
+            max_steps=steps(16000),
         )
         result = fit.run(seed=7)
     report(
@@ -122,7 +139,7 @@ for dataset_id in ("qpo/gro_j1655_40", "qpo/xte_j1859_226"):
     print(f"  ISCO for the analytic spin: {r_isco:.3f}; QPO radius: {float(exact.radius):.3f}\n")
 
 print(
-    "Reading of the comparison (details in VERIFICATION_v0.2.md):\n"
+    "Reading of the comparison (details in verification/v0.2.md):\n"
     "- GRO J1655-40: all determinations agree on a = 0.286 except the value 0.290 quoted in the\n"
     "  abstract and text of Motta et al. (2014), which differs from their own Table 3 (0.286).\n"
     "  Stuchlik & Kolos use the same frequencies; their 0.286 is the exact solution, and their\n"

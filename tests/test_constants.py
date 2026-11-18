@@ -31,7 +31,8 @@ def test_constants_match_scipy_codata():
     # G is identical in the CODATA 2018 and CODATA 2022 adjustments.
     name = "Newtonian constant of gravitation"
     assert _codata._physical_constants_2018[name][0] == c.G
-    assert _codata._physical_constants_2022[name][0] == c.G
+    if hasattr(_codata, "_physical_constants_2022"):  # SciPy >= 1.15
+        assert _codata._physical_constants_2022[name][0] == c.G
     assert sc.physical_constants[name][2] == 1.5e-15
     # The edition SciPy treats as current (CODATA 2022 for SciPy >= 1.15).
     current = _codata._current_codata

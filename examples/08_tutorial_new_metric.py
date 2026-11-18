@@ -12,6 +12,7 @@ Run:  python examples/08_tutorial_new_metric.py        (about one minute)
 """
 
 import math
+import os
 import warnings
 from pathlib import Path
 
@@ -23,6 +24,22 @@ import sympy as sp  # noqa: E402
 
 import blackpy as bp  # noqa: E402
 from blackpy.infer import Fit, Uniform  # noqa: E402
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 out = Path(__file__).parent / "output"
 out.mkdir(exist_ok=True)
@@ -67,14 +84,20 @@ data = bp.data.load("qpo/gro_j1655_40")
 priors = {"a": Uniform(0.0, 0.998), "beta": Uniform(-2.0, 0.9), "r": Uniform(2.0, 20.0)}
 warnings.simplefilter("always")  # show BlackPy's integrity warnings; do not silence them
 fit = Fit(
-    metric, data, qpo_model="RP", priors=priors, sampler="emcee", nsteps=8000, max_steps=64000
+    metric,
+    data,
+    qpo_model="RP",
+    priors=priors,
+    sampler="emcee",
+    nsteps=steps(8000),
+    max_steps=steps(64000),
 )
 result = fit.run(seed=1)
 print(result, "\n")
 
 # --- Step 5: model comparison and plots ------------------------------------------------------
 print(fit.bayes_factor(null={"beta": 0.0}))  # Savage-Dickey density ratio (emcee)
-nested = Fit(metric, data, qpo_model="RP", priors=priors, sampler="dynesty", nlive=400)
+nested = Fit(metric, data, qpo_model="RP", priors=priors, sampler="dynesty", nlive=live(400))
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     nested.run(seed=2)

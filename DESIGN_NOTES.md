@@ -188,7 +188,7 @@ each other.
 | D8 | Catalogue entries as classes | Factory functions `Schwarzschild()`, ... returning `StaticSpherical` | Simpler than subclasses; the public call syntax is identical |
 | D9 | Extra integrity warnings | Added `UnverifiedDataWarning` and `IgnoredDataWarning` | Makes unverified registry data and dropped low-frequency QPOs visible |
 
-| D10 (v0.2) | "deviation from circularity as defined by the EHT M87* papers" | `Delta C` of Bambi et al. (2019), Eqs. (4)-(5) | The EHT M87* papers define no `Delta C`; Paper VI uses the fractional spread of the ring diameter and refers to the asymmetry of Johannsen & Psaltis (2010). See `VERIFICATION_v0.2.md`, section 8 |
+| D10 (v0.2) | "deviation from circularity as defined by the EHT M87* papers" | `Delta C` of Bambi et al. (2019), Eqs. (4)-(5) | The EHT M87* papers define no `Delta C`; Paper VI uses the fractional spread of the ring diameter and refers to the asymmetry of Johannsen & Psaltis (2010). See `verification/v0.2.md`, section 8 |
 | D11 (v0.2) | "StaticSpherical ideally becomes a special case with g_tphi = 0" | Separate class with `as_axisymmetric()`; dispatch in the core functions | Keeps the v0.1 numbers and speed exactly; the special-case relation is tested instead of structural |
 | D12 (v0.2) | Reproduce published RPM values "as validation" (tests) | Example 06, not a test | `CLAUDE.md`: tests must not depend on unverified registry numbers |
 | D13 (v0.2) | Rotating metrics in the built-in catalogue | `ROTATING_CATALOGUE`, not `CATALOGUE` | v0.1 tests iterate over `CATALOGUE` |
@@ -275,7 +275,7 @@ metric classes can be added without changing the public API.
 - B5: triplet likelihood, spin bounds, rotating shadow likelihood with
   inclination, two new warnings, examples 05 to 08.
 - Documentation: `how_it_works.md`, `tutorial.md`, LaTeX theory for
-  rotation, `VERIFICATION_v0.2.md`.
+  rotation, `verification/v0.2.md`.
 
 **Left for later sessions:**
 
@@ -292,7 +292,7 @@ metric classes can be added without changing the public API.
 The whole specification `BLACKPY_v0.3_PROMPT.md` (Part A, B1 to B8) is
 implemented and committed, one commit per part or smaller (`git log`).
 Version 0.3.0. Results, tolerances, papers read and limitations are in
-`VERIFICATION_v0.3.md`.
+`verification/v0.3.md`.
 
 **Not done, by decision:**
 
@@ -315,7 +315,7 @@ Version 0.3.0. Results, tolerances, papers read and limitations are in
 - Human verification of every registry value (all `verified_by_human:
   false`), including the new M87\* and Sgr A\* entries.
 - CI has never run (nothing is pushed); Linux and Windows are untested.
-- Open questions recorded in the registry files and in `VERIFICATION_v0.3.md`
+- Open questions recorded in the registry files and in `verification/v0.3.md`
   (section 7).
 
 ## 9. Decisions added in v0.3

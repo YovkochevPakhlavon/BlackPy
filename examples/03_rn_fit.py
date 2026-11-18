@@ -9,6 +9,7 @@ LaTeX table, and saves a corner plot and the reproducibility bundles to
 Run:  python examples/03_rn_fit.py        (about half a minute)
 """
 
+import os
 import warnings
 from pathlib import Path
 
@@ -20,6 +21,22 @@ import numpy as np  # noqa: E402
 
 import blackpy as bp  # noqa: E402
 from blackpy.infer import Fit, FitResult, Uniform, simulate_qpo_dataset  # noqa: E402
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 out = Path(__file__).parent / "output"
 out.mkdir(exist_ok=True)
@@ -41,7 +58,9 @@ for d in data:
 # The masses use the (synthetic) independent mass measurements as Gaussian priors.
 priors = {"Q": Uniform(0.0, 1.0), "r": Uniform(4.0, 12.0)}
 
-emcee_fit = Fit(rn, data, qpo_model="RP", priors=priors, sampler="emcee", nwalkers=32, nsteps=6000)
+emcee_fit = Fit(
+    rn, data, qpo_model="RP", priors=priors, sampler="emcee", nwalkers=32, nsteps=steps(6000)
+)
 emcee_result = emcee_fit.run(seed=1)
 print("\n", emcee_result, sep="")
 print(
@@ -50,7 +69,7 @@ print(
 )
 print(emcee_fit.bayes_factor(null={"Q": 0.0}))
 
-dynesty_fit = Fit(rn, data, qpo_model="RP", priors=priors, sampler="dynesty", nlive=400)
+dynesty_fit = Fit(rn, data, qpo_model="RP", priors=priors, sampler="dynesty", nlive=live(400))
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)  # dynesty's own efficiency hints
     dynesty_result = dynesty_fit.run(seed=2)

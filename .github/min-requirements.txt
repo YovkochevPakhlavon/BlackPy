@@ -1,0 +1,13 @@
+# The declared minimum versions of the runtime dependencies (lower bounds in
+# pyproject.toml), used by the min-deps CI job on Python 3.10. Tested locally on
+# Python 3.10.20 (macOS arm64) with the quick subset: see verification/v1.0.md.
+jax==0.4.30
+jaxlib==0.4.30
+numpy==1.24.4
+scipy==1.10.1
+sympy==1.12
+matplotlib==3.7.5
+corner==2.2.3
+pyyaml==6.0.3
+emcee==3.1.6
+dynesty==2.1.5

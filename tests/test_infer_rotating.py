@@ -52,7 +52,8 @@ def gauss(x, mu, sigma):
 def test_isotropic_prior():
     prior = Isotropic(0.0, 90.0)
     x = np.linspace(0.0, 90.0, 20001)
-    assert np.trapezoid(np.exp(prior.logpdf(x)), x) == pytest.approx(1.0, rel=1e-8)
+    trapezoid = getattr(np, "trapezoid", None) or np.trapz  # noqa: NPY201 (NumPy < 2.0)
+    assert trapezoid(np.exp(prior.logpdf(x)), x) == pytest.approx(1.0, rel=1e-8)
     u = np.linspace(0.0, 1.0, 11)
     np.testing.assert_allclose(prior.cdf(prior.ppf(u)), u, atol=1e-12)
     assert float(prior.ppf(0.5)) == pytest.approx(60.0, rel=1e-12)  # cos(i) = 1/2

@@ -18,10 +18,16 @@
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\check_windows.ps1 -Full -Examples
     Full test suite (slow tests included, may take 30 minutes or more) and all examples.
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File scripts\check_windows.ps1 -SkipInstall -ExamplesQuick
+    Quick subset and every example in quick mode (BLACKPY_EXAMPLES_QUICK=1: smaller
+    sampler settings, about a minute per example), as in the weekly CI job.
 #>
 param(
     [switch]$Full,             # full test suite instead of the quick subset
     [switch]$Examples,         # also run every script in examples\
+    [switch]$ExamplesQuick,    # run the examples in quick mode (implies -Examples)
     [switch]$SkipInstall,      # reuse the existing .venv as it is
     [int]$Workers = 4,         # pytest-xdist workers
     [string]$PythonVersion = "3.12"   # used with the py launcher to create .venv
@@ -38,6 +44,12 @@ $summaryPath = Join-Path $logDir "SUMMARY.txt"
 $venvPython = Join-Path $root ".venv\Scripts\python.exe"
 
 $env:MPLBACKEND = "Agg"
+if ($ExamplesQuick) {
+    $Examples = $true
+    $env:BLACKPY_EXAMPLES_QUICK = "1"
+} else {
+    Remove-Item Env:\BLACKPY_EXAMPLES_QUICK -ErrorAction SilentlyContinue
+}
 # Console output only. File reads and writes keep the Windows default encoding, so
 # encoding bugs in BlackPy itself still show up.
 $env:PYTHONIOENCODING = "utf-8"
@@ -98,7 +110,7 @@ $header = @(
     "BlackPy Windows check, $(Get-Date -Format 'yyyy-MM-dd HH:mm')",
     "OS: $($os.Caption) $($os.Version) ($env:PROCESSOR_ARCHITECTURE), $env:NUMBER_OF_PROCESSORS logical CPUs",
     "Git commit: $(git rev-parse --short HEAD 2>$null)   core.autocrlf: $(git config core.autocrlf 2>$null)",
-    "Mode: $(if ($Full) { 'full suite' } else { 'quick subset' })$(if ($Examples) { ' + examples' })"
+    "Mode: $(if ($Full) { 'full suite' } else { 'quick subset' })$(if ($Examples) { ' + examples' })$(if ($ExamplesQuick) { ' (quick mode)' })"
 )
 
 # ---------------------------------------------------------------- install

@@ -19,6 +19,7 @@ Run:  python examples/11_m87_and_sgra_shadows.py        (about 1.5 minutes)
 """
 
 import math
+import os
 import warnings
 
 import numpy as np
@@ -27,6 +28,22 @@ from scipy.optimize import brentq
 import blackpy as bp
 from blackpy.errors import BlackPyWarning, CircularInferenceWarning
 from blackpy.infer import Fit, Uniform, inclination_prior
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 m87, sgra = bp.data.load("eht/m87"), bp.data.load("eht/sgra")
 rn, kerr_newman = bp.metric.ReissnerNordstrom(), bp.metric.KerrNewman()
@@ -66,14 +83,14 @@ print(
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", BlackPyWarning)  # unverified data, stated above
     single = {
-        name: Fit(rn, data, priors={"Q": Uniform(0.0, 1.0)}, nsteps=3000).run(seed=1)
+        name: Fit(rn, data, priors={"Q": Uniform(0.0, 1.0)}, nsteps=steps(3000)).run(seed=1)
         for name, data in (("M87*", m87), ("Sgr A*", sgra))
     }
-    shared = Fit(rn, [sgra, m87], priors={"Q": Uniform(0.0, 1.0)}, shared=["Q"], nsteps=3000).run(
-        seed=2
-    )
+    shared = Fit(
+        rn, [sgra, m87], priors={"Q": Uniform(0.0, 1.0)}, shared=["Q"], nsteps=steps(3000)
+    ).run(seed=2)
     separate = Fit(
-        rn, [sgra, m87], priors={"Q": Uniform(0.0, 1.0)}, per_source=["Q"], nsteps=3000
+        rn, [sgra, m87], priors={"Q": Uniform(0.0, 1.0)}, per_source=["Q"], nsteps=steps(3000)
     ).run(seed=3)
 try:
     Fit(rn, [sgra, m87], priors={"Q": Uniform(0.0, 1.0)})
@@ -109,8 +126,8 @@ with warnings.catch_warnings(record=True) as caught:
             "inclination_deg_m87": inclination_prior(m87),  # the jet angle, on request only
         },
         shared=["Q"],
-        nsteps=4000,
-        max_steps=16000,
+        nsteps=steps(4000),
+        max_steps=steps(16000),
     )
     result = rotating.run(seed=4)
 print("Kerr-Newman: shared Q, one spin and one inclination per source")

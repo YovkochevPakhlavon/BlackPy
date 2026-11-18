@@ -19,6 +19,7 @@ Run:  python examples/12_parametrised_metrics.py        (about 45 seconds)
 """
 
 import math
+import os
 import warnings
 from pathlib import Path
 
@@ -32,6 +33,22 @@ from scipy.optimize import brentq  # noqa: E402
 import blackpy as bp  # noqa: E402
 from blackpy.errors import BlackPyWarning  # noqa: E402
 from blackpy.infer import Fit, Uniform  # noqa: E402
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 out = Path(__file__).parent / "output"
 out.mkdir(exist_ok=True)
@@ -87,8 +104,8 @@ with warnings.catch_warnings(record=True) as caught:
         ["eht/sgra", "eht/m87"],
         priors={"epsilon": Uniform(-0.4, 0.45), "a1": Uniform(-2.0, 2.0)},
         shared=["epsilon", "a1"],  # an assumption: the same deviations for both objects
-        nsteps=5000,
-        max_steps=20000,
+        nsteps=steps(5000),
+        max_steps=steps(20000),
     )
     result = fit.run(seed=12)
 print("RZ (order 1) fitted to the Sgr A* and M87* shadow sizes, shared coefficients:")
@@ -116,7 +133,7 @@ with warnings.catch_warnings(record=True) as caught:
         qpo_model="RP",
         priors={"epsilon": Uniform(-0.4, 0.45), "a1": Uniform(-2.0, 2.0), "r": Uniform(3.0, 15.0)},
         sampler="dynesty",  # the degeneracy is curved and narrow: emcee does not converge
-        nlive=400,
+        nlive=live(400),
     )
     joint_result = joint.run(seed=13)
 print("RZ (order 1) fitted to the GRO J1655-40 twin QPOs and the Sgr A* shadow size:")

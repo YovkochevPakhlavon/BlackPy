@@ -79,3 +79,56 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: python -m pip install -e ".[docs]"
       - run: python -m mkdocs build --strict
+
+  # Build the sdist and the wheel, install the wheel (not editable) in a clean
+  # environment and run the quick subset against the installed package.
+  wheel:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: |
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Check the wheel contents
+        run: |
+          python - <<'PY'
+          import glob, zipfile
+          names = zipfile.ZipFile(glob.glob("dist/*.whl")[0]).namelist()
+          assert "blackpy/py.typed" in names, "py.typed missing"
+          assert sum(n.startswith("blackpy/data/registry/") and n.endswith(".yaml") for n in names) >= 8
+          bad = [n for n in names if n.startswith(("tests/", "examples/", "site/")) or ".DS_Store" in n]
+          assert not bad, bad
+          PY
+      - name: Install the wheel in a clean environment
+        run: |
+          python -m venv /tmp/wheel-env
+          /tmp/wheel-env/bin/python -m pip install dist/*.whl pytest pytest-xdist
+      - name: Quick tests against the installed package
+        run: |
+          /tmp/wheel-env/bin/python -c "import blackpy, sys; assert 'site-packages' in blackpy.__file__, blackpy.__file__; print(blackpy.__file__)"
+          /tmp/wheel-env/bin/python -m pytest -m "not slow" -n auto --dist loadfile -q
+
+  # The oldest supported Python with the declared minimum dependency versions
+  # (lower bounds in pyproject.toml; see DESIGN_NOTES.md, decision 42).
+  min-deps:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install the minimum versions
+        run: |
+          python -m pip install -r .github/min-requirements.txt pytest pytest-xdist
+          python -m pip install --no-deps -e .
+          python -m pip check
+          python -m pip list
+      - name: Quick tests
+        run: python -m pytest -m "not slow" -n auto --dist loadfile -q

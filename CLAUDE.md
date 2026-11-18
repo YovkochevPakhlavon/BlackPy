@@ -106,7 +106,7 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
 - Error messages must tell the user what to do next.
 - Every formula must have a source or a derivation in `docs/theory.md`, and
   a test in at least one known limit. Never invent formulas or citations; if
-  a reference could not be checked, say so in `VERIFICATION.md`.
+  a reference could not be checked, say so in the current report in `verification/`.
 - Every catalogue metric is one file with its reference and at least one test.
 - `ruff check` and `ruff format --check` must pass (line length 100).
 
@@ -117,7 +117,7 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
   that session; record the exact location (table/figure/section) and how it
   was accessed in the `location` / `source_access` fields.
 - If the original source cannot be accessed, the value stays `null`, a
-  `TODO` entry is added to the file, and it is listed in `VERIFICATION.md`.
+  `TODO` entry is added to the file, and it is listed in the current report in `verification/`.
 - A value taken from a secondary source must be labelled as such
   (`source_access`) and is not "verified".
 - Every dataset carries `verified_by_human: false` until the project owner

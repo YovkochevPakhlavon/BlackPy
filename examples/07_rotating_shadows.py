@@ -19,6 +19,7 @@ Run:  python examples/07_rotating_shadows.py        (about 20 seconds)
 """
 
 import math
+import os
 import warnings
 from pathlib import Path
 
@@ -32,6 +33,22 @@ import numpy as np  # noqa: E402
 import blackpy as bp  # noqa: E402
 from blackpy.errors import BlackPyWarning  # noqa: E402
 from blackpy.infer import Fit, Uniform  # noqa: E402
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 out = Path(__file__).parent / "output"
 out.mkdir(exist_ok=True)
@@ -130,11 +147,13 @@ with warnings.catch_warnings():
         sgra,
         priors={"a": Uniform(0.0, 0.998), "Q": Uniform(0.0, 1.0)},  # inclination: isotropic
         sampler="emcee",
-        nsteps=4000,
-        max_steps=16000,
+        nsteps=steps(4000),
+        max_steps=steps(16000),
     )
     result = fit.run(seed=4)
-    static = Fit(bp.metric.ReissnerNordstrom(), sgra, priors={"Q": Uniform(0.0, 1.0)}, nsteps=3000)
+    static = Fit(
+        bp.metric.ReissnerNordstrom(), sgra, priors={"Q": Uniform(0.0, 1.0)}, nsteps=steps(3000)
+    )
     static_result = static.run(seed=0)
 q68, q95 = np.percentile(result["Q"], [68.27, 95.45])
 s68, s95 = np.percentile(static_result["Q"], [68.27, 95.45])

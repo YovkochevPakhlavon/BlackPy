@@ -23,6 +23,7 @@ Run:  python examples/10_plasma_shadows.py        (about 40 seconds)
 """
 
 import math
+import os
 import warnings
 from pathlib import Path
 
@@ -37,6 +38,22 @@ import numpy as np  # noqa: E402
 import blackpy as bp  # noqa: E402
 from blackpy.errors import BlackPyWarning, NotSeparableError, PlasmaPropagationError  # noqa: E402
 from blackpy.infer import Fit, Uniform  # noqa: E402
+
+# BLACKPY_EXAMPLES_QUICK=1 (CI, scripts/check_windows.ps1 -ExamplesQuick) reduces the sampler
+# settings so that the script finishes in about a minute; the numbers are then less precise.
+# Unset, the script runs exactly as documented.
+QUICK = os.environ.get("BLACKPY_EXAMPLES_QUICK") == "1"
+
+
+def steps(n: int) -> int:
+    """Number of emcee steps (or posterior predictive draws): n, or n / 10 in quick mode."""
+    return max(n // 10, 200) if QUICK else n
+
+
+def live(n: int) -> int:
+    """Number of dynesty live points: n, or 100 in quick mode."""
+    return 100 if QUICK else n
+
 
 out = Path(__file__).parent / "output"
 out.mkdir(exist_ok=True)
@@ -97,11 +114,11 @@ with warnings.catch_warnings(record=True) as caught:
         "eht/sgra",
         priors={"Q": Uniform(0.0, 1.0), "omega_p": Uniform(0.0, 3.0)},
         plasma=plasma,
-        nsteps=4000,
-        max_steps=16000,
+        nsteps=steps(4000),
+        max_steps=steps(16000),
     )
     result = fit.run(seed=10)
-    vacuum = Fit(rn, "eht/sgra", priors={"Q": Uniform(0.0, 1.0)}, nsteps=3000).run(seed=10)
+    vacuum = Fit(rn, "eht/sgra", priors={"Q": Uniform(0.0, 1.0)}, nsteps=steps(3000)).run(seed=10)
 names = sorted({w.category.__name__ for w in caught if issubclass(w.category, BlackPyWarning)})
 print("\nSgr A* shadow size, Reissner-Nordstrom charge Q and plasma amplitude omega_p (k = 3/2):")
 print(result)
