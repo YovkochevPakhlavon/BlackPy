@@ -228,7 +228,7 @@ Priors, likelihoods, fits, model comparison, fit quality, forecasts.
 
 ## Plotting (`blackpy.plot`)
 
-Profile plots, shadow contours, corner and residual plots, LaTeX tables.
+Profile plots, shadow contours, corner and residual plots, LaTeX tables, deflection angles, thin-disk profiles, Fisher-forecast ellipses.
 
 | Name | Meaning |
 |---|---|
@@ -239,6 +239,9 @@ Profile plots, shadow contours, corner and residual plots, LaTeX tables.
 ::: blackpy.plot.profiles.profile
 ::: blackpy.plot.posterior.residuals
 ::: blackpy.plot.shadows.shadow
+::: blackpy.plot.predictions.deflection
+::: blackpy.plot.predictions.disk_flux
+::: blackpy.plot.predictions.forecast
 
 ## Constants (`blackpy.constants`)
 

@@ -29,6 +29,6 @@ Each script runs on its own: `python examples/NN_name.py`. Figures go to
 | `10_plasma_shadows.py` | shadows in a plasma, plasma–charge degeneracy | ~1 min | `kerr_plasma_shadows.png` |
 | `11_m87_and_sgra_shadows.py` | two shadow sources, shared and per-source parameters, mass priors | ~2.5 min | – |
 | `12_parametrised_metrics.py` | RZ coefficients, RZ shadow fit, KRZ | ~1.5 min | `rz_shadow_corner.png` |
-| `13_fisher_forecast.py` | Fisher forecasts compared with a fit; a forecast not to trust | ~1 min | – |
-| `14_lensing.py` | deflection angles, strong deflection limit, Sgr A\* observables | ~30 s | `deflection_angle.png` |
-| `15_thin_disks.py` | radiative efficiency and Page–Thorne flux | ~1 min | `thin_disk_flux.png` |
+| `13_fisher_forecast.py` | Fisher forecasts compared with a fit (`plot.forecast` on a corner plot); a forecast not to trust | ~30 s | `forecast_vs_fit.png` |
+| `14_lensing.py` | deflection angles (`plot.deflection`), strong deflection limit, Sgr A\* observables | ~30 s | `deflection_angle.png` |
+| `15_thin_disks.py` | radiative efficiency and Page–Thorne flux (`plot.disk_flux`) | ~1 min | `thin_disk_flux.png` |

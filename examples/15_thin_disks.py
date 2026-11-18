@@ -22,7 +22,6 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
 
 import blackpy as bp  # noqa: E402
 from blackpy.errors import BlackPyError  # noqa: E402
@@ -65,13 +64,8 @@ for metric, params, label in cases:
         f"  {label:<14} r_in = {profile.r_in:7.4f}  r_max = {profile.r_max:7.4f}  "
         f"F_max = {profile.flux_max:.4e}  eta = {profile.efficiency:.4f}"
     )
-    ax1.loglog(profile.r, np.clip(profile.flux, 1e-14, None), label=label)
-    ax2.semilogx(profile.r, profile.temperature, label=label)
-radii = np.geomspace(10, 6000, 50)
-ax1.loglog(radii, 3 / (8 * math.pi * radii**3), "k:", label=r"$3/(8\pi r^3)$")
-ax1.set(xlabel=r"$r/M$", ylabel=r"$F\,M^2/\dot M$", ylim=(1e-12, 1e-2))
-ax2.set(xlabel=r"$r/M$", ylabel=r"$T_{\rm eff}/T_{\rm max}$")
-ax1.legend(fontsize="small")
+bp.plot.disk_flux(cases, newtonian=True, ax=ax1)  # (metric, params, label) triples
+bp.plot.disk_flux(cases, quantity="temperature", ax=ax2)
 fig.tight_layout()
 fig.savefig(out / "thin_disk_flux.png", dpi=130)
 

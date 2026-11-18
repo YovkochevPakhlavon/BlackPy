@@ -1233,6 +1233,42 @@ print(table.splitlines()[0], "...", len(table.splitlines()), "lines")
 
 ![Residuals and posterior predictive ranges](images/residuals.png)
 
+### Predictions: deflection angles, disk profiles, forecast ellipses
+
+`deflection(metric, b=None, *, weak=True, strong=True, plasma=None, ax=None, **params)`
+draws the exact deflection angle (radians) against \(b/b_c - 1\), with the
+weak-field (Gauss–Bonnet, for \(b \ge 2b_c\)) and strong-deflection
+approximations. `disk_flux(model, *, quantity="flux" | "temperature", r=None, newtonian=False, ax=None, **params)`
+draws Page–Thorne profiles (\(F M^2/\dot M\), or \(T_{\rm eff}/T_{\rm max}\))
+for a metric with one parameter given as a sequence, or for a list of
+`(metric, params)` pairs. `forecast(prediction, *, parameters=None, figure=None, levels=(0.68, 0.95))`
+draws the Fisher-forecast ellipses of a `Forecast`; pass
+`figure=bp.plot.corner(result, parameters=...)` to overlay them on the
+posterior of a fit.
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(10, 3.8))
+bp.plot.deflection(schwarzschild, ax=axes[0])
+bp.plot.disk_flux(kerr, a=[0.0, 0.5, 0.9], newtonian=True, ax=axes[1])
+fig.tight_layout()
+fig.savefig("predictions.png", dpi=90)
+
+figure = bp.plot.forecast(prediction)
+figure.savefig("forecast.png", dpi=70)
+```
+
+![Deflection angle and Page-Thorne flux profiles](images/predictions.png)
+
+![Fisher-forecast ellipses of the QPO triplet forecast](images/forecast.png)
+
+To overlay the ellipses on the posterior of a fit of the same data and
+parameters (example `13_fisher_forecast.py` does this):
+
+```python-skip
+figure = bp.plot.corner(triplet_result, parameters=["a", "M_src", "r_src"])
+bp.plot.forecast(prediction, parameters=["a", "M_src", "r_src"], figure=figure)
+```
+
 ### Plots BlackPy does not draw itself
 
 Everything else is a few lines of matplotlib on top of the vectorised
@@ -1448,6 +1484,6 @@ Each script runs on its own: `python examples/NN_name.py`. Figures go to
 | `10_plasma_shadows.py` | shadows in a plasma, plasma–charge degeneracy | ~1 min | `kerr_plasma_shadows.png` |
 | `11_m87_and_sgra_shadows.py` | two shadow sources, shared and per-source parameters, mass priors | ~2.5 min | – |
 | `12_parametrised_metrics.py` | RZ coefficients, RZ shadow fit, KRZ | ~1.5 min | `rz_shadow_corner.png` |
-| `13_fisher_forecast.py` | Fisher forecasts compared with a fit; a forecast not to trust | ~1 min | – |
-| `14_lensing.py` | deflection angles, strong deflection limit, Sgr A\* observables | ~30 s | `deflection_angle.png` |
-| `15_thin_disks.py` | radiative efficiency and Page–Thorne flux | ~1 min | `thin_disk_flux.png` |
+| `13_fisher_forecast.py` | Fisher forecasts compared with a fit (`plot.forecast` on a corner plot); a forecast not to trust | ~30 s | `forecast_vs_fit.png` |
+| `14_lensing.py` | deflection angles (`plot.deflection`), strong deflection limit, Sgr A\* observables | ~30 s | `deflection_angle.png` |
+| `15_thin_disks.py` | radiative efficiency and Page–Thorne flux (`plot.disk_flux`) | ~1 min | `thin_disk_flux.png` |

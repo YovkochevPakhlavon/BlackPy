@@ -133,3 +133,86 @@ def test_shadow_contours(kerr, kerr_newman, rn):
     with pytest.raises(ValueError, match="3sigma"):
         bp.plot.shadow(kerr, 1.0, a=0.5, band="eht/sgra", band_level="3sigma")
     plt.close("all")
+
+
+# ---------------------------------------------------------------------- prediction plots (1.0)
+
+
+def test_deflection_plot_draws_the_lensing_functions(schwarzschild):
+    ax = bp.plot.deflection(schwarzschild)
+    exact, weak, strong = ax.get_lines()[:3]
+    b_c = float(bp.lensing.strong_deflection_limit(schwarzschild).b_c)
+    b = b_c * (1.0 + np.geomspace(1e-6, 30.0, 300))  # the default impact parameters
+    np.testing.assert_allclose(exact.get_xdata(), b / b_c - 1.0, rtol=1e-12)
+    np.testing.assert_allclose(
+        exact.get_ydata(), bp.lensing.deflection_angle(schwarzschild, b), rtol=1e-12
+    )
+    b_far = b[b >= 2.0 * b_c]  # the weak-field estimate only where it applies
+    np.testing.assert_allclose(weak.get_xdata(), b_far / b_c - 1.0, rtol=1e-12)
+    np.testing.assert_allclose(
+        weak.get_ydata(), bp.lensing.weak_deflection_angle(schwarzschild, b_far), rtol=1e-12
+    )
+    np.testing.assert_allclose(
+        strong.get_ydata(), bp.lensing.strong_deflection_angle(schwarzschild, b), rtol=1e-12
+    )
+    assert ax.get_ylabel() == "deflection angle [rad]" and "b_c" in ax.get_xlabel()
+    with pytest.raises(ValueError, match="b_c"):
+        bp.plot.deflection(schwarzschild, b=[4.0, 10.0])
+    plt.close("all")
+
+
+@pytest.mark.slow
+def test_disk_flux_plot_draws_page_thorne(kerr, rn):
+    ax = bp.plot.disk_flux(kerr, a=[0.0, 0.9], newtonian=True)
+    lines = ax.get_lines()
+    assert [line.get_label() for line in lines[:2]] == ["Kerr, a = 0", "Kerr, a = 0.9"]
+    profile = bp.disk.page_thorne_flux(kerr, a=0.9)
+    np.testing.assert_allclose(lines[1].get_xdata(), profile.r)
+    np.testing.assert_allclose(lines[1].get_ydata(), np.clip(profile.flux, 1e-14, None))
+    assert "dot M" in ax.get_ylabel() and ax.get_xlabel() == "$r/M$"
+    ax2 = bp.plot.disk_flux([(kerr, {"a": 0.5}), (rn, {"Q": 0.8}, "RN")], quantity="temperature")
+    labels = [line.get_label() for line in ax2.get_lines()]
+    assert labels == ["Kerr a = 0.5", "RN"]
+    np.testing.assert_allclose(
+        ax2.get_lines()[1].get_ydata(), bp.disk.page_thorne_flux(rn, Q=0.8).temperature
+    )
+    assert "T_{\\rm max}" in ax2.get_ylabel()
+    with pytest.raises(ValueError, match="quantity"):
+        bp.plot.disk_flux(kerr, quantity="spectrum", a=0.5)
+    plt.close("all")
+
+
+@pytest.mark.slow
+def test_forecast_plot_ellipses_match_the_covariance(kerr):
+    from blackpy.infer import simulate_qpo_dataset
+
+    data = simulate_qpo_dataset(
+        kerr, "RP", name="src", mass=6.0, r=5.7, sigma_nu=1.0, mass_sigma=0.3, sigma_low=0.1, a=0.3
+    )
+    fiducial = {"a": 0.3, "M_src": 6.0, "r_src": 5.7}
+    priors = {"a": Uniform(0.0, 0.998), "r": Uniform(2.0, 20.0)}
+    prediction = bp.infer.forecast(kerr, data, fiducial, "RP", priors, warn=False)
+    figure = bp.plot.forecast(prediction, levels=(0.68,))
+    axes = np.array(figure.axes).reshape(3, 3)
+    # The 68% ellipse of (M_src, r_src): (x - m)^T C^-1 (x - m) = -2 ln(1 - 0.68) on the curve.
+    ellipse = axes[2, 1].get_lines()[0]
+    points = np.stack([ellipse.get_xdata() - 6.0, ellipse.get_ydata() - 5.7])
+    block = prediction.covariance[np.ix_([1, 2], [1, 2])]
+    q = np.einsum("in,ij,jn->n", points, np.linalg.inv(block), points)
+    np.testing.assert_allclose(q, -2.0 * np.log(1.0 - 0.68), rtol=1e-8)
+    # Diagonal: a Gaussian with the forecast sigma.
+    curve = axes[0, 0].get_lines()[0]
+    peak = curve.get_xdata()[np.argmax(curve.get_ydata())]
+    assert peak == pytest.approx(0.3, abs=prediction.sigma["a"] / 50)
+    assert axes[2, 1].get_xlabel().startswith("M_src") and "odot" in axes[2, 1].get_xlabel()
+    assert axes[2, 0].get_ylabel() == "r_src [M]"
+    assert not axes[0, 2].get_visible()
+    # On top of an existing K x K figure (a corner plot has this layout).
+    import matplotlib.pyplot as plt_
+
+    corner_like, _ = plt_.subplots(2, 2)
+    bp.plot.forecast(prediction, parameters=["a", "M_src"], figure=corner_like)
+    assert len(corner_like.axes[2].get_lines()) >= 2
+    with pytest.raises(ValueError, match="not 3 x 3"):
+        bp.plot.forecast(prediction, figure=corner_like)
+    plt.close("all")

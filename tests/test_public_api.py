@@ -249,6 +249,9 @@ PUBLIC_API = {
     "blackpy.plot": [
         "QUANTITIES",
         "corner",
+        "deflection",
+        "disk_flux",
+        "forecast",
         "latex_table",
         "profile",
         "residuals",

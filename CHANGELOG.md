@@ -20,6 +20,18 @@ All notable changes to this project are documented here. The format follows
   `plot.shadow`) refuse values outside [0, π] with a message that suggests
   `math.radians(...)`.
 - `docs/roadmap.md`; `docs/api.md` lists every public name.
+- `docs/user_guide.md`: every calculation and plot with real outputs, the unit table,
+  the integrity guards and errors, an FAQ and an index of the examples; its snippets,
+  those of the README, the quickstart and the data page are run by `tests/test_docs.py`.
+- Plot helpers `blackpy.plot.deflection` (exact, weak and strong deflection angles),
+  `blackpy.plot.disk_flux` (Page–Thorne flux or temperature profiles) and
+  `blackpy.plot.forecast` (Fisher-forecast ellipses, alone or on a corner plot);
+  examples 13 to 15 use them (example 13 writes `forecast_vs_fit.png`).
+- Packaging: wheel and minimum-dependency CI jobs, weekly examples job, GitHub Pages
+  and PyPI release workflows (trusted publishing); `build` and `twine` in the `dev`
+  extra; examples honour `BLACKPY_EXAMPLES_QUICK=1`; `check_windows.ps1 -ExamplesQuick`.
+- `scripts/registry_checklist.py` lists every registry number with its paper and
+  location, for human verification.
 
 ### Changed
 - **The shadow inclination nuisance parameter is renamed `inclination` →

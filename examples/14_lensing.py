@@ -21,7 +21,6 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
 
 import blackpy as bp  # noqa: E402
 
@@ -45,18 +44,9 @@ print(
     f"b = {float(limit.b_bar):.6f}\n  (Bozza 2002: a = 1, b = ln[216 (7 - 4 sqrt 3)] - pi = "
     f"{math.log(216 * (7 - 4 * math.sqrt(3))) - math.pi:.6f}), b_c = {float(limit.b_c):.6f}\n"
 )
-impact = b_c * (1.0 + np.geomspace(1e-6, 30.0, 300))
 fig, ax = plt.subplots(figsize=(6.4, 4.4))
-ax.loglog(impact / b_c - 1, ln.deflection_angle(schwarzschild, impact), label="exact")
-ax.loglog(impact / b_c - 1, 4.0 / impact, "--", label="4M/b")
-ax.loglog(
-    impact / b_c - 1, ln.strong_deflection_angle(schwarzschild, impact), ":", label="strong limit"
-)
-ax.axhline(2 * math.pi, color="0.6", lw=0.8)
-ax.set_xlabel(r"$b/b_c - 1$")
-ax.set_ylabel("deflection angle [rad]")
+bp.plot.deflection(schwarzschild, ax=ax)  # exact, weak-field and strong-deflection curves
 ax.set_ylim(1e-2, 30)
-ax.legend()
 fig.tight_layout()
 fig.savefig(out / "deflection_angle.png", dpi=130)
 

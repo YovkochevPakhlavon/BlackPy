@@ -18,6 +18,7 @@ Run:  python examples/13_fisher_forecast.py        (about 40 seconds)
 import os
 import time
 import warnings
+from pathlib import Path
 
 import numpy as np
 
@@ -137,3 +138,15 @@ print(
 )
 if not QUICK:  # the short quick-mode chain is too noisy for this check
     np.testing.assert_allclose(predicted.sigma["a"], result.summary()["a"]["std"], rtol=0.15)
+
+# ----------------------------------------------------------------- 4. figure: forecast on the fit
+import matplotlib  # noqa: E402
+
+matplotlib.use("Agg")
+out = Path(__file__).parent / "output"
+out.mkdir(exist_ok=True)
+names = ["a", "M_src", "r_src"]
+figure = bp.plot.corner(result, parameters=names)  # posterior of section 1
+bp.plot.forecast(predicted, parameters=names, figure=figure)  # its Fisher forecast
+figure.savefig(out / "forecast_vs_fit.png", dpi=110)
+print(f"\nwrote {out / 'forecast_vs_fit.png'}")
