@@ -127,8 +127,13 @@ other.
 ## 6. How a fit runs, end to end
 
 ```python
-fit = Fit(kerr, "qpo/gro_j1655_40", qpo_model="RP",
-          priors={"a": Uniform(0, 0.998), "r": Uniform(2, 20)}, sampler="emcee")
+fit = Fit(
+    kerr,
+    "qpo/gro_j1655_40",
+    qpo_model="RP",
+    priors={"a": Uniform(0, 0.998), "r": Uniform(2, 20)},
+    sampler="emcee",
+)
 result = fit.run(seed=1)
 ```
 
@@ -138,7 +143,8 @@ result = fit.run(seed=1)
    others are fixed. Each QPO source adds its own mass `M_<source>` (solar
    masses) and orbital radius `r_<source>` (units of \(M\)). The mass prior
    defaults to the *independent* (dynamical) mass in the registry. Shadow
-   data with a rotating metric add the inclination as a nuisance parameter.
+   data with a rotating metric add the inclination as a nuisance parameter
+   (`inclination_deg`, in degrees).
    With several shadow sources you must say which metric parameters are
    common to all of them (`shared=[...]`) and which have one value per
    source (`per_source=[...]`, named `<name>_<source>`): a charge-to-mass
@@ -182,9 +188,11 @@ import sympy as sp
 import blackpy as bp
 
 r, k = sp.symbols("r k", real=True)
-metric = bp.StaticSpherical.from_sympy(1 - 2/r + k/r**3, parameters={"k": 0.0}, name="my metric")
-print(bp.geometry.report(metric, k=0.3))       # horizons, source, energy conditions
-rotating = bp.metric.rotating_from_static(metric)   # a model: check its source too
+metric = bp.StaticSpherical.from_sympy(
+    1 - 2 / r + k / r**3, parameters={"k": 0.0}, name="my metric"
+)
+print(bp.geometry.report(metric, k=0.3))  # horizons, source, energy conditions
+rotating = bp.metric.rotating_from_static(metric)  # a model: check its source too
 ```
 
 For a rotating metric given directly, pass the five components
@@ -220,6 +228,6 @@ See [Data registry](data.md) for the schema.
   rotating metrics, images of accretion disks. For the same reason there are
   no continuum-fitting or iron-line likelihoods.
 - Quasinormal modes and thermodynamics: not scheduled, because no data
-  would use them in a likelihood (see the roadmap in `DESIGN_NOTES.md`).
+  would use them in a likelihood (see the [roadmap](roadmap.md)).
   Their interfaces exist and raise `NotImplementedError`.
 - S2-orbit data.

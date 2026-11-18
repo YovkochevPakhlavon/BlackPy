@@ -54,7 +54,7 @@ version of the Newman–Janis algorithm:
 
 ```python
 metric = bp.metric.rotating_from_static(static, name="rotating 1/r^2 metric")
-print(metric.is_reflection_symmetric, metric.is_separable)      # True True
+print(metric.is_reflection_symmetric, metric.is_separable)  # True True
 print(bp.geometry.horizons(metric, a=0.5, beta=-0.5))
 print(bp.geometry.effective_source(metric, a=0.5, beta=-0.5).summary())
 ```
@@ -87,10 +87,12 @@ If one is missing, the corresponding functions raise an error that says so.
 import math
 
 pars = dict(a=0.3, beta=-0.5)
-bp.orbits.isco(metric, **pars)                                  # 5.7317
-bp.orbits.frequencies_hz(metric, r=6.0, mass=5.4, **pars)       # nu_phi, nu_r, nu_theta in Hz
-bp.orbits.nodal_precession_frequency(metric, r=6.0, mass=5.4, **pars)   # 15.74 Hz
-bp.light.shadow_observables(metric, math.radians(60.0), **pars) # mean radius 5.5817, Delta C 0.0009
+bp.orbits.isco(metric, **pars)  # 5.7317
+bp.orbits.frequencies_hz(metric, r=6.0, mass=5.4, **pars)  # nu_phi, nu_r, nu_theta in Hz
+bp.orbits.nodal_precession_frequency(metric, r=6.0, mass=5.4, **pars)  # 15.74 Hz
+bp.light.shadow_observables(
+    metric, math.radians(60.0), **pars
+)  # mean radius 5.5817, Delta C 0.0009
 ```
 
 ```text
@@ -115,9 +117,10 @@ from blackpy.infer import Fit, Uniform
 
 data = bp.data.load("qpo/gro_j1655_40")
 priors = {"a": Uniform(0.0, 0.998), "beta": Uniform(-2.0, 0.9), "r": Uniform(2.0, 20.0)}
-warnings.simplefilter("always")          # read the integrity warnings; do not silence them
-fit = Fit(metric, data, qpo_model="RP", priors=priors, sampler="emcee",
-          nsteps=8000, max_steps=64000)
+warnings.simplefilter("always")  # read the integrity warnings; do not silence them
+fit = Fit(
+    metric, data, qpo_model="RP", priors=priors, sampler="emcee", nsteps=8000, max_steps=64000
+)
 result = fit.run(seed=1)
 print(result)
 ```
@@ -167,15 +170,15 @@ as undefined instead of quoting a p-value. With degrees of freedom left,
 ## Step 5. Compare with Kerr and plot
 
 ```python
-print(fit.bayes_factor(null={"beta": 0.0}))          # Savage-Dickey ratio from the chain
+print(fit.bayes_factor(null={"beta": 0.0}))  # Savage-Dickey ratio from the chain
 
 nested = Fit(metric, data, qpo_model="RP", priors=priors, sampler="dynesty", nlive=400)
 nested.run(seed=2)
-print(nested.bayes_factor(null={"beta": 0.0}))       # evidence ratio from two nested runs
+print(nested.bayes_factor(null={"beta": 0.0}))  # evidence ratio from two nested runs
 
 fig = bp.plot.corner(result, truths={"beta": 0.0})
 fig.savefig("tutorial_corner.png", dpi=130)
-result.save("tutorial_fit")                          # reproducibility bundle (.npz)
+result.save("tutorial_fit")  # reproducibility bundle (.npz)
 ```
 
 ```text
@@ -202,6 +205,6 @@ not the two marginal intervals.
 | a metric known only numerically | `bp.metric.interpolated.spline` and the callable constructor |
 | another QPO model | `qpo_model="ER"`, `"TD"`, `"WD"`, ... (`bp.orbits.QPO_MODELS`) |
 | more sources | `data=["qpo/gro_j1655_40", "qpo/xte_j1859_226"]`; metric parameters are shared |
-| shadow data | add `"eht/sgra"`; a rotating metric then gets an `inclination` nuisance parameter |
+| shadow data | add `"eht/sgra"`; a rotating metric then gets an `inclination_deg` nuisance parameter (degrees) |
 | your own data | a YAML file loaded with `bp.data.load_file`, see [Data registry](data.md) |
 | retrograde orbits | `direction="retrograde"`, or a prior on `a` that includes negative values |

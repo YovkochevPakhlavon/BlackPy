@@ -3,7 +3,24 @@
 Sections 1 to 11 cover static, spherically symmetric metrics (version 0.1).
 Sections 12 to 16 cover stationary, axisymmetric (rotating) metrics
 (version 0.2). Sections 17 onwards were added in version 0.3. All formulas
-are written in LaTeX so that they can be reused.
+are written in LaTeX so that they can be reused. **The section numbers are
+stable**: code and docstrings cite them ("theory section 18").
+
+## Topic index
+
+| Topic | Sections |
+|---|---|
+| Conventions, units, catalogue | [1](#1-conventions), [12](#12-rotating-metrics-conventions-and-catalogue), [25](#25-further-catalogue-metrics) |
+| Horizons, curvature, effective source, energy conditions | [2](#2-horizons), [3](#3-curvature-and-effective-stress-energy), [4](#4-energy-conditions), [13](#13-geometry-of-rotating-metrics) |
+| Circular orbits, ISCO, epicyclic frequencies | [5](#5-circular-timelike-orbits), [6](#6-epicyclic-frequencies-and-the-isco), [7](#7-frequencies-in-physical-units), [14](#14-equatorial-circular-orbits-and-epicyclic-frequencies-rotating) |
+| QPO models | [8](#8-qpo-models) |
+| Photon spheres and shadows | [9](#9-photon-spheres-and-shadow), [15](#15-separable-null-geodesics-and-the-shadow-of-rotating-black-holes), [17](#17-deviation-from-circularity-three-definitions), [19](#19-shadows-in-a-plasma) |
+| Numerical methods | [10](#10-numerical-methods) |
+| Statistics, fits, model comparison | [11](#11-statistics), [16](#16-statistics-for-rotating-metrics), [18](#18-goodness-of-fit-and-posterior-predictive-checks), [20](#20-several-shadow-sources-m87-and-the-role-of-the-mass-prior) |
+| Parametrised metrics (RZ, KRZ) | [21](#21-parametrised-metrics-rezzollazhidenko-and-krz) |
+| Fisher forecasts | [22](#22-fisher-matrix-forecasts) |
+| Lensing | [23](#23-gravitational-lensing-static-metrics) |
+| Thin disks | [24](#24-thin-accretion-disks) |
 
 Every formula used by BlackPy is listed here with its source or derivation
 and the test that checks it. Status labels:
@@ -1244,7 +1261,7 @@ every sampled metric parameter must be listed in `shared=[...]` or in
 `per_source=[...]`; otherwise the fit is refused with a message that states
 the choice. Per-source copies are named `<name>_<source>`. The spin is per
 source unless it is listed in `shared`, and each shadow source has its own
-inclination `inclination_<source>` (isotropic prior by default). The black
+inclination `inclination_deg_<source>` (degrees; isotropic prior by default). The black
 hole domain is applied to the parameters of every source. With one shadow
 dataset nothing changes with respect to version 0.2.
 
@@ -1450,7 +1467,7 @@ static and rotating metrics: minus its autodiff Hessian equals \(F\) from
 the Jacobian to \(10^{-8}\) (tested). Reverse-mode differentiation does not
 work, because the safeguarded Newton iteration is a `while_loop`; this is
 why the optional gradient-based sampler of the specification was not added
-(a design note is in `DESIGN_NOTES.md`).
+(see the [roadmap](roadmap.md)).
 
 **Degenerate directions.** \(F\) is diagonalised in units of the prior
 widths (half the central 68% interval of each prior). An eigenvalue below
@@ -1673,7 +1690,10 @@ correction \(\propto r^{-1/2}\); the general (rotating) code through
 image of the disk on the sky (light bending, Doppler and gravitational
 shifts), i.e. ray tracing, which is outside BlackPy's scope.
 
-## 25. Catalogue metrics added in version 0.3
+## 25. Further catalogue metrics
+
+GMGHS, Simpson–Visser, Kerr–Sen, rotating Bardeen and rotating Hayward
+(added in version 0.3).
 
 Each entry is one file in `src/blackpy/metric/catalogue/`, with its
 reference and tests in `tests/test_catalogue_v03.py`.

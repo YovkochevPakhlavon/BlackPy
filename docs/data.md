@@ -4,7 +4,8 @@ The registry lives in `src/blackpy/data/registry/`, one YAML file per dataset.
 
 ```python
 import blackpy as bp
-bp.data.list()                       # table with verification status and open TODOs
+
+bp.data.list()  # table with verification status and open TODOs
 d = bp.data.load("qpo/xte_j1550_564")
 ```
 
@@ -44,66 +45,75 @@ d = bp.data.load("qpo/xte_j1550_564")
 | `references` | citation, DOI, arXiv id, role |
 | `source_access`, `notes`, `todo` | provenance and open issues |
 
-## Changes in version 0.3
-
-Read by Claude on 2026-11-15 to 2026-11-17 from the arXiv versions (EHT
-M87\* Papers I and VI from the arXiv PDFs). **None has been verified by a
-human.**
-
-| Dataset | Change | Source and location |
-|---|---|---|
-| `qpo/gro_j1655_40` (version 3) | Table 3 values of spin 0.286 ± 0.003, mass 5.307 ± 0.066, radius 5.677 ± 0.035 are the main entries; the text values (0.290, 5.31, 5.68) are kept under `other_values` | Motta et al. (2014), Table 3; abstract, Sec. 4.1 and 5 |
-| `qpo/xte_j1859_226` (version 3) | open question: published RPM uncertainties 2.7 times larger than propagation gives | Motta et al. (2022) |
-| `eht/sgra` (version 2) | mass priors `keck` (3.964 ± 0.054 × 10⁶ M☉) and `vlti` (4.297 ± 0.042 × 10⁶ M☉) with \(\theta_g\) and \(\delta\) per prior; distance 8.277 ± 0.034 kpc | Do et al. (2019); GRAVITY Collaboration (2022); EHT Sgr A\* Paper VI, Sec. 2.1; Vagnozzi et al. (2023) |
-| `eht/m87` (new) | 68% bound 4.31–6.08 on \(r_{\rm sh}/M\); \(\delta = -0.01 \pm 0.17\) (stellar dynamics); ring diameter 42 ± 3 µas; \(\theta_g = 3.8 \pm 0.4\) µas; masses from stellar dynamics (independent), gas dynamics (independent, in tension) and the EHT ring (**not** independent); distance 16.8 ± 0.8 Mpc; jet inclination 17.2 ± 3.3°; circularity < 0.10 (`fractional_rms`) | EHT (2019) Papers I and VI; Kocherlakota et al. (2021), Eq. (14); Gebhardt et al. (2011); Walsh et al. (2013); Mertens et al. (2016) |
-
-The M87\* entry records the chain from the measured ring to a bound on the
-shadow size (theory section 20). A fit uses the stellar-dynamics bound by
-default; `shadow_mass_prior=` selects another, and the image-based mass
-triggers a `CircularInferenceWarning`.
-
-## Status of version 0.2
-
-All values below were read from the arXiv versions of the papers (ar5iv HTML
-rendering) on 2026-11-14; bibliographic details were checked against Crossref.
-**None has been verified by a human yet.**
-
-Added in version 0.2 (read on 2026-11-15, dataset version 2), for comparison
-with BlackPy's own fits (example 6); these are Kerr QPO fits and **not**
-independent measurements:
-
-| Dataset | Published RPM result | Source and location |
-|---|---|---|
-| `qpo/gro_j1655_40` | \(a = 0.290 \pm 0.003\), \(M = 5.31 \pm 0.07\,M_\odot\), \(R = 5.68 \pm 0.04\,R_g\) | Motta et al. (2014), abstract and Sec. 4.1; their Table 3 gives the spin as 0.286 ± 0.003 |
-| `qpo/xte_j1859_226` | \(a = 0.149 \pm 0.005\), \(M = 7.85 \pm 0.46\,M_\odot\), \(R = 6.85 \pm 0.18\,R_g\) | Motta et al. (2022), abstract, Sec. 3 and Table 3 |
-
-| Dataset | Values | Source and location | Mass prior |
-|---|---|---|---|
-| `qpo/gro_j1655_40` | 441 ± 2, 298 ± 4, 17.3 ± 0.1 Hz | Motta et al. (2014), Table 2, Sample B1 | 5.40 ± 0.30 M☉, Beer & Podsiadlowski (2002), Table 4 (dynamical) |
-| `qpo/xte_j1859_226` | 227.5 (+2.1/−2.4), 128.6 (+1.6/−1.8), 3.65 ± 0.01 Hz | Motta et al. (2022), Table 2, triplet | 7.8 ± 1.9 M☉, Yanes-Rizo et al. (2022), abstract (dynamical) |
-| `qpo/xte_j1550_564` | 268 ± 3, 188 ± 3 Hz | Miller et al. (2001), Fig. 4 caption | 9.10 ± 0.61 M☉, Orosz et al. (2011), abstract and Sec. IV.1 (dynamical) |
-| `qpo/grs_1915_105` | 69.2 ± 0.15, 41.5 ± 0.4 Hz | Strohmayer (2001), Sec. 2 | 12.4 (+2.0/−1.8) M☉, Reid et al. (2014), abstract |
-| `qpo/h1743_322` | 241 ± 3, 165 (+9/−5) Hz | Homan et al. (2005), Sec. 3 | **null** (no dynamical mass found) |
-| `qpo/m82_x1` | 5.07 ± 0.06, 3.32 ± 0.06 Hz | Pasham et al. (2014), abstract | 415 ± 63 M☉, same paper: **not independent** (RPM fit) |
-| `eht/sgra` | 4.55–5.22 (1σ), 4.21–5.56 (2σ) for \(r_{\rm sh}/M\) | Vagnozzi et al. (2023), Eqs. (5)–(8) | – |
-
-### Open issues
-
-- **XTE J1550-564**: the pair 276 ± 3 / 184 ± 5 Hz used in many QPO papers was
-  not found in the original papers accessed (Remillard et al. 2002 give only
-  harmonic fits and "near 184 and 276 Hz"). The registry uses the
-  independently fitted pair of Miller et al. (2001).
-- **GRS 1915+105**: the 113/168 Hz pair is listed under `alternatives` without
-  uncertainties (only a review was accessible); the default pair is the
-  41/67 Hz detection of Strohmayer (2001).
-- **H1743-322**: no mass prior. A fit needs an explicit user prior.
-- **M82 X-1**: the only mass estimates come from the QPOs themselves; using
-  them is circular and triggers a warning.
-- **Sgr A\***: the paper gives lower limits 4.55 and 4.21, whereas 4.54 and
-  4.20 are sometimes quoted.
-
 ## Your own data
 
-Write a YAML file with the same schema and load it with
-`blackpy.data.load_file(path)`; or create synthetic data with
-`blackpy.infer.simulate_qpo_dataset(...)`.
+A dataset of your own is a YAML file with the same schema; BlackPy validates
+it when it is loaded and every fit records its file hash, exactly as for the
+registry.
+
+1. **Copy a registry file of the same type** as a template: a QPO pair or
+   triplet from `qpo/`, a shadow bound from `eht/`. The folder is
+   `blackpy.data.registry_path()`.
+2. **Fill in the fields.** Required: `schema_version: 1`, `id` (any
+   `"group/name"`; the last part names the source parameters, e.g. `M_name`),
+   `object`, `data_type`, `dataset_version`, `verified_by_human`,
+   `references` (at least one, with a `citation`), and the data block
+   (`frequencies` and `mass_prior` for QPOs, `bounds` and
+   `fractional_deviation` for shadows). Every measurement has `value`,
+   `err_minus`, `err_plus`, `unit`, `source` (a key of `references`) and
+   `location` (where in the paper the number is printed). Unknown values are
+   `null`.
+3. **State whether the mass prior is independent** of the QPO modelling
+   (`independent: true/false`); a non-independent prior triggers
+   `CircularInferenceWarning` in fits.
+4. **Load it** with `blackpy.data.load_file(path)`; a schema error raises
+   `RegistryError` naming the field. Pass the dataset object (or a list of
+   them) to `Fit`, `build_problem` or `forecast` like a registry id.
+
+A minimal QPO pair (the numbers are made up for the example):
+
+```python
+import tempfile
+import textwrap
+from pathlib import Path
+
+import blackpy as bp
+
+text = textwrap.dedent("""
+    schema_version: 1
+    id: mine/source_x
+    object: Source X
+    data_type: qpo_pair
+    dataset_version: "1"
+    verified_by_human: true
+    frequencies:
+      upper: {value: 300.0, err_minus: 3.0, err_plus: 3.0, unit: Hz, source: me, location: "Table 1"}
+      lower: {value: 200.0, err_minus: 4.0, err_plus: 4.0, unit: Hz, source: me, location: "Table 1"}
+    simultaneous: true
+    mass_prior: {value: 8.0, err_minus: 1.0, err_plus: 1.0, unit: Msun, method: dynamical,
+                 independent: true, source: me, location: "Section 2"}
+    intended_models: [RP]
+    references:
+      me: {citation: "Me et al. (2026), in preparation"}
+    source_access: "own measurement"
+""")
+path = Path(tempfile.mkdtemp()) / "source_x.yaml"
+path.write_text(text)
+mine = bp.data.load_file(path)
+print(mine.id, mine.upper, mine.lower, mine.mass_prior.value, mine.mass_prior.independent)
+fit = bp.infer.Fit(
+    bp.metric.Kerr(), mine, qpo_model="RP", priors={"a": bp.infer.Uniform(0.0, 0.998)}
+)
+print(fit.param_names)
+```
+
+```text title="Output"
+mine/source_x 300 +- 3 Hz 200 +- 4 Hz 8.0 True
+['a', 'M_source_x', 'r_source_x']
+```
+
+The same in memory, without a file: `blackpy.data.parse_dataset(dict)`.
+For synthetic data from a known model use
+`blackpy.infer.simulate_qpo_dataset(...)` or `simulate_shadow_dataset(...)`.
+Datasets you create set `verified_by_human` themselves; the field of the
+registry files is changed only by the maintainer, by hand.

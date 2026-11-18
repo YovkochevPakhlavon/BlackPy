@@ -132,6 +132,11 @@ def rename_legacy_inclination(names, what: str, *, stacklevel: int = 4):
     return type(names)(out_keys) if isinstance(names, (list, tuple)) else out_keys
 
 
+def _tex(text: str) -> str:
+    """An object name as LaTeX text (underscores escaped, e.g. 'src_a')."""
+    return text.replace("_", r"\_")
+
+
 def _slug(dataset_id: str) -> str:
     return dataset_id.split("/")[-1]
 
@@ -501,7 +506,7 @@ def build_problem(
                 if prior is None and key not in fixed:
                     prior = generic
                 if prior is not None:
-                    label = rf"{par.symbol}^{{\rm {d.object}}}"
+                    label = rf"{par.symbol}^{{\rm {_tex(d.object)}}}"
                     layout[slug][par.name] = (
                         "free",
                         add_parameter(key, label, prior, kind, par.name),
@@ -579,10 +584,10 @@ def build_problem(
         if not rotating and (d.low is not None or d.spin is not None):
             rotating_sources.append(d.id)
         i_mass = add_parameter(
-            f"M_{slug}", rf"M_{{\rm {d.object}}}/M_\odot", mass_prior, "mass", f"M_{slug}"
+            f"M_{slug}", rf"M_{{\rm {_tex(d.object)}}}/M_\odot", mass_prior, "mass", f"M_{slug}"
         )
         i_radius = add_parameter(
-            f"r_{slug}", rf"r_{{\rm {d.object}}}/M", radius_prior, "radius", f"r_{slug}"
+            f"r_{slug}", rf"r_{{\rm {_tex(d.object)}}}/M", radius_prior, "radius", f"r_{slug}"
         )
         source_index[slug] = (i_mass, i_radius)
 
@@ -609,7 +614,9 @@ def build_problem(
                 inclination[slug] = ("fixed", value)
                 continue
             prior = priors.pop(key, None) or generic_prior or Isotropic(*DEFAULT_INCLINATION_PRIOR)
-            label = r"i\ [{}^\circ]" if not multi_shadow else rf"i_{{\rm {d.object}}}\ [{{}}^\circ]"
+            label = (
+                rf"i_{{\rm {_tex(d.object)}}}\ [{{}}^\circ]" if multi_shadow else r"i\ [{}^\circ]"
+            )
             inclination[slug] = ("free", add_parameter(key, label, prior, "nuisance", INCLINATION))
         if multi_shadow:
             priors.pop(INCLINATION, None)

@@ -13,19 +13,21 @@ MCMC against QPO tables copied from other papers. BlackPy turns this into one
 tested package with a curated, citable data registry, so that results become
 comparable across papers.
 
-```python
+```text
 import blackpy as bp
 
 rn = bp.metric.ReissnerNordstrom()
 bp.orbits.isco(rn, Q=0.5)                    # 5.607...
 bp.light.shadow_radius(rn, Q=0.5)            # 4.968...
-bp.geometry.horizons(rn, Q=0.5).radii        # (0.134, 1.866)
+bp.geometry.horizons(rn, Q=0.5).radii        # [0.134, 1.866]
 ```
 
-New here? Read [How BlackPy works](how_it_works.md), then follow the
-[tutorial](tutorial.md).
+**New here? Start with the [user guide](user_guide.md)**: installation,
+units, and how to use every calculation and every plot. Then
+[How BlackPy works](how_it_works.md) explains the architecture and the
+[tutorial](tutorial.md) walks through a complete analysis.
 
-## What version 0.3 covers
+## What BlackPy covers
 
 Static, spherically symmetric metrics
 \( ds^2 = -f(r)\,dt^2 + dr^2/g(r) + h(r)\,d\Omega^2 \) and stationary,
@@ -45,11 +47,8 @@ in units \(G = c = 1\):
 | `blackpy.infer` | priors, likelihoods (QPO pairs and triplets, shadow sizes of several sources, plasma), emcee and dynesty, Bayes factors, goodness of fit and posterior predictive checks, Fisher forecasts, integrity warnings, reproducibility bundles |
 | `blackpy.plot` | profile plots, shadow contours, corner plots, residual plots, LaTeX tables |
 
-Not in version 0.3 (interfaces reserved, they raise `NotImplementedError` or
-refuse with a message): ray tracing for non-separable metrics, lensing by
-rotating metrics, continuum-fitting and iron-line likelihoods, quasinormal
-modes and thermodynamics (not scheduled: no data would use them), S2 orbit
-data.
+What is not included, and why (ray tracing, lensing by rotating metrics,
+quasinormal modes, thermodynamics, ...): see the [roadmap](roadmap.md).
 
 ## Design principle: symbolic in, numeric core
 
@@ -69,9 +68,11 @@ BlackPy warns when such data are used. See [Data registry](data.md).
 
 ## Installation
 
-```bash
+```text
 python3 -m venv .venv
-.venv/bin/python -m pip install -e ".[dev,docs]"
+.venv/bin/python -m pip install blackpy-gr          # once released on PyPI
+.venv/bin/python -m pip install -e ".[dev,docs]"    # from the repository
 ```
 
-The distribution name is `blackpy-gr`; the import name is `blackpy`.
+The distribution name is `blackpy-gr`; the import name is `blackpy`. Details,
+including Windows: [user guide, installation](user_guide.md#installation).

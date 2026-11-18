@@ -262,7 +262,7 @@ Physical constants (SI) and unit conversions.
 
 ## Errors and warnings (`blackpy.errors`)
 
-Every exception and warning class. What triggers each one and what to do about it is explained in the [user guide](user_guide.md#integrity-guards-and-errors).
+Every exception and warning class. What triggers each one and what to do about it is explained in the [user guide](user_guide.md#11-integrity-guards-and-errors).
 
 ::: blackpy.errors.BlackPyError
 ::: blackpy.errors.BlackPyWarning

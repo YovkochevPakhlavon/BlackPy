@@ -1,6 +1,9 @@
 site_name: BlackPy
 site_description: Black hole metric in, observables and Bayesian parameter constraints out.
-repo_name: BlackPy
+site_url: https://yovkochevpakhlavon.github.io/BlackPy/
+repo_url: https://github.com/YovkochevPakhlavon/BlackPy
+repo_name: YovkochevPakhlavon/BlackPy
+edit_uri: ""
 nav:
   - Home: index.md
   - User guide: user_guide.md
@@ -44,3 +47,7 @@ plugins:
             show_root_heading: true
             heading_level: 3
             members_order: source
+validation:
+  links:
+    anchors: warn
+    unrecognized_links: warn

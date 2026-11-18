@@ -132,6 +132,24 @@ lensing, thin disks. The v0.2 API is unchanged except where noted under
   Visser (2018); no change was needed.
 - Two errors in Konoplya, Rezzolla & Zhidenko (2016) (theory section 21.2).
 
+### Registry (moved from `docs/data.md` in 1.0)
+
+Read by Claude on 2026-11-15 to 2026-11-17 from the arXiv versions (EHT
+M87\* Papers I and VI from the arXiv PDFs). **None has been verified by a
+human.**
+
+| Dataset | Change | Source and location |
+|---|---|---|
+| `qpo/gro_j1655_40` (version 3) | Table 3 values of spin 0.286 ± 0.003, mass 5.307 ± 0.066, radius 5.677 ± 0.035 are the main entries; the text values (0.290, 5.31, 5.68) are kept under `other_values` | Motta et al. (2014), Table 3; abstract, Sec. 4.1 and 5 |
+| `qpo/xte_j1859_226` (version 3) | open question: published RPM uncertainties 2.7 times larger than propagation gives | Motta et al. (2022) |
+| `eht/sgra` (version 2) | mass priors `keck` (3.964 ± 0.054 × 10⁶ M☉) and `vlti` (4.297 ± 0.042 × 10⁶ M☉) with \(\theta_g\) and \(\delta\) per prior; distance 8.277 ± 0.034 kpc | Do et al. (2019); GRAVITY Collaboration (2022); EHT Sgr A\* Paper VI, Sec. 2.1; Vagnozzi et al. (2023) |
+| `eht/m87` (new) | 68% bound 4.31–6.08 on \(r_{\rm sh}/M\); \(\delta = -0.01 \pm 0.17\) (stellar dynamics); ring diameter 42 ± 3 µas; \(\theta_g = 3.8 \pm 0.4\) µas; masses from stellar dynamics (independent), gas dynamics (independent, in tension) and the EHT ring (**not** independent); distance 16.8 ± 0.8 Mpc; jet inclination 17.2 ± 3.3°; circularity < 0.10 (`fractional_rms`) | EHT (2019) Papers I and VI; Kocherlakota et al. (2021), Eq. (14); Gebhardt et al. (2011); Walsh et al. (2013); Mertens et al. (2016) |
+
+The M87\* entry records the chain from the measured ring to a bound on the
+shadow size (theory section 20). A fit uses the stellar-dynamics bound by
+default; `shadow_mass_prior=` selects another, and the image-based mass
+triggers a `CircularInferenceWarning`.
+
 ## [0.2.0] - 2026-11-15
 
 Rotating (stationary, axisymmetric) black holes. The v0.1 API is unchanged.
@@ -167,7 +185,7 @@ Rotating (stationary, axisymmetric) black holes. The v0.1 API is unchanged.
 - Examples 05 (Johannsen fit to the GRO J1655-40 triplet), 06 (published RPM
   results), 07 (rotating shadows, Sgr A*), 08 (tutorial).
 - Documentation: `docs/how_it_works.md`, `docs/tutorial.md`, rotating-metric
-  theory in LaTeX, `VERIFICATION_v0.2.md`.
+  theory in LaTeX, `verification/v0.2.md`.
 
 ### Changed
 - Constants are tested against `scipy.constants` (CODATA 2022; `G` is
@@ -186,6 +204,46 @@ Rotating (stationary, axisymmetric) black holes. The v0.1 API is unchanged.
 - No registry value has been verified by a human yet.
 - Shadows need separable null geodesics (no ray tracing); the horizon of a
   metric whose `g^rr = 0` surface depends on theta is not computed.
+
+### Registry (moved from `docs/data.md` in 1.0)
+
+All values below were read from the arXiv versions of the papers (ar5iv HTML
+rendering) on 2026-11-14; bibliographic details were checked against Crossref.
+**None has been verified by a human yet.**
+
+Added in version 0.2 (read on 2026-11-15, dataset version 2), for comparison
+with BlackPy's own fits (example 6); these are Kerr QPO fits and **not**
+independent measurements:
+
+| Dataset | Published RPM result | Source and location |
+|---|---|---|
+| `qpo/gro_j1655_40` | \(a = 0.290 \pm 0.003\), \(M = 5.31 \pm 0.07\,M_\odot\), \(R = 5.68 \pm 0.04\,R_g\) | Motta et al. (2014), abstract and Sec. 4.1; their Table 3 gives the spin as 0.286 ± 0.003 |
+| `qpo/xte_j1859_226` | \(a = 0.149 \pm 0.005\), \(M = 7.85 \pm 0.46\,M_\odot\), \(R = 6.85 \pm 0.18\,R_g\) | Motta et al. (2022), abstract, Sec. 3 and Table 3 |
+
+| Dataset | Values | Source and location | Mass prior |
+|---|---|---|---|
+| `qpo/gro_j1655_40` | 441 ± 2, 298 ± 4, 17.3 ± 0.1 Hz | Motta et al. (2014), Table 2, Sample B1 | 5.40 ± 0.30 M☉, Beer & Podsiadlowski (2002), Table 4 (dynamical) |
+| `qpo/xte_j1859_226` | 227.5 (+2.1/−2.4), 128.6 (+1.6/−1.8), 3.65 ± 0.01 Hz | Motta et al. (2022), Table 2, triplet | 7.8 ± 1.9 M☉, Yanes-Rizo et al. (2022), abstract (dynamical) |
+| `qpo/xte_j1550_564` | 268 ± 3, 188 ± 3 Hz | Miller et al. (2001), Fig. 4 caption | 9.10 ± 0.61 M☉, Orosz et al. (2011), abstract and Sec. IV.1 (dynamical) |
+| `qpo/grs_1915_105` | 69.2 ± 0.15, 41.5 ± 0.4 Hz | Strohmayer (2001), Sec. 2 | 12.4 (+2.0/−1.8) M☉, Reid et al. (2014), abstract |
+| `qpo/h1743_322` | 241 ± 3, 165 (+9/−5) Hz | Homan et al. (2005), Sec. 3 | **null** (no dynamical mass found) |
+| `qpo/m82_x1` | 5.07 ± 0.06, 3.32 ± 0.06 Hz | Pasham et al. (2014), abstract | 415 ± 63 M☉, same paper: **not independent** (RPM fit) |
+| `eht/sgra` | 4.55–5.22 (1σ), 4.21–5.56 (2σ) for \(r_{\rm sh}/M\) | Vagnozzi et al. (2023), Eqs. (5)–(8) | – |
+
+#### Open issues
+
+- **XTE J1550-564**: the pair 276 ± 3 / 184 ± 5 Hz used in many QPO papers was
+  not found in the original papers accessed (Remillard et al. 2002 give only
+  harmonic fits and "near 184 and 276 Hz"). The registry uses the
+  independently fitted pair of Miller et al. (2001).
+- **GRS 1915+105**: the 113/168 Hz pair is listed under `alternatives` without
+  uncertainties (only a review was accessible); the default pair is the
+  41/67 Hz detection of Strohmayer (2001).
+- **H1743-322**: no mass prior. A fit needs an explicit user prior.
+- **M82 X-1**: the only mass estimates come from the QPOs themselves; using
+  them is circular and triggers a warning.
+- **Sgr A\***: the paper gives lower limits 4.55 and 4.21, whereas 4.54 and
+  4.20 are sometimes quoted.
 
 ## [0.1.0] - 2026-11-14
 
