@@ -104,11 +104,11 @@ print(
 )
 
 # ----------------------------------------------------------------- 3. a forecast not to trust
-shadow = simulate_shadow_dataset(kerr, name="img", sigma=0.34, inclination=30.0, a=0.5)
+shadow = simulate_shadow_dataset(kerr, name="img", sigma=0.34, inclination_deg=30.0, a=0.5)
 with warnings.catch_warnings(record=True) as caught:
     warnings.simplefilter("always")
     spin = forecast(
-        kerr, shadow, {"a": 0.5}, priors={"a": Uniform(0.0, 0.998)}, fixed={"inclination": 30.0}
+        kerr, shadow, {"a": 0.5}, priors={"a": Uniform(0.0, 0.998)}, fixed={"inclination_deg": 30.0}
     )
 print("Kerr spin from one shadow size (6.5% precision, inclination fixed at 30 deg):")
 print(spin)

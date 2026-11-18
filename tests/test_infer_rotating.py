@@ -186,18 +186,21 @@ def test_rotating_shadow_likelihood(kerr, schwarzschild, rn):
         warnings.simplefilter("ignore", UnverifiedDataWarning)
         problem = build_problem(kerr, "eht/sgra", priors={"a": Uniform(0, 0.998)})
         fixed = build_problem(
-            kerr, "eht/sgra", priors={"a": Uniform(0, 0.998)}, fixed={"inclination": 30.0}
+            kerr, "eht/sgra", priors={"a": Uniform(0, 0.998)}, fixed={"inclination_deg": 30.0}
         )
         by_area = build_problem(
             kerr,
             "eht/sgra",
             priors={"a": Uniform(0, 0.998)},
             shadow_size="area",
-            fixed={"inclination": 30.0},
+            fixed={"inclination_deg": 30.0},
         )
         mean, sigma = bp.data.load("eht/sgra").gaussian()
     # The inclination (degrees) is a nuisance parameter with an isotropic default prior.
-    assert problem.param_names == ["a", "inclination"] and problem.kinds == ["metric", "nuisance"]
+    assert problem.param_names == ["a", "inclination_deg"] and problem.kinds == [
+        "metric",
+        "nuisance",
+    ]
     assert problem.priors[1] == Isotropic(0.0, 90.0)
     assert problem.description["inclination_deg"] == "sampled"
     assert problem.description["shadow_size"] == "mean radius"
@@ -215,14 +218,14 @@ def test_rotating_shadow_likelihood(kerr, schwarzschild, rn):
         static = build_problem(rn, "eht/sgra", priors={"Q": Uniform(0, 1)})
         with pytest.raises(ValueError, match="circle for every observer"):
             build_problem(
-                rn, "eht/sgra", priors={"Q": Uniform(0, 1), "inclination": Uniform(0, 90)}
+                rn, "eht/sgra", priors={"Q": Uniform(0, 1), "inclination_deg": Uniform(0, 90)}
             )
         with pytest.raises(ValueError, match="both a prior and a fixed value"):
             build_problem(
                 kerr,
                 "eht/sgra",
-                priors={"a": Uniform(0, 1), "inclination": Uniform(0, 90)},
-                fixed={"inclination": 30.0},
+                priors={"a": Uniform(0, 1), "inclination_deg": Uniform(0, 90)},
+                fixed={"inclination_deg": 30.0},
             )
         with pytest.raises(ValueError, match="shadow_size"):
             build_problem(kerr, "eht/sgra", priors={"a": Uniform(0, 1)}, shadow_size="max")
@@ -233,7 +236,7 @@ def test_rotating_shadow_likelihood(kerr, schwarzschild, rn):
     # QPO-only problems have no inclination.
     with pytest.raises(ValueError, match="only a parameter when"):
         build_problem(
-            kerr, kerr_triplet(kerr), "RP", {"a": Uniform(0, 1), "inclination": Uniform(0, 90)}
+            kerr, kerr_triplet(kerr), "RP", {"a": Uniform(0, 1), "inclination_deg": Uniform(0, 90)}
         )
 
 
@@ -355,10 +358,10 @@ def test_shadow_fit_with_inclination_nuisance(kerr):
             max_steps=12000,
         )
         result = fit.run(seed=3)
-    assert result.param_names == ["a", "inclination"] and result.diagnostics["converged"]
+    assert result.param_names == ["a", "inclination_deg"] and result.diagnostics["converged"]
     # The isotropic prior of the nuisance parameter is recovered (the data do not see it).
-    assert np.mean(np.cos(np.radians(result["inclination"]))) == pytest.approx(0.5, abs=0.06)
-    assert result.priors["inclination"] == Isotropic(0.0, 90.0)
+    assert np.mean(np.cos(np.radians(result["inclination_deg"]))) == pytest.approx(0.5, abs=0.06)
+    assert result.priors["inclination_deg"] == Isotropic(0.0, 90.0)
     assert result.summary()["a"]["std"] > 0.2  # essentially the prior width (0.29)
 
 

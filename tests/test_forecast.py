@@ -147,7 +147,7 @@ def test_log_likelihood_is_twice_differentiable_end_to_end(case, rn, kerr, kerr_
             theta = [0.5]
         else:
             data = simulate_shadow_dataset(
-                kerr_newman, name="i", sigma=0.1, inclination=60.0, a=0.6, Q=0.4
+                kerr_newman, name="i", sigma=0.1, inclination_deg=60.0, a=0.6, Q=0.4
             )
             problem = build_problem(
                 kerr_newman, data, priors={"a": Uniform(0, 0.99), "Q": Uniform(0, 0.9)}
@@ -190,7 +190,7 @@ def test_forecast_interface_and_boundary_warning(rn):
 @pytest.mark.slow
 def test_prior_dominated_bounded_parameter_is_warned_about(kerr):
     """The shadow size hardly depends on the Kerr spin: the forecast says so (mandatory)."""
-    data = simulate_shadow_dataset(kerr, name="img", sigma=0.3, inclination=30.0, a=0.5)
+    data = simulate_shadow_dataset(kerr, name="img", sigma=0.3, inclination_deg=30.0, a=0.5)
     with pytest.warns(PriorDominatedWarning, match="do not report"):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ForecastWarning)
@@ -199,7 +199,7 @@ def test_prior_dominated_bounded_parameter_is_warned_about(kerr):
                 data,
                 {"a": 0.5},
                 priors={"a": Uniform(0.0, 0.998)},
-                fixed={"inclination": 30.0},
+                fixed={"inclination_deg": 30.0},
             )
     assert result.prior_dominated["a"] and result.sigma["a"] > 0.29  # wider than the prior
     assert result.near_boundary["a"]

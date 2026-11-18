@@ -48,18 +48,14 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from blackpy.errors import BlackPyError, BlackPyWarning, PriorDominatedWarning
-from blackpy.infer.likelihood import Problem, build_problem
+from blackpy.errors import BlackPyError, ForecastWarning, PriorDominatedWarning
+from blackpy.infer.likelihood import Problem, build_problem, rename_legacy_inclination
 from blackpy.infer.priors import Gaussian, Isotropic, LogUniform, Prior, Uniform
 from blackpy.infer.quality import gaussian_rows
 
 #: A direction in (scaled) parameter space is called degenerate if its Fisher eigenvalue
 #: is below this fraction of the largest one.
 DEGENERATE_EIGENVALUE_RATIO = 1e-8
-
-
-class ForecastWarning(BlackPyWarning):
-    """A Fisher forecast is being used outside the range where it can be trusted."""
 
 
 def _prior_curvature(prior: Prior, value: float) -> float:
@@ -224,6 +220,7 @@ def forecast_from_problem(problem: Problem, fiducial, *, warn: bool = True) -> F
     """
     names = list(problem.param_names)
     if isinstance(fiducial, Mapping):
+        fiducial = rename_legacy_inclination(fiducial, "the fiducial point")
         missing = set(names) - set(fiducial)
         if missing:
             raise TypeError(
@@ -237,7 +234,7 @@ def forecast_from_problem(problem: Problem, fiducial, *, warn: bool = True) -> F
     if not np.isfinite(problem.log_prior(theta)[0]):
         raise BlackPyError(
             "The fiducial point lies outside the support of the priors; a forecast there has "
-            "no meaning."
+            "no meaning. Choose fiducial values inside the prior ranges (see problem.priors)."
         )
     rows = gaussian_rows(problem.data_table)
     notes = []
@@ -361,7 +358,8 @@ def forecast(
         the uncertainties you want to explore.
     fiducial : mapping of str -> float
         Fiducial values of every sampled parameter (the names are those of
-        :func:`build_problem`, e.g. ``{"a": 0.3, "M_src": 6, "r_src": 5.7}``).
+        :func:`build_problem`, e.g. ``{"a": 0.3, "M_src": 6, "r_src": 5.7}``;
+        a shadow inclination is ``"inclination_deg"``, in degrees).
     qpo_model, priors, **options
         As in :class:`blackpy.infer.Fit` / :func:`build_problem`; the priors
         decide which parameters are free and enter the Fisher matrix

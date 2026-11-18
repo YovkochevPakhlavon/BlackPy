@@ -12,13 +12,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from blackpy.errors import RegistryError
+
 SCHEMA_VERSION = 1
 QPO_TYPES = ("qpo_pair", "qpo_triplet")
 SHADOW_TYPES = ("shadow_bound",)
-
-
-class RegistryError(ValueError):
-    """A registry file is missing or does not follow the schema."""
 
 
 @dataclass(frozen=True)
@@ -97,7 +95,11 @@ class Measurement:
     def sigma(self) -> float:
         """Symmetrised 1-sigma uncertainty, ``(err_minus + err_plus) / 2``."""
         if not self.is_complete:
-            raise RegistryError("This measurement is incomplete (null value or uncertainty).")
+            raise RegistryError(
+                f"This measurement is incomplete (null value or uncertainty; source: "
+                f"{self.source}). It could not be read from the original source; see the "
+                "dataset's 'todo' field, or pass your own prior."
+            )
         return 0.5 * (self.err_minus + self.err_plus)
 
     def __str__(self) -> str:
@@ -395,7 +397,11 @@ class ShadowDataset(Dataset):
         """
         if mass_prior is None:
             if self.fractional_deviation is None or not self.fractional_deviation.is_complete:
-                raise RegistryError(f"Dataset '{self.id}' has no default fractional deviation.")
+                raise RegistryError(
+                    f"Dataset '{self.id}' has no default fractional deviation. Choose a mass "
+                    f"prior with one: {sorted(self.mass_priors) or 'none'}, or use "
+                    "shadow_likelihood='interval'."
+                )
             return self.fractional_deviation
         prior = self._mass_prior(mass_prior)
         if prior.fractional_deviation is not None and prior.fractional_deviation.is_complete:
@@ -405,10 +411,13 @@ class ShadowDataset(Dataset):
             raise RegistryError(
                 f"Dataset '{self.id}': mass prior '{mass_prior}' has no published fractional "
                 "deviation and the angular gravitational radii needed to compute one are "
-                "missing."
+                f"missing. Choose another mass prior: {sorted(self.mass_priors)}."
             )
         if not prior.theta_g.is_complete:
-            raise RegistryError(f"Dataset '{self.id}': theta_g of '{mass_prior}' is incomplete.")
+            raise RegistryError(
+                f"Dataset '{self.id}': theta_g of '{mass_prior}' is incomplete. Choose another "
+                f"mass prior: {sorted(self.mass_priors)}."
+            )
         ratio = image.value / prior.theta_g.value
         sigma = (
             ratio
@@ -441,5 +450,8 @@ class ShadowDataset(Dataset):
             return scale * (1.0 + fd.value), scale * fd.sigma
         lo, hi = self.bounds["1sigma"]
         if lo is None or hi is None:
-            raise RegistryError(f"Dataset '{self.id}' has no complete 1-sigma bound.")
+            raise RegistryError(
+                f"Dataset '{self.id}' has no complete 1-sigma bound. Use "
+                f"shadow_likelihood='interval' with one of the bounds {list(self.bounds)}."
+            )
         return 0.5 * (lo + hi), 0.5 * (hi - lo)

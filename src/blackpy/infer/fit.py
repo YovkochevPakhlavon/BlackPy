@@ -19,7 +19,7 @@ from blackpy.errors import (
     PoorFitWarning,
     PriorDominatedWarning,
 )
-from blackpy.infer.likelihood import Problem, build_problem
+from blackpy.infer.likelihood import Problem, build_problem, rename_legacy_inclination
 from blackpy.infer.priors import Prior
 from blackpy.infer.quality import (
     POOR_FIT_P_VALUE,
@@ -146,9 +146,11 @@ class Fit:
         self.model = model
         self.data = data
         self.qpo_model = qpo_model
-        self.priors = dict(priors or {})
+        self.priors = dict(rename_legacy_inclination(priors or {}, "priors"))
         self.sampler = sampler
-        self.fixed = dict(fixed or {})
+        self.fixed = dict(rename_legacy_inclination(fixed or {}, "fixed"))
+        shared = rename_legacy_inclination(shared, "shared")
+        per_source = rename_legacy_inclination(per_source, "per_source")
         self.shadow_likelihood = shadow_likelihood
         self.shadow_level = shadow_level
         self.sampler_kwargs = dict(sampler_kwargs)
@@ -179,6 +181,7 @@ class Fit:
 
     def log_likelihood(self, **theta) -> float:
         """Log-likelihood at a point given by keyword parameters (all sampled ones)."""
+        theta = rename_legacy_inclination(theta, "log_likelihood()")
         missing = set(self.param_names) - set(theta)
         if missing:
             raise TypeError(f"Missing parameters {sorted(missing)}. Needed: {self.param_names}.")
@@ -257,6 +260,7 @@ class Fit:
                     f"{self.param_names}."
                 )
             return self.result.goodness_of_fit()
+        theta = rename_legacy_inclination(theta, "goodness_of_fit()")
         missing = set(self.param_names) - set(theta)
         if missing or set(theta) - set(self.param_names):
             raise TypeError(
@@ -364,14 +368,20 @@ class Fit:
         nwalkers = int(kw.pop("nwalkers", max(32, 4 * ndim)))
         nwalkers += nwalkers % 2
         if nwalkers < 2 * ndim:
-            raise ValueError(f"emcee needs nwalkers >= 2 * ndim = {2 * ndim}, got {nwalkers}.")
+            raise ValueError(
+                f"emcee needs nwalkers >= 2 * ndim = {2 * ndim}, got {nwalkers}: pass "
+                f"nwalkers={max(32, 4 * ndim)} or more (or leave it out for the default)."
+            )
         nsteps = int(kw.pop("nsteps", 5000))
         max_steps = int(kw.pop("max_steps", nsteps))
         progress = bool(kw.pop("progress", False))
         initial = kw.pop("initial_state", None)
         moves = kw.pop("moves", None)
         if kw:
-            raise TypeError(f"Unknown emcee options {sorted(kw)}.")
+            raise TypeError(
+                f"Unknown emcee options {sorted(kw)}. Known: nwalkers, nsteps, max_steps, "
+                "initial_state, moves, progress."
+            )
         rng = np.random.default_rng(seed)
         state = (
             self._initial_state(rng, nwalkers) if initial is None else np.asarray(initial, float)
@@ -452,7 +462,10 @@ class Fit:
         maxcall = kw.pop("maxcall", None)
         print_progress = bool(kw.pop("print_progress", False))
         if kw:
-            raise TypeError(f"Unknown dynesty options {sorted(kw)}.")
+            raise TypeError(
+                f"Unknown dynesty options {sorted(kw)}. Known: nlive, dlogz, bound, sample, "
+                "maxcall, print_progress."
+            )
         rng = np.random.default_rng(seed)
         log_likelihood = problem.log_likelihood
 

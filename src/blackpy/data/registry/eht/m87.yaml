@@ -144,6 +144,7 @@ inclination:
     - value: 17.0
       err_minus: null
       err_plus: null
+      unit: deg
       source: eht2019i
       location: "eht2019i, Sec. 6: 'adopting an inclination of 17 deg between the approaching jet and the line of sight (Walker et al. 2018)'; walker2018, Sec. 1: 'we adopt the smaller viewing angle ... of theta ~ 17 deg'"
       note: "Value adopted by the EHT, without uncertainty."

@@ -336,9 +336,15 @@ class MetricWithPlasma(Metric):
 
     def __init__(self, metric: Metric, plasma: PlasmaModel):
         if isinstance(metric, MetricWithPlasma):
-            raise TypeError("This metric already carries a plasma.")
+            raise TypeError(
+                "This metric already carries a plasma: pass the bare metric (metric.metric) "
+                "together with the new plasma."
+            )
         if not isinstance(plasma, PlasmaModel):
-            raise TypeError("plasma must be a blackpy.light.PlasmaModel.")
+            raise TypeError(
+                "plasma must be a blackpy.light.PlasmaModel, for example HomogeneousPlasma() or "
+                "PowerLawPlasma()."
+            )
         clash = set(metric.param_names) & set(plasma.param_names)
         if clash:
             raise ValueError(
@@ -492,7 +498,10 @@ def with_plasma(metric: Metric, plasma: PlasmaModel) -> MetricWithPlasma:
             "PowerLawPlasma(), PlasmaProfile(fn) or SeparablePlasma(f_r, f_theta))."
         )
     if isinstance(metric, MetricWithPlasma):
-        raise TypeError(f"'{metric.name}' already carries a plasma.")
+        raise TypeError(
+            f"'{metric.name}' already carries a plasma: pass the bare metric together with the "
+            "plasma you want."
+        )
     cache = plasma.__dict__.setdefault("_views", {})
     key = id(metric)
     if key not in cache or cache[key][0] is not metric:
@@ -709,7 +718,10 @@ def photon_spheres_in_plasma(metric, plasma: PlasmaModel, *, n_scan: int = 256, 
         np.asarray(v) for v in view.evaluate(photon_spheres_core, params, n_scan=n_scan)
     )
     if roots.ndim != 1:
-        raise ValueError("photon_spheres_in_plasma() needs scalar parameters.")
+        raise ValueError(
+            "photon_spheres_in_plasma() lists every photon sphere of one configuration, so it "
+            "needs scalar parameters; use photon_sphere_in_plasma() for arrays."
+        )
     out = []
     for radius, is_unstable in zip(roots, unstable, strict=True):
         if np.isfinite(radius):
@@ -730,7 +742,10 @@ def photon_sphere_in_plasma(metric, plasma: PlasmaModel, *, n_scan: int = 256, *
         NaN if there is none.
     """
     if metric.is_rotating_class:
-        raise TypeError("photon_sphere_in_plasma is for static metrics.")
+        raise TypeError(
+            "photon_sphere_in_plasma is for static metrics; a rotating metric has a photon "
+            "region: use blackpy.light.photon_region(blackpy.light.with_plasma(metric, plasma))."
+        )
     view = with_plasma(metric, plasma)
     return view.evaluate(static_shadow_core, params, np.inf, n_scan=n_scan, finite=False).r_ph
 
@@ -797,6 +812,9 @@ def shadow_in_plasma(
     NotAsymptoticallyFlatError
         If ``r_obs`` is None and the metric is not asymptotically flat.
     """
+    from blackpy.light.rotating import check_inclination_radians
+
+    check_inclination_radians(inclination, "shadow_in_plasma()")
     view = with_plasma(metric, plasma)
     finite = r_obs is not None
     if not finite and not view.is_asymptotically_flat(**params):

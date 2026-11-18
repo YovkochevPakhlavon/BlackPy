@@ -132,7 +132,7 @@ def test_simulated_shadow_dataset_and_shadow_pulls(rn, kerr):
     assert data.bounds["2sigma"] == pytest.approx((truth - 0.4, truth + 0.4))
     noisy = simulate_shadow_dataset(rn, name="img", sigma=0.2, Q=0.6, rng=np.random.default_rng(1))
     assert noisy.gaussian()[0] != mean and abs(noisy.gaussian()[0] - mean) < 1.0
-    rotating = simulate_shadow_dataset(kerr, name="k", sigma=0.1, inclination=60.0, a=0.8)
+    rotating = simulate_shadow_dataset(kerr, name="k", sigma=0.1, inclination_deg=60.0, a=0.8)
     expected = float(bp.light.shadow_radius(kerr, inclination=math.radians(60.0), a=0.8))
     assert rotating.gaussian()[0] == pytest.approx(expected, rel=1e-12)
     with pytest.raises(TypeError, match="inclination"):

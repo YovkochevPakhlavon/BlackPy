@@ -106,7 +106,7 @@ with warnings.catch_warnings(record=True) as caught:
         priors={
             "Q": Uniform(0.0, 1.0),
             "a": Uniform(0.0, 0.998),  # applies to a_sgra and a_m87
-            "inclination_m87": inclination_prior(m87),  # the jet angle, on request only
+            "inclination_deg_m87": inclination_prior(m87),  # the jet angle, on request only
         },
         shared=["Q"],
         nsteps=4000,

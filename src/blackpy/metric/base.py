@@ -138,11 +138,15 @@ class Metric(ABC):
         self.reference = reference
         self.parameters = parameters
         if len(set(self.param_names)) != len(self.param_names):
-            raise ValueError(f"Duplicate parameter names: {self.param_names}.")
+            raise ValueError(
+                f"Duplicate parameter names: {self.param_names}. Give every parameter a "
+                "different name."
+            )
         for word in reserved:
             if word in self.param_names:
                 raise ValueError(
-                    f"'{word}' is reserved for a coordinate and cannot be a parameter name."
+                    f"'{word}' is reserved for a coordinate and cannot be a parameter name; "
+                    "rename the parameter."
                 )
         r_min, r_max = float(r_range[0]), float(r_range[1])
         if not 0.0 < r_min < r_max:
@@ -441,7 +445,7 @@ class StaticSpherical(Metric):
             if missing:
                 raise ValueError(
                     f"The expressions contain symbols {sorted(missing)} that are not listed in "
-                    "parameters."
+                    "parameters. Add them, e.g. parameters={'name': default_value}."
                 )
         by_name = {s.name: s for s in other}
         symbols = tuple(by_name.get(p.name, sp.Symbol(p.name, real=True)) for p in params)

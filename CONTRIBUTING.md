@@ -54,6 +54,35 @@ Python 3.10 or newer. Work only inside the project's `.venv`.
   half-way.
 - New dependencies must be justified in `DESIGN_NOTES.md`.
 
+## Public API and deprecation policy
+
+BlackPy follows [semantic versioning](https://semver.org/) from 1.0 on.
+
+- The **public API** is the set of names in `__all__` of `blackpy` and of its
+  sub-packages and public modules, plus `blackpy.errors`. Everything else is
+  private, even if it can be imported. `tests/test_public_api.py` keeps a
+  snapshot of every `__all__`.
+- A public name is **removed**, or its behaviour **changed**, only in a major
+  release (2.0, 3.0, ...), and only after at least one minor release in which
+  using it emits a `DeprecationWarning` that names the replacement. Use
+  `blackpy._deprecation.warn_deprecated` / `alias_getattr`, list the old name
+  under "Deprecated" in `CHANGELOG.md`, and add it to `DEPRECATED` in
+  `tests/test_public_api.py`.
+- **Adding** a public name is allowed in a minor release: add it to `__all__`,
+  to the snapshot, to `docs/api.md` and to the user guide.
+
+## Units and angles
+
+- G = c = 1 and lengths in units of M; frequencies in Hz need a mass in solar
+  masses (`blackpy.constants.omega_to_hz`).
+- **Every angle in the public API is in radians; a quantity in degrees carries
+  `_deg` in its name** (for example the shadow nuisance parameter
+  `inclination_deg`). A public function that takes an angle in radians must
+  refuse a value outside its range with a message that suggests
+  `math.radians(...)`.
+- Every argument and returned field of a public function states its unit in the
+  docstring; the unit table is in the user guide.
+
 ## Catalogue metrics: one file, one reference, one test
 
 A new built-in metric is

@@ -185,7 +185,9 @@ def axisymmetric_tensors(g_tt, g_tphi, g_phiphi, g_rr, g_thth, r, theta, timeout
     if any(e.has(theta) for e in exprs):
         raise ValueError(
             "axisymmetric_tensors: theta must enter the metric only through sin(theta) and "
-            "cos(theta)."
+            "cos(theta). Rewrite the components in that form (e.g. tan(theta) as "
+            "sin(theta)/cos(theta)), or use the numerical functions (blackpy.geometry.kretschmann, "
+            "effective_source)."
         )
     g_tt, g_tphi, g_phiphi, g_rr, g_thth = exprs
     coords = (sp.Symbol("t", real=True), r, x, sp.Symbol("phi", real=True))

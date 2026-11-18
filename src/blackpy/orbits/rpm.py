@@ -29,7 +29,7 @@ solution for prograde orbits is (Eqs. (9), (6), (1))
 
 BlackPy evaluates :math:`c^3 / (2\pi G M_\odot)` from its own constants
 (32 312.5 Hz); Ingram & Motta quote 3.237e4 Hz, which is 0.18% larger and
-shifts the mass by the same fraction (see ``VERIFICATION_v0.2.md``).
+shifts the mass by the same fraction.
 """
 
 from __future__ import annotations

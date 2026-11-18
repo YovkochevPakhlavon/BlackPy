@@ -208,7 +208,8 @@ def _lens(mass_msun, distance_kpc, dataset, mass_prior):
     prior, distance = data.mass_priors[key], data.distance
     if prior.unit not in units or distance.unit not in lengths:
         raise BlackPyError(
-            f"Unknown unit in '{data.id}': mass in '{prior.unit}', distance in '{distance.unit}'."
+            f"Unknown unit in '{data.id}': mass in '{prior.unit}', distance in '{distance.unit}'. "
+            "Pass the lens as mass_msun=... and distance_kpc=... instead."
         )
     return prior.value * units[prior.unit], distance.value * lengths[distance.unit]
 

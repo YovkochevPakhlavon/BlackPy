@@ -130,7 +130,10 @@ class Gaussian(Prior):
         self._cdf_low = float(ndtr((self.low - self.mean) / self.sigma))
         self._norm = float(ndtr((self.high - self.mean) / self.sigma)) - self._cdf_low
         if not self._norm > 0:
-            raise ValueError("The truncation interval contains no probability mass.")
+            raise ValueError(
+                f"The truncation interval [{low}, {high}] contains no probability mass of "
+                f"N({mean}, {sigma}). Widen the interval or move the mean inside it."
+            )
 
     def logpdf(self, x):
         x = np.asarray(x, dtype=float)

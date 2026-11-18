@@ -166,7 +166,8 @@ each other.
     exists", when `require_black_hole=True` (default for rotating metrics).
 28. **Inclination in degrees, isotropic by default.** The shadow nuisance
     parameter is named `inclination`; its default prior is `p(i) ~ sin i` on
-    [0, 90] degrees (`Isotropic`).
+    [0, 90] degrees (`Isotropic`). *Superseded by decision 39 (1.0): the
+    parameter is now `inclination_deg`; units and prior are unchanged.*
 29. **`Parameter.role`** (`"spin"`, `"deformation"`, `"charge"`) lets the
     degeneracy guard find the spin without guessing from names.
 30. **Coverage test draws the truth from the prior.** Only then is "68%
@@ -341,3 +342,39 @@ Version 0.3.0. Results, tolerances, papers read and limitations are in
 37. **Catalogue names**: the Simpson-Visser length scale is `ell` (the
     paper's `a`) so that `rotating_from_static` can add a spin; the
     power-law plasma index is `k` (Bardeen already has `q`).
+
+## 10. Decisions added in v1.0
+
+38. **Public API and deprecation policy.** The public API is the set of
+    names in `__all__` of `blackpy` and of its sub-packages and public
+    modules (`constants`, `errors`, `metric`, `metric.future`,
+    `metric.interpolated`, `geometry`, `orbits`, `light`, `lensing`, `disk`,
+    `data`, `infer`, `plot`, `qnm`, `thermo`). Everything else is private,
+    even if importable (`blackpy._numerics`, `blackpy.infer.likelihood.INCLINATION`,
+    core functions). From 1.0 on, BlackPy follows semantic versioning: a
+    public name is removed, or its behaviour changed, only in a major
+    release, and only after at least one minor release in which using it
+    emits a `DeprecationWarning` that names the replacement. Deprecated
+    aliases are served by a module `__getattr__` (PEP 562), are not in
+    `__all__`, and are listed in `tests/test_public_api.py`, whose snapshot
+    of `__all__` fails when a public name disappears.
+39. **One rule for angles** (supersedes 28): every angle in the public API
+    is in radians; a quantity in degrees carries `_deg` in its name. The
+    shadow nuisance parameter is therefore `inclination_deg` (per source:
+    `inclination_deg_<source>`), while `inclination` stays in radians in
+    `blackpy.light` and `blackpy.plot`. Posteriors, corner plots and the
+    `Isotropic(0, 90)` prior stay in degrees because the name says so. The
+    pre-1.0 names are accepted during 1.x with a `DeprecationWarning`
+    (priors, fixed values, `shared`/`per_source`, keyword arguments,
+    fiducial points, `FitResult[...]`); a name given in both spellings is an
+    error. The registry keeps degrees as printed in the papers, with an
+    explicit `unit: deg`; values are converted where they are used. Public
+    functions that take an inclination in radians refuse values outside
+    [0, π] with a message that suggests `math.radians`. No opposite guard
+    on `inclination_deg`: any range test (for example "the whole prior lies
+    below 1.6") would have false positives for nearly face-on systems.
+40. **Versioned result bundles.** `FitResult.save` writes
+    `"bundle_format": 1`. Bundles without the field are format 0 (0.1 to
+    0.3) and are upgraded on loading (inclination columns renamed); a newer
+    format is refused with the BlackPy version that wrote it. Fixtures of
+    both formats (`tests/data/`) guard loading for all of 1.x.

@@ -240,7 +240,7 @@ def test_rotating_sources_have_their_own_spin_and_inclination(kerr_newman):
     truth = {"a": (0.3, 0.9), "inc": (60.0, 20.0), "Q": 0.4}
     data = [
         simulate_shadow_dataset(
-            kerr_newman, name=name, sigma=0.05, inclination=inc, a=a, Q=truth["Q"]
+            kerr_newman, name=name, sigma=0.05, inclination_deg=inc, a=a, Q=truth["Q"]
         )
         for name, a, inc in zip(("one", "two"), truth["a"], truth["inc"], strict=True)
     ]
@@ -251,12 +251,18 @@ def test_rotating_sources_have_their_own_spin_and_inclination(kerr_newman):
         shared=["Q"],
     )
     # The spin is per source without being asked; each source has its own inclination.
-    assert problem.param_names == ["a_one", "a_two", "Q", "inclination_one", "inclination_two"]
+    assert problem.param_names == [
+        "a_one",
+        "a_two",
+        "Q",
+        "inclination_deg_one",
+        "inclination_deg_two",
+    ]
     assert problem.kinds == ["metric", "metric", "metric", "nuisance", "nuisance"]
     assert problem.description["per_source"] == ["a"]
     assert problem.description["inclinations_deg"] == {
-        "inclination_one": "sampled",
-        "inclination_two": "sampled",
+        "inclination_deg_one": "sampled",
+        "inclination_deg_two": "sampled",
     }
     norm = -math.log(0.05 * math.sqrt(2 * math.pi))
     at_truth = np.array([0.3, 0.9, 0.4, 60.0, 20.0])
@@ -279,12 +285,12 @@ def test_rotating_sources_have_their_own_spin_and_inclination(kerr_newman):
         data,
         priors={"a": Uniform(0.0, 0.99), "Q": Uniform(0.0, 0.9)},
         shared=["Q", "a"],
-        fixed={"inclination_one": 60.0, "inclination_two": 20.0},
+        fixed={"inclination_deg_one": 60.0, "inclination_deg_two": 20.0},
     )
     assert fixed.param_names == ["a", "Q"]
     with pytest.raises(ValueError, match="unknown"):
         build_problem(
-            kerr_newman, data, priors={"a": Uniform(0.0, 0.9)}, fixed={"inclination_x": 3.0}
+            kerr_newman, data, priors={"a": Uniform(0.0, 0.9)}, fixed={"inclination_deg_x": 3.0}
         )
 
 
@@ -331,13 +337,13 @@ def test_mass_prior_choice_and_circular_inference(rn):
 def test_inclination_is_a_prior_only_on_request(kerr):
     data = ring()
     problem = build_problem(kerr, data, priors={"a": Uniform(0.0, 0.99)})
-    index = problem.param_names.index("inclination")
+    index = problem.param_names.index("inclination_deg")
     assert problem.priors[index].to_dict()["type"] == "Isotropic"  # the measurement is not used
     prior = inclination_prior(data)
     assert isinstance(prior, Gaussian) and (prior.mean, prior.sigma) == (17.0, 3.0)
     assert prior.support == (0.0, 90.0)
-    explicit = build_problem(kerr, data, priors={"a": Uniform(0.0, 0.99), "inclination": prior})
-    assert explicit.priors[explicit.param_names.index("inclination")] == prior
+    explicit = build_problem(kerr, data, priors={"a": Uniform(0.0, 0.99), "inclination_deg": prior})
+    assert explicit.priors[explicit.param_names.index("inclination_deg")] == prior
     with pytest.raises(BlackPyError, match="no measured inclination"):
         inclination_prior(bp.data.load("eht/sgra"))
 
@@ -368,7 +374,7 @@ def test_circularity_bound_needs_its_definition(kerr, rn):
     assert values[1] > 0.1 > np.asarray(matching.predict(theta))[1]
     # A bound is not a measurement: it has no pull and adds no degree of freedom.
     fit = Fit(kerr, data, priors=priors, circularity="fractional_rms")
-    quality = fit.goodness_of_fit(a=0.5, inclination=40.0)
+    quality = fit.goodness_of_fit(a=0.5, inclination_deg=40.0)
     assert quality.labels == ["r_sh[ring]"] and "upper bounds" in quality.notes[-1]
     with pytest.raises(ValueError, match="fractional_rms"):
         build_problem(kerr, data, priors=priors, circularity="eht")
@@ -377,7 +383,7 @@ def test_circularity_bound_needs_its_definition(kerr, rn):
     with pytest.raises(ValueError, match="none of the shadow datasets"):
         build_problem(
             kerr,
-            simulate_shadow_dataset(kerr, name="k", sigma=0.1, inclination=30.0, a=0.5),
+            simulate_shadow_dataset(kerr, name="k", sigma=0.1, inclination_deg=30.0, a=0.5),
             priors=priors,
             circularity="fractional_rms",
         )

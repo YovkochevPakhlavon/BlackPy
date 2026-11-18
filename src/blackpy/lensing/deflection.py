@@ -55,6 +55,7 @@ import math
 import jax.numpy as jnp
 import numpy as np
 
+from blackpy._links import ROADMAP
 from blackpy._numerics import derivative, gauss_legendre, refine_root, value_and_derivative
 from blackpy.errors import BlackPyError, NotAsymptoticallyFlatError
 
@@ -66,7 +67,8 @@ def _static_only(metric, what: str) -> None:
         raise TypeError(
             f"{what} is implemented for static, spherically symmetric metrics only. Lensing by "
             f"the rotating metric '{metric.name}' (even in its equatorial plane) is not "
-            "implemented in this version of BlackPy; see the roadmap in DESIGN_NOTES.md."
+            "implemented in this version of BlackPy. Use a static metric (for example the "
+            "a = 0 member of the family), or see " + ROADMAP + "."
         )
 
 

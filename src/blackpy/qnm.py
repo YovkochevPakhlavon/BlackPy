@@ -5,10 +5,14 @@ Within BlackPy's scope (a metric without field equations) only test-field
 modes could be computed, and those cannot be compared with ringdown
 observations for non-vacuum metrics, so the feature would not feed a
 likelihood. The function below reserves the name and raises
-``NotImplementedError``. See the roadmap in ``DESIGN_NOTES.md``, section 6.
+``NotImplementedError``. See the 'Roadmap' page of the documentation.
 """
 
 from __future__ import annotations
+
+from blackpy._links import ROADMAP
+
+__all__ = ["quasinormal_modes"]
 
 
 def quasinormal_modes(metric, *, spin: int = 2, ell: int = 2, overtone: int = 0, **params):
@@ -28,5 +32,5 @@ def quasinormal_modes(metric, *, spin: int = 2, ell: int = 2, overtone: int = 0,
         "Quasinormal modes are not implemented in BlackPy and are not scheduled for a release: "
         "without field equations only test-field modes could be computed, and these cannot be "
         "compared with ringdown observations for non-vacuum metrics. The interface is "
-        "reserved; see the roadmap in DESIGN_NOTES.md (section 6)."
+        "reserved; see " + ROADMAP + "."
     )

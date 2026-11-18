@@ -464,7 +464,10 @@ def delta_c_core(
         return BAMBI2019_FACTOR * observables.delta_c
     if definition == "jp_asymmetry":
         return asymmetry
-    raise ValueError(f"Unknown deviation-from-circularity definition {definition!r}.")
+    raise ValueError(
+        f"Unknown deviation-from-circularity definition {definition!r}. Choose one of "
+        f"{DELTA_C_DEFINITIONS}."
+    )
 
 
 def mean_radius_core(metric, p, inclination, n=128, n_scan=256):
@@ -527,6 +530,32 @@ def critical_impact_parameters(metric, r_p, **params) -> CriticalParameters:
     return CriticalParameters(*metric.evaluate(critical_core, params, r_p))
 
 
+def check_inclination_radians(inclination, what: str) -> None:
+    """Refuse an observer inclination outside ``[0, pi]``: it is in radians.
+
+    Every angle in the public API is in radians; a quantity in degrees carries
+    ``_deg`` in its name. Values that are not concrete (inside ``jax.jit``) are
+    not checked.
+    """
+    if inclination is None:
+        return
+    try:
+        values = np.asarray(inclination, dtype=float)
+    except (TypeError, jax.errors.ConcretizationTypeError):
+        return
+    if values.size == 0:
+        return
+    finite = values[np.isfinite(values)]
+    if finite.size and (finite.min() < 0.0 or finite.max() > math.pi + 1e-9):
+        bad = finite[(finite < 0.0) | (finite > math.pi + 1e-9)][0]
+        raise ValueError(
+            f"{what}: the inclination {bad:g} lies outside [0, pi]. The observer inclination "
+            "is a polar angle in radians here (every angle in the BlackPy API is in radians "
+            "unless its name ends in '_deg'). Convert degrees with math.radians(...) or "
+            "numpy.radians(...)."
+        )
+
+
 def photon_region(metric, inclination=HALF_PI, *, n_scan: int = 256, **params):
     """Radial range of the spherical photon orbits that form the shadow rim.
 
@@ -546,6 +575,7 @@ def photon_region(metric, inclination=HALF_PI, *, n_scan: int = 256, **params):
         ``(r_min, r_max)`` in units of M; NaN for a non-rotating metric (a
         single photon sphere).
     """
+    check_inclination_radians(inclination, "photon_region()")
     metric = _as_rotating(metric)
     require_separable(metric)
     return metric.evaluate(photon_region_core, params, inclination, n_scan=n_scan)
@@ -637,6 +667,7 @@ def shadow_contour(
     NotAsymptoticallyFlatError
         If ``r_obs`` is None and the metric is not asymptotically flat.
     """
+    check_inclination_radians(inclination, "shadow_contour()")
     metric = _as_rotating(metric)
     require_separable(metric)
     finite = r_obs is not None
@@ -713,6 +744,7 @@ def shadow_observables(
         ``mean_radius`` and ``delta_c`` are NaN if the contour is not
         star-shaped about its centre.
     """
+    check_inclination_radians(inclination, "shadow_observables()")
     metric = _as_rotating(metric)
     require_separable(metric)
     finite = r_obs is not None
@@ -786,6 +818,7 @@ def deviation_from_circularity(
         star-shaped about the centre used.
     """
     check_delta_c_definition(definition)
+    check_inclination_radians(inclination, "deviation_from_circularity()")
     metric = _as_rotating(metric)
     require_separable(metric)
     finite = r_obs is not None

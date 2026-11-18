@@ -127,7 +127,8 @@ def test_rz_horizon_radius_in_units_of_the_mass():
         mt.RezzollaZhidenko(order=-1)
     with pytest.raises(ValueError, match="ppn"):
         mt.RezzollaZhidenko(ppn="solar")
-    assert mt.future.rezzolla_zhidenko is mt.RezzollaZhidenko  # the reserved name still works
+    with pytest.warns(DeprecationWarning):  # the reserved name still works, with a warning
+        assert mt.future.rezzolla_zhidenko is mt.RezzollaZhidenko
 
 
 def test_continued_fraction_from_series():
@@ -293,7 +294,8 @@ def test_krz_with_zero_deviations_has_the_kerr_components(krz, kerr):
                 atol=1e-14,
                 err_msg=f"{name}, a = {a}",
             )
-    assert mt.future.konoplya_rezzolla_zhidenko is mt.KRZ
+    with pytest.warns(DeprecationWarning):
+        assert mt.future.konoplya_rezzolla_zhidenko is mt.KRZ
     assert "effective_source" in mt.KRZ.__doc__  # a model: the source must be checked
 
 

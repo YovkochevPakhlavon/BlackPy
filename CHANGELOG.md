@@ -6,6 +6,53 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Public-API snapshot test (`tests/test_public_api.py`) and a written deprecation
+  policy (`CONTRIBUTING.md`): within 1.x no public name disappears without a
+  deprecation period.
+- `__all__` for `blackpy.constants`, `blackpy.qnm`, `blackpy.thermo`,
+  `blackpy.metric.interpolated` and `blackpy.errors`.
+- `src/blackpy/py.typed` (PEP 561 typing marker).
+- Result bundles carry `"bundle_format": 1`; `FitResult.load` reads pre-1.0 bundles
+  (format 0) and refuses newer formats with the BlackPy version that is needed.
+- Public inclination functions in radians (`shadow_contour`, `shadow_observables`,
+  `shadow_radius`, `deviation_from_circularity`, `photon_region`, `shadow_in_plasma`,
+  `plot.shadow`) refuse values outside [0, π] with a message that suggests
+  `math.radians(...)`.
+- `docs/roadmap.md`; `docs/api.md` lists every public name.
+
+### Changed
+- **The shadow inclination nuisance parameter is renamed `inclination` →
+  `inclination_deg`** (per source: `inclination_<source>` → `inclination_deg_<source>`),
+  following the rule "every angle in the public API is in radians; a quantity in
+  degrees has `_deg` in its name". Units (degrees) and the default prior
+  `Isotropic(0, 90)` are unchanged. `simulate_shadow_dataset(inclination=...)` becomes
+  `inclination_deg=...`. The old names keep working during 1.x (see "Deprecated").
+- `ForecastWarning` and `RegistryError` are defined in `blackpy.errors` (still importable
+  from `blackpy.infer`, `blackpy.infer.forecast` and `blackpy.data`); `RegistryError` is
+  now also a `BlackPyError` (it remains a `ValueError`).
+- Error messages that did not say what to do next were rewritten; messages no longer
+  refer to repository files that a `pip install` does not contain, but to the
+  documentation (roadmap page).
+- The M87\* registry entry states `unit: deg` on its alternative inclination value
+  (no number changed).
+
+### Deprecated
+- The parameter names `inclination` and `inclination_<source>` (in `priors`, `fixed`,
+  `shared`/`per_source`, fiducial points, `Fit.log_likelihood` / `goodness_of_fit`
+  keywords, `FitResult[...]`) and the keyword `simulate_shadow_dataset(inclination=...)`:
+  use `inclination_deg` / `inclination_deg_<source>`. Giving both spellings is an error.
+- `blackpy.light.deflection_angle` and `blackpy.light.future.deflection_angle`: use
+  `blackpy.lensing.deflection_angle`.
+- `blackpy.light.future.PlasmaModel` and `blackpy.light.future.shadow_in_plasma`: use
+  `blackpy.light.PlasmaModel` and `blackpy.light.shadow_in_plasma`.
+- `blackpy.metric.future.rezzolla_zhidenko` and
+  `blackpy.metric.future.konoplya_rezzolla_zhidenko`: use `blackpy.metric.RezzollaZhidenko`
+  and `blackpy.metric.KRZ`.
+
+All deprecated names emit a `DeprecationWarning` naming the replacement and will be
+removed in 2.0.
+
 ### Fixed
 - Dataset hashes (`Dataset.sha256`, recorded in fit results) no longer depend on
   line endings: a registry file checked out with CRLF on Windows has the same hash

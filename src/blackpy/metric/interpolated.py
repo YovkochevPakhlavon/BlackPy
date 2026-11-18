@@ -67,3 +67,6 @@ def spline(r_grid, values, k: int = 5) -> Callable:
         return jnp.where((r >= lo) & (r <= hi), out, jnp.nan)
 
     return fn
+
+
+__all__ = ["spline"]

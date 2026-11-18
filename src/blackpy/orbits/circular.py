@@ -508,7 +508,10 @@ def circular_orbit_region(
     bounds, lo, hi = metric.evaluate(_existence_boundaries_core, params, n_scan=n_scan, **options)
     bounds = np.asarray(bounds)
     if bounds.ndim != 1:
-        raise ValueError("circular_orbit_region() needs scalar parameters.")
+        raise ValueError(
+            "circular_orbit_region() needs scalar parameters; call it once per parameter "
+            "value, or use isco() / circular_orbit_exists() for arrays."
+        )
     edges = [float(lo), *[float(b) for b in bounds if np.isfinite(b)], float(hi)]
     intervals = []
     for a, b in zip(edges[:-1], edges[1:], strict=True):

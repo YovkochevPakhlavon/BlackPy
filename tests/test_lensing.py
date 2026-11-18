@@ -253,7 +253,9 @@ def test_lensing_refusals(sds, kerr, schwarzschild):
         ln.strong_deflection_limit(kerr, a=0.5)
     with pytest.raises(NotAsymptoticallyFlatError):
         ln.deflection_angle(sds, 10.0, Lambda=0.01)
-    # The name reserved in earlier versions is the implementation.
-    assert bp.light.deflection_angle is ln.deflection_angle
-    assert bp.light.future.deflection_angle is ln.deflection_angle
+    # The names reserved in earlier versions are deprecated aliases of the implementation.
+    with pytest.warns(DeprecationWarning, match="blackpy.lensing.deflection_angle"):
+        assert bp.light.deflection_angle is ln.deflection_angle
+    with pytest.warns(DeprecationWarning, match="blackpy.lensing.deflection_angle"):
+        assert bp.light.future.deflection_angle is ln.deflection_angle
     assert "predictions, not constraints" in ln.__doc__

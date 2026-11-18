@@ -3,15 +3,19 @@
 Thermodynamics was removed from the roadmap of version 0.3 on purpose:
 BlackPy is "metric in, constraints out", and there are no thermodynamic data
 that a likelihood could use. The functions below reserve the names and raise
-``NotImplementedError``. See the roadmap in ``DESIGN_NOTES.md``, section 6.
+``NotImplementedError``. See the 'Roadmap' page of the documentation.
 """
 
 from __future__ import annotations
 
+from blackpy._links import ROADMAP
+
+__all__ = ["entropy", "hawking_temperature", "heat_capacity"]
+
 _MESSAGE = (
     "Black hole thermodynamics is not implemented in BlackPy and is not scheduled for a "
     "release: no observational data constrain it, so it would not feed a likelihood. The "
-    "interface is reserved; see the roadmap in DESIGN_NOTES.md (section 6)."
+    "interface is reserved; see " + ROADMAP + "."
 )
 
 

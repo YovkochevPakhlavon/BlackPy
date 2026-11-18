@@ -309,7 +309,10 @@ def horizon_profile(metric, theta=None, *, n_scan: int = 256, **params) -> Horiz
         metric = metric.as_axisymmetric()
     theta = np.linspace(0.05, math.pi - 0.05, 17) if theta is None else np.atleast_1d(theta)
     if np.any(theta <= 0.0) or np.any(theta >= math.pi):
-        raise ValueError("horizon_profile: theta must lie strictly between 0 and pi.")
+        raise ValueError(
+            "horizon_profile: theta (radians) must lie strictly between 0 and pi; to probe the "
+            "poles use values such as 1e-6 and pi - 1e-6."
+        )
     radius = np.asarray(metric.evaluate(_event_horizon_at_core, params, theta, n_scan=n_scan))
     finite = np.isfinite(radius)
     if not finite.any():

@@ -104,14 +104,18 @@ def parse_dataset(raw: dict, *, sha256: str = "", origin: str = "<memory>") -> D
         With a message naming the offending field.
     """
     if not isinstance(raw, dict):
-        raise RegistryError(f"{origin}: the file must contain a YAML mapping.")
+        raise RegistryError(
+            f"{origin}: the file must contain a YAML mapping (key: value pairs). Compare it "
+            "with a registry file, e.g. blackpy.data.registry_path() / 'eht/sgra.yaml'."
+        )
     for key in _REQUIRED:
         if key not in raw:
             raise RegistryError(f"{origin}: missing required field '{key}'.")
     if raw["schema_version"] != SCHEMA_VERSION:
         raise RegistryError(
             f"{origin}: schema_version {raw['schema_version']} is not supported "
-            f"(this BlackPy reads version {SCHEMA_VERSION})."
+            f"(this BlackPy reads version {SCHEMA_VERSION}). Upgrade BlackPy, or write the "
+            f"file in schema version {SCHEMA_VERSION} (see the 'Data registry' page)."
         )
     if not isinstance(raw["verified_by_human"], bool):
         raise RegistryError(f"{origin}: 'verified_by_human' must be true or false.")
@@ -326,7 +330,11 @@ def load_file(path) -> Dataset:
     """Load a dataset from an arbitrary YAML file (e.g. your own data)."""
     path = Path(path)
     if not path.is_file():
-        raise RegistryError(f"Dataset file not found: {path}")
+        raise RegistryError(
+            f"Dataset file not found: {path}. Check the path; registry datasets are loaded "
+            "by id with blackpy.data.load('qpo/gro_j1655_40') (list them with "
+            "blackpy.data.list())."
+        )
     content = path.read_bytes()
     raw = yaml.safe_load(content)
     return parse_dataset(raw, sha256=file_hash(content), origin=str(path))
@@ -375,7 +383,10 @@ def load(dataset_id: str) -> Dataset:
         )
     dataset = load_file(path)
     if dataset.id != dataset_id:
-        raise RegistryError(f"{path}: the 'id' field ({dataset.id}) does not match the file path.")
+        raise RegistryError(
+            f"{path}: the 'id' field ({dataset.id}) does not match the file path; set it to "
+            f"'{dataset_id}'."
+        )
     return dataset
 
 

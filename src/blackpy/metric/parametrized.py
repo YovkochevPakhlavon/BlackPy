@@ -386,7 +386,10 @@ def rz_coefficients(metric, order: int = 4, **params) -> RZCoefficients:
         If the metric has no event horizon or is not asymptotically flat.
     """
     if metric.is_rotating_class:
-        raise TypeError("rz_coefficients needs a StaticSpherical metric.")
+        raise TypeError(
+            "rz_coefficients needs a StaticSpherical metric. For a rotating metric close to "
+            "Kerr use blackpy.metric.krz_deviations."
+        )
     if not 1 <= order <= 6:
         raise ValueError("order must be between 1 and 6.")
     f_k, g_k, m_k, far, r0, rho_h = (
@@ -395,7 +398,8 @@ def rz_coefficients(metric, order: int = 4, **params) -> RZCoefficients:
     if not np.isfinite(rho_h):
         raise BlackPyError(
             f"Metric '{metric.name}' has no event horizon for these parameters, so the "
-            "Rezzolla-Zhidenko expansion (in x = 1 - r0/r) is not defined."
+            "Rezzolla-Zhidenko expansion (in x = 1 - r0/r) is not defined. Choose parameters "
+            "with an event horizon (see blackpy.geometry.horizons)."
         )
     limit = _extrapolate_to_zero(far[:, 4], far[:, :4])
     epsilon, a0 = float(limit[0]), float(limit[0] + 0.5 * limit[1])
@@ -403,7 +407,9 @@ def rz_coefficients(metric, order: int = 4, **params) -> RZCoefficients:
     if not np.all(np.isfinite(limit)) or abs(far[-1, 3] - mass) > 1e-2 * max(abs(mass), 1e-12):
         raise BlackPyError(
             f"Metric '{metric.name}' does not look asymptotically flat (f does not approach "
-            "1 - 2M/r), so its Rezzolla-Zhidenko coefficients are not defined."
+            "1 - 2M/r), so its Rezzolla-Zhidenko coefficients are not defined. The "
+            "parametrisation applies to asymptotically flat metrics in units of their "
+            "asymptotic mass only."
         )
     n = order
     # N^2 = x A(x): the Taylor coefficients of A are those of f shifted by one.
@@ -613,7 +619,10 @@ def krz_deviations(
         Keyword parameters for the metric returned by :func:`KRZ`.
     """
     if not abs(a) <= 1.0:
-        raise ValueError("The KRZ deviation parameters are defined for |a| <= 1.")
+        raise ValueError(
+            f"The KRZ deviation parameters are defined for |a| <= 1, got a = {a}; choose a spin "
+            "in that range."
+        )
     r0_kerr = 1.0 + math.sqrt(1.0 - a**2)
     r0 = r0_kerr if r0 is None else float(r0)
     kerr_a20, kerr_a21 = 2.0 * a**2 / r0**3, -(a**4) / r0**4

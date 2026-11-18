@@ -25,7 +25,8 @@ Rotating metrics (:class:`blackpy.metric.StationaryAxisymmetric`)
 * **Shadow**: the shadow of a rotating hole is not a circle and depends on
   the observer's inclination. The compared quantity is the mean radius of
   the contour (or its area-equivalent radius), and the inclination (in
-  degrees) is a nuisance parameter named ``"inclination"``.
+  degrees) is a nuisance parameter named ``"inclination_deg"`` (before 1.0:
+  ``"inclination"``, still accepted with a :class:`DeprecationWarning`).
 
 The log-likelihood is a pure JAX function of the parameter vector and is
 compiled once; root finding for the horizon and the shadow happens inside it.
@@ -42,6 +43,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from blackpy._deprecation import warn_deprecated
 from blackpy.data import QPODataset, ShadowDataset, load
 from blackpy.errors import (
     BlackPyError,
@@ -67,13 +69,67 @@ from blackpy.orbits.circular import direction_sign, require_equatorial_orbits
 from blackpy.orbits.qpo import QPOModel, get_qpo_model
 
 #: Name of the inclination nuisance parameter (degrees) of rotating-metric shadows.
-INCLINATION = "inclination"
+#: Every angle in the public API is in radians; a quantity in degrees has ``_deg``
+#: in its name (design decision 39). Per-source copies are ``inclination_deg_<source>``.
+INCLINATION = "inclination_deg"
+
+#: Name of the same parameter before 1.0 (deprecated; accepted with a warning).
+LEGACY_INCLINATION = "inclination"
 
 #: Default prior of the inclination: random orientation, 0 to 90 degrees.
 DEFAULT_INCLINATION_PRIOR = (0.0, 90.0)
 
 #: Default prior on the orbital radius of a QPO source, in units of M.
 DEFAULT_RADIUS_PRIOR = (1.0, 50.0)
+
+
+def legacy_inclination_key(key) -> str | None:
+    """The 1.0 name of a pre-1.0 inclination parameter name, or None.
+
+    ``"inclination"`` -> ``"inclination_deg"`` and ``"inclination_<source>"`` ->
+    ``"inclination_deg_<source>"``; every other name gives None.
+    """
+    if not isinstance(key, str):
+        return None
+    if key == LEGACY_INCLINATION:
+        return INCLINATION
+    prefix = LEGACY_INCLINATION + "_"
+    if key.startswith(prefix) and not (key == INCLINATION or key.startswith(INCLINATION + "_")):
+        return f"{INCLINATION}_{key[len(prefix) :]}"
+    return None
+
+
+def rename_legacy_inclination(names, what: str, *, stacklevel: int = 4):
+    """Map pre-1.0 inclination names in a mapping or sequence to the 1.0 names.
+
+    Each renamed key emits a :class:`DeprecationWarning` naming the new key; a
+    name given under both spellings is an error. ``None`` passes through.
+    """
+    if names is None or isinstance(names, str):
+        return names
+    is_mapping = isinstance(names, Mapping)
+    keys = list(names)
+    present = set(keys)
+    out_keys = []
+    for key in keys:
+        new = legacy_inclination_key(key)
+        if new is None:
+            out_keys.append(key)
+            continue
+        if new in present:
+            raise ValueError(
+                f"{what} gives the inclination twice, as '{key}' (deprecated name) and as "
+                f"'{new}'. Keep only '{new}' (degrees)."
+            )
+        warn_deprecated(
+            f"The parameter name '{key}' (in {what})",
+            f"'{new}' (the inclination is in degrees, so its name carries '_deg')",
+            stacklevel=stacklevel,
+        )
+        out_keys.append(new)
+    if is_mapping:
+        return {new: names[old] for new, old in zip(out_keys, keys, strict=True)}
+    return type(names)(out_keys) if isinstance(names, (list, tuple)) else out_keys
 
 
 def _slug(dataset_id: str) -> str:
@@ -174,10 +230,16 @@ def _resolve_datasets(data) -> list:
         data = [data]
     datasets = [load(d) if isinstance(d, str) else d for d in data]
     if not datasets:
-        raise ValueError("At least one dataset is required.")
+        raise ValueError(
+            "At least one dataset is required, e.g. data='eht/sgra' or a list of registry "
+            "ids (see blackpy.data.list())."
+        )
     slugs = [_slug(d.id) for d in datasets]
     if len(set(slugs)) != len(slugs):
-        raise ValueError(f"Dataset names must be unique, got {slugs}.")
+        raise ValueError(
+            f"Dataset names must be unique, got {slugs}: the last part of each id names the "
+            "source parameters (M_<name>, r_<name>). Give simulated datasets different names."
+        )
     return datasets
 
 
@@ -218,14 +280,16 @@ def build_problem(
         ``"r"`` apply to every source without a specific entry. Defaults: the
         registry mass measurement (Gaussian, truncated at zero) for the mass
         and ``Uniform(1, 50)`` for the radius. With a rotating metric and
-        shadow data, ``"inclination"`` (degrees) is sampled as a nuisance
-        parameter; its default prior is ``Isotropic(0, 90)``. Per-source
+        shadow data, ``"inclination_deg"`` (the observer inclination in
+        degrees) is sampled as a nuisance parameter; its default prior is
+        ``Isotropic(0, 90)``. The pre-1.0 name ``"inclination"`` is accepted
+        with a :class:`DeprecationWarning`. Per-source
         parameters (see ``per_source``) are named ``<name>_<source>``; a
         prior under the bare name applies to every source without its own.
     fixed : mapping of str -> float
         Values of metric parameters that are not sampled (default: the
-        parameter's default value). ``fixed={"inclination": 30.0}`` fixes
-        the shadow inclination instead of sampling it.
+        parameter's default value). ``fixed={"inclination_deg": 30.0}``
+        fixes the shadow inclination (degrees) instead of sampling it.
     shadow_likelihood : {"gaussian", "interval"}
         Form of the shadow likelihood. ``"interval"`` is flat inside the
         bounds of ``shadow_level`` and zero outside.
@@ -268,7 +332,7 @@ def build_problem(
         shadow datasets every sampled metric parameter must be listed in
         one of the two**; the spin is per source unless listed in
         ``shared``, and each shadow source has its own inclination
-        (``inclination_<source>``). In all other fits the default is
+        (``inclination_deg_<source>``). In all other fits the default is
         ``shared``, as in earlier versions.
     shadow_mass_prior : str or mapping of str -> str, optional
         Which mass prior of a shadow dataset the Gaussian bound on
@@ -292,8 +356,10 @@ def build_problem(
     -------
     Problem
     """
-    priors = dict(priors or {})
-    fixed = dict(fixed or {})
+    priors = dict(rename_legacy_inclination(priors or {}, "priors"))
+    fixed = dict(rename_legacy_inclination(fixed or {}, "fixed"))
+    shared = rename_legacy_inclination(shared, "shared")
+    per_source = rename_legacy_inclination(per_source, "per_source")
     datasets = _resolve_datasets(data)
     plasma_names: tuple[str, ...] = ()
     if plasma is not None:
@@ -346,7 +412,8 @@ def build_problem(
         ):
             raise ValueError(
                 "circularity was requested, but none of the shadow datasets carries a "
-                "circularity bound."
+                "circularity bound. Drop circularity=... or add a dataset that has one "
+                "(for example 'eht/m87')."
             )
 
     # ------------------------------------------------------------------ parameter layout
@@ -363,13 +430,16 @@ def build_problem(
     if shared_set & per_source_set:
         raise ValueError(
             f"Parameters {sorted(shared_set & per_source_set)} are listed both as shared and "
-            "as per_source."
+            "as per_source. List each parameter in only one of the two."
         )
     spin = getattr(metric, "spin_parameter", None)
     if multi_shadow and spin is not None and spin not in shared_set:
         per_source_set.add(spin)
     if per_source_set and len(datasets) < 2:
-        raise ValueError("per_source needs at least two datasets.")
+        raise ValueError(
+            "per_source needs at least two datasets; with one dataset every parameter is "
+            "simply sampled (drop per_source=...)."
+        )
 
     def copy_name(name: str, slug: str) -> str:
         return f"{name}_{slug}"
@@ -385,11 +455,14 @@ def build_problem(
         allowed_fixed |= {INCLINATION, *inclination_names.values()}
     unknown_fixed = set(fixed) - allowed_fixed
     if unknown_fixed:
-        raise ValueError(f"'fixed' contains unknown metric parameters {sorted(unknown_fixed)}.")
+        raise ValueError(
+            f"'fixed' contains unknown parameters {sorted(unknown_fixed)}. Parameters that can "
+            f"be fixed here: {sorted(allowed_fixed)}."
+        )
     inclination_keys = {INCLINATION, *inclination_names.values()}
     if not uses_inclination and (inclination_keys & (set(fixed) | set(priors))):
         raise ValueError(
-            "'inclination' is only a parameter when a rotating metric is fitted to shadow data"
+            f"'{INCLINATION}' is only a parameter when a rotating metric is fitted to shadow data"
             + (
                 "."
                 if rotating
@@ -420,7 +493,10 @@ def build_problem(
             for d, slug in zip(datasets, slugs, strict=True):
                 key = copy_name(par.name, slug)
                 if key in fixed and (key in priors):
-                    raise ValueError(f"Parameter '{key}' has both a prior and a fixed value.")
+                    raise ValueError(
+                        f"Parameter '{key}' has both a prior and a fixed value: remove it from "
+                        "priors (to fix it) or from fixed (to sample it)."
+                    )
                 prior = priors.pop(key, None)
                 if prior is None and key not in fixed:
                     prior = generic
@@ -443,7 +519,10 @@ def build_problem(
             continue
         if par.name in priors:
             if par.name in fixed:
-                raise ValueError(f"Parameters ['{par.name}'] have both a prior and a fixed value.")
+                raise ValueError(
+                    f"Parameter '{par.name}' has both a prior and a fixed value: remove it from "
+                    "priors (to fix it) or from fixed (to sample it)."
+                )
             if multi_shadow and par.name not in shared_set:
                 undecided.append(par.name)
             entry = (
@@ -514,12 +593,19 @@ def build_problem(
         for d, slug in zip(shadow_sets, shadow_slugs, strict=True):
             key = inclination_names[slug]
             if key in fixed and key in priors:
-                raise ValueError(f"'{key}' has both a prior and a fixed value.")
+                raise ValueError(
+                    f"'{key}' has both a prior and a fixed value: remove it from priors (to fix "
+                    "it) or from fixed (to sample it)."
+                )
             value = fixed.get(key, fixed.get(INCLINATION) if key not in priors else None)
             if value is not None and key not in priors:
                 value = float(value)
                 if not 0.0 <= value <= 180.0:
-                    raise ValueError("The fixed inclination must lie between 0 and 180 degrees.")
+                    raise ValueError(
+                        f"The fixed inclination '{key}' = {value} must lie between 0 and 180 "
+                        "degrees. It is in degrees (not radians): use math.degrees(...) to "
+                        "convert an angle in radians."
+                    )
                 inclination[slug] = ("fixed", value)
                 continue
             prior = priors.pop(key, None) or generic_prior or Isotropic(*DEFAULT_INCLINATION_PRIOR)
@@ -547,7 +633,9 @@ def build_problem(
         if not metric.is_asymptotically_flat(**reference_parameters(slug)):
             raise NotAsymptoticallyFlatError(
                 f"The shadow likelihood compares r_sh/M seen from infinity, but metric "
-                f"'{metric.name}' is not asymptotically flat."
+                f"'{metric.name}' is not asymptotically flat for the prior medians of its "
+                "parameters. Restrict the priors to an asymptotically flat range (for example "
+                "Lambda = 0), or declare asymptotically_flat=True if the numerical probe is wrong."
             )
     if isinstance(shadow_mass_prior, str):
         chosen_mass_prior = {slug: shadow_mass_prior for slug in shadow_slugs}
@@ -865,7 +953,7 @@ def inclination_prior(dataset, *, low: float = 0.0, high: float = 90.0) -> Gauss
     The registry stores a measured inclination (for M87* the viewing angle of
     the jet) but the likelihood never uses it on its own: equating the jet
     axis with the spin axis of the black hole is an assumption. Pass the
-    result explicitly, e.g. ``priors={"inclination": inclination_prior(m87)}``.
+    result explicitly, e.g. ``priors={"inclination_deg": inclination_prior(m87)}``.
 
     Parameters
     ----------
@@ -937,7 +1025,10 @@ def simulate_qpo_dataset(
     options = {"direction": direction} if metric.is_rotating_class else {}
     nu_u, nu_l = (float(v) for v in model.frequencies(metric, r, mass, **options, **params))
     if not (np.isfinite(nu_u) and np.isfinite(nu_l)):
-        raise ValueError("The model frequencies are not finite at this radius (inside the ISCO?).")
+        raise ValueError(
+            f"The model frequencies are not finite at r = {r}: probably inside the ISCO or "
+            "where no circular orbit exists. Choose a larger r (see blackpy.orbits.isco)."
+        )
     nu_low = None
     if sigma_low is not None:
         nu_low = float(model.low_frequency(metric, r, mass, **options, **params))
@@ -992,7 +1083,7 @@ def simulate_shadow_dataset(
     name: str,
     sigma: float,
     rng: np.random.Generator | None = None,
-    inclination: float | None = None,
+    inclination_deg: float | None = None,
     shadow_size: str = "mean",
     **params,
 ) -> ShadowDataset:
@@ -1015,9 +1106,11 @@ def simulate_shadow_dataset(
     rng : numpy.random.Generator, optional
         If given, Gaussian noise of width ``sigma`` is added. Without it the
         dataset is noise-free.
-    inclination : float, optional
+    inclination_deg : float, optional
         Rotating metrics: inclination of the observer in **degrees** (the
-        unit of the ``inclination`` fit parameter). Required for them.
+        unit of the ``inclination_deg`` fit parameter). Required for them.
+        The pre-1.0 keyword ``inclination`` (also degrees) is accepted with a
+        :class:`DeprecationWarning`.
     shadow_size : {"mean", "area"}
         Rotating metrics: which radius is "measured".
     **params
@@ -1033,22 +1126,44 @@ def simulate_shadow_dataset(
     from blackpy.data.registry import parse_dataset
     from blackpy.light.shadow import shadow_radius
 
+    if LEGACY_INCLINATION in params:
+        if inclination_deg is not None:
+            raise ValueError(
+                "simulate_shadow_dataset() got both 'inclination' (deprecated name) and "
+                "'inclination_deg'. Keep only inclination_deg=<degrees>."
+            )
+        warn_deprecated(
+            "The keyword 'inclination' of simulate_shadow_dataset()",
+            "inclination_deg=<degrees>",
+        )
+        inclination_deg = params.pop(LEGACY_INCLINATION)
     if not sigma > 0:
-        raise ValueError("sigma must be positive.")
+        raise ValueError(
+            f"sigma must be positive, got {sigma}: give the 1-sigma uncertainty of r_sh/M."
+        )
     if metric.is_rotating_class:
-        if inclination is None:
+        if inclination_deg is None:
             raise TypeError(
                 f"The shadow of the rotating metric '{metric.name}' depends on the observer: "
-                "pass inclination=<degrees>."
+                "pass inclination_deg=<degrees>."
+            )
+        if not 0.0 <= float(inclination_deg) <= 180.0:
+            raise ValueError(
+                f"inclination_deg = {inclination_deg} must lie between 0 and 180 degrees; use "
+                "math.degrees(...) to convert an angle in radians."
             )
         truth = shadow_radius(
-            metric, inclination=math.radians(inclination), kind=shadow_size, **params
+            metric, inclination=math.radians(inclination_deg), kind=shadow_size, **params
         )
     else:
         truth = shadow_radius(metric, **params)
     truth = float(truth)
     if not math.isfinite(truth):
-        raise ValueError("The model has no shadow for these parameters (no photon sphere?).")
+        raise ValueError(
+            f"The model has no shadow for the parameters {params}: no event horizon or no "
+            "unstable photon sphere / photon region. Check blackpy.geometry.horizons and "
+            "blackpy.light.photon_spheres, and choose other true parameters."
+        )
     value = truth + (0.0 if rng is None else float(rng.normal(0.0, sigma)))
     scale = 3.0 * math.sqrt(3.0)
     raw = {
@@ -1078,6 +1193,6 @@ def simulate_shadow_dataset(
         },
         "references": {"synthetic": {"citation": "synthetic data generated by BlackPy"}},
         "source_access": "generated in memory",
-        "notes": f"truth: r_sh/M={truth}, inclination={inclination}, params={params}",
+        "notes": f"truth: r_sh/M={truth}, inclination_deg={inclination_deg}, params={params}",
     }
     return parse_dataset(raw, origin=f"synthetic/{name}")

@@ -3,12 +3,14 @@ site_description: Black hole metric in, observables and Bayesian parameter const
 repo_name: BlackPy
 nav:
   - Home: index.md
+  - User guide: user_guide.md
   - How BlackPy works: how_it_works.md
   - Tutorial: tutorial.md
   - Quickstart: quickstart.md
   - Theory and formulas: theory.md
   - Data registry: data.md
   - API reference: api.md
+  - Roadmap: roadmap.md
 theme:
   name: material
   features:

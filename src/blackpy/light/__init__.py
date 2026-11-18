@@ -1,6 +1,7 @@
 """Null geodesics: photon spheres, critical impact parameters and shadows."""
 
-from blackpy.light.future import deflection_angle
+from blackpy._deprecation import alias_getattr
+from blackpy.light import future  # noqa: F401  (deprecated aliases, kept importable)
 from blackpy.light.photon_sphere import (
     PhotonSphere,
     critical_impact_parameter,
@@ -34,6 +35,19 @@ from blackpy.light.rotating import (
 )
 from blackpy.light.shadow import shadow_angular_radius, shadow_radius
 
+# ``blackpy.light.deflection_angle`` was an alias of ``blackpy.lensing.deflection_angle``
+# (v0.3); it is deprecated since 1.0 and not part of ``__all__``.
+__getattr__ = alias_getattr(
+    __name__,
+    {
+        "deflection_angle": (
+            "blackpy.lensing.deflection",
+            "deflection_angle",
+            "blackpy.lensing.deflection_angle",
+        ),
+    },
+)
+
 __all__ = [
     "DELTA_C_DEFINITIONS",
     "CriticalParameters",
@@ -48,7 +62,6 @@ __all__ = [
     "ShadowObservables",
     "critical_impact_parameter",
     "critical_impact_parameters",
-    "deflection_angle",
     "deviation_from_circularity",
     "photon_region",
     "photon_sphere",

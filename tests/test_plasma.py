@@ -361,7 +361,12 @@ def test_shadow_likelihood_with_plasma(rn, kerr, power_law, homogeneous):
     assert float(opaque.log_likelihood(np.array([1.5]))) == -np.inf
     # Rotating metric with a separable plasma: inclination is still a nuisance parameter.
     kerr_data = simulate_shadow_dataset(
-        lt.with_plasma(kerr, homogeneous), name="k", sigma=0.1, inclination=40.0, a=0.6, omega_p=0.3
+        lt.with_plasma(kerr, homogeneous),
+        name="k",
+        sigma=0.1,
+        inclination_deg=40.0,
+        a=0.6,
+        omega_p=0.3,
     )
     rotating = build_problem(
         kerr,
@@ -369,7 +374,7 @@ def test_shadow_likelihood_with_plasma(rn, kerr, power_law, homogeneous):
         priors={"a": Uniform(0.0, 0.99), "omega_p": Uniform(0.0, 0.8)},
         plasma=homogeneous,
     )
-    assert rotating.param_names == ["a", "omega_p", "inclination"]
+    assert rotating.param_names == ["a", "omega_p", "inclination_deg"]
     truth = float(rotating.log_likelihood(np.array([0.6, 0.3, 40.0])))
     assert truth == pytest.approx(-math.log(0.1 * math.sqrt(2 * math.pi)), rel=1e-9)
     with pytest.raises(ValueError, match="no shadow dataset"):

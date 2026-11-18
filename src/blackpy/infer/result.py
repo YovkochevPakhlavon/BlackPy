@@ -11,7 +11,10 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 
+from blackpy._deprecation import warn_deprecated
+from blackpy._version import __version__
 from blackpy.errors import BlackPyError, BlackPyWarning, PoorFitWarning
+from blackpy.infer.likelihood import legacy_inclination_key
 from blackpy.infer.priors import Prior, prior_from_dict
 from blackpy.infer.quality import (
     POOR_FIT_P_VALUE,
@@ -33,6 +36,43 @@ def _json_default(obj):
     if isinstance(obj, float) and not math.isfinite(obj):
         return str(obj)
     return str(obj)
+
+
+#: Format of the ``.npz`` result bundle written by :meth:`FitResult.save`.
+#: 0: versions 0.1 to 0.3 (no ``bundle_format`` field); 1: since 1.0.
+BUNDLE_FORMAT = 1
+
+
+def _rename_names(obj, renames: dict[str, str]):
+    """Rename parameter names in a JSON record: dict keys, strings and "a, b" pairs."""
+    if isinstance(obj, dict):
+        return {_rename_names(k, renames): _rename_names(v, renames) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_rename_names(v, renames) for v in obj]
+    if isinstance(obj, str):
+        if obj in renames:
+            return renames[obj]
+        if ", " in obj:
+            parts = obj.split(", ")
+            if any(part in renames for part in parts):
+                return ", ".join(renames.get(part, part) for part in parts)
+    return obj
+
+
+def _upgrade_format_0(record: dict) -> dict:
+    """Bring a format-0 (pre-1.0) record to format 1: rename the inclination columns."""
+    renames = {}
+    for name in record["param_names"]:
+        new = legacy_inclination_key(name)
+        if new is not None:
+            renames[name] = new
+    if renames:
+        # The base name of every per-source inclination was "inclination" as well.
+        renames.setdefault("inclination", "inclination_deg")
+        record = _rename_names(record, renames)
+    record["bundle_format"] = BUNDLE_FORMAT
+    record.setdefault("metadata", {})["loaded_from_bundle_format"] = 0
+    return record
 
 
 def poor_fit_message(p_value: float, dof: int) -> str:
@@ -151,6 +191,10 @@ class FitResult:
 
     def __getitem__(self, name: str) -> np.ndarray:
         """Samples of one parameter."""
+        new = legacy_inclination_key(name)
+        if name not in self.param_names and new in self.param_names:
+            warn_deprecated(f"The parameter name '{name}'", f"'{new}'", stacklevel=3)
+            name = new
         if name not in self.param_names:
             raise KeyError(f"No parameter '{name}'. Available: {self.param_names}.")
         return self.samples[:, self.param_names.index(name)]
@@ -374,7 +418,11 @@ class FitResult:
         values = np.array([float(null[n]) for n in names])
         log_prior = sum(float(self.priors[n].logpdf(v)) for n, v in zip(names, values, strict=True))
         if not np.isfinite(log_prior):
-            raise ValueError(f"The null value {null} lies outside the prior support.")
+            raise ValueError(
+                f"The null value {null} lies outside the prior support, where the posterior "
+                "density is zero by construction. Choose a null value inside the prior range, "
+                "or refit with a prior that contains it."
+            )
         notes = []
         boundary = [
             n for n, v in zip(names, values, strict=True) if self.priors[n].is_on_boundary(v)
@@ -450,13 +498,25 @@ class FitResult:
         """Save the result as a single ``.npz`` reproducibility bundle.
 
         The bundle holds the samples and a JSON record with the configuration,
-        priors, package versions, sampler settings, seed and dataset versions.
-        No pickle is used, so the file is safe to share.
+        priors, package versions, sampler settings, seed and dataset versions,
+        and the bundle format (``"bundle_format"``, currently
+        :data:`BUNDLE_FORMAT`). No pickle is used, so the file is safe to share.
+
+        Parameters
+        ----------
+        path : str or pathlib.Path
+            Destination; the suffix ``.npz`` is added if missing.
+
+        Returns
+        -------
+        pathlib.Path
+            The path that was written.
         """
         path = Path(path)
         if path.suffix != ".npz":
             path = path.with_suffix(".npz")
         record = {
+            "bundle_format": BUNDLE_FORMAT,
             "param_names": self.param_names,
             "param_labels": self.param_labels,
             "priors": {n: p.to_dict() for n, p in self.priors.items()},
@@ -477,12 +537,38 @@ class FitResult:
 
     @classmethod
     def load(cls, path) -> FitResult:
-        """Load a result saved with :meth:`save`."""
+        """Load a result saved with :meth:`save`.
+
+        Bundles written before 1.0 have no ``"bundle_format"`` field and are
+        read as format 0; their inclination parameter (``inclination``,
+        ``inclination_<source>``) is renamed to ``inclination_deg``
+        (``inclination_deg_<source>``). A bundle written by a newer BlackPy
+        with an unknown format is refused.
+
+        Parameters
+        ----------
+        path : str or pathlib.Path
+            A ``.npz`` file written by :meth:`save`.
+
+        Returns
+        -------
+        FitResult
+        """
         with np.load(Path(path), allow_pickle=False) as bundle:
             record = json.loads(str(bundle["record"]))
             samples = np.array(bundle["samples"])
             log_prob = np.array(bundle["log_prob"])
             predictions = np.array(bundle["predictions"]) if "predictions" in bundle else None
+        fmt = record.get("bundle_format", 0)
+        if not isinstance(fmt, int) or fmt > BUNDLE_FORMAT or fmt < 0:
+            raise BlackPyError(
+                f"'{path}' is a result bundle of format {fmt}, but this BlackPy "
+                f"({__version__}) reads formats 0 to {BUNDLE_FORMAT} only. Upgrade BlackPy "
+                f"(pip install --upgrade blackpy-gr) to the version that wrote it: "
+                f"{record.get('metadata', {}).get('versions', {}).get('blackpy', 'unknown')}."
+            )
+        if fmt == 0:
+            record = _upgrade_format_0(record)
         return cls(
             samples=samples,
             log_prob=log_prob,

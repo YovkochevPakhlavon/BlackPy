@@ -1,4 +1,10 @@
-"""Exceptions and warnings used across BlackPy."""
+"""Exceptions and warnings used across BlackPy.
+
+Every exception and warning class that BlackPy raises is defined here, so that
+``from blackpy.errors import ...`` is the one place to import them from. Each
+class is also explained, with what to do about it, in the "Integrity guards and
+errors" section of the user guide.
+"""
 
 from __future__ import annotations
 
@@ -40,6 +46,13 @@ class SymbolicTimeoutError(BlackPyError):
     """A symbolic computation exceeded its time limit."""
 
 
+class RegistryError(BlackPyError, ValueError):
+    """A registry file is missing or does not follow the schema.
+
+    Also a :class:`ValueError`, as in versions before 1.0.
+    """
+
+
 class BlackPyWarning(UserWarning):
     """Base class for all BlackPy warnings."""
 
@@ -79,6 +92,35 @@ class CircularityDefinitionWarning(BlackPyWarning):
     Delta C other than the one the bound was derived for."""
 
 
+class ForecastWarning(BlackPyWarning):
+    """A Fisher forecast is being used outside the range where it can be trusted
+    (fiducial value near a prior boundary)."""
+
+
 class PoorFitWarning(BlackPyWarning):
     """The best model does not describe the data: the posterior predictive p-value of
     the chi-square discrepancy is below the documented threshold."""
+
+
+__all__ = [
+    "BlackPyError",
+    "BlackPyWarning",
+    "CircularInferenceWarning",
+    "CircularityDefinitionWarning",
+    "ConvergenceWarning",
+    "DegeneracyWarning",
+    "ForecastWarning",
+    "IgnoredDataWarning",
+    "NodalPrecessionUnavailableError",
+    "NotAsymptoticallyFlatError",
+    "NotSeparableError",
+    "PlasmaPropagationError",
+    "PoorFitWarning",
+    "PriorDominatedWarning",
+    "ReflectionSymmetryError",
+    "RegistryError",
+    "SpinIgnoredWarning",
+    "SymbolicTimeoutError",
+    "SymbolicUnavailableError",
+    "UnverifiedDataWarning",
+]

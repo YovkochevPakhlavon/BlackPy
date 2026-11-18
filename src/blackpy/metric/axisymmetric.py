@@ -246,7 +246,7 @@ class StationaryAxisymmetric(Metric):
             if missing:
                 raise ValueError(
                     f"The expressions contain symbols {sorted(missing)} that are not listed in "
-                    "parameters."
+                    "parameters. Add them, e.g. parameters={'name': default_value}."
                 )
         by_name = {s.name: s for s in other}
         symbols = tuple(by_name.get(p.name, sp.Symbol(p.name, real=True)) for p in params)

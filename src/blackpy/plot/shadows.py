@@ -8,7 +8,11 @@ import numpy as np
 
 from blackpy import light
 from blackpy.data import ShadowDataset, load
-from blackpy.light.rotating import check_delta_c_definition, warn_if_definition_mismatch
+from blackpy.light.rotating import (
+    check_delta_c_definition,
+    check_inclination_radians,
+    warn_if_definition_mismatch,
+)
 from blackpy.metric.base import Metric
 
 _DELTA_C_SYMBOL = {
@@ -113,6 +117,7 @@ def shadow(
 
     if annotate_delta_c is not None:
         check_delta_c_definition(annotate_delta_c)
+    check_inclination_radians(inclination, "plot.shadow()")
     curves = _scan(inclination, params)
     if labels is not None and len(labels) != len(curves):
         raise ValueError(f"labels has {len(labels)} entries for {len(curves)} contours.")
