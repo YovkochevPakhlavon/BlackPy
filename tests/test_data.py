@@ -5,6 +5,7 @@ numerical value of an unverified registry entry.
 """
 
 import copy
+import hashlib
 
 import pytest
 import yaml
@@ -91,6 +92,26 @@ def test_list_prints_verification_status(capsys):
     out = capsys.readouterr().out
     assert len(datasets) == len(EXPECTED)
     assert "not human-verified" in out and "TODO" in out and "qpo/gro_j1655_40" in out
+
+
+def test_dataset_hash_does_not_depend_on_line_endings(tmp_path):
+    # Git on Windows checks files out with CRLF by default; the recorded hash must not change.
+    content = (bp.data.registry_path() / "qpo" / "gro_j1655_40.yaml").read_bytes()
+    lf = content.replace(b"\r\n", b"\n")
+    expected = hashlib.sha256(lf).hexdigest()
+    assert bp.data.load("qpo/gro_j1655_40").sha256 == expected
+    for name, data in [
+        ("lf", lf),
+        ("crlf", lf.replace(b"\n", b"\r\n")),
+        ("cr", lf.replace(b"\n", b"\r")),
+    ]:
+        path = tmp_path / f"{name}.yaml"
+        path.write_bytes(data)
+        assert bp.data.load_file(path).sha256 == expected, name
+    # A change of content still changes the hash.
+    path = tmp_path / "changed.yaml"
+    path.write_bytes(lf + b"# comment\n")
+    assert bp.data.load_file(path).sha256 != expected
 
 
 def test_unknown_dataset_and_schema_violations(tmp_path):

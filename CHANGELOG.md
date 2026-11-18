@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Dataset hashes (`Dataset.sha256`, recorded in fit results) no longer depend on
+  line endings: a registry file checked out with CRLF on Windows has the same hash
+  as on Linux and macOS (`blackpy.data.registry.file_hash`). Hashes of files with
+  LF line endings are unchanged. `.gitattributes` keeps text files in LF.
+
+### Added
+- `scripts/check_windows.ps1`: one command that installs BlackPy and runs the
+  linter, the tests, the documentation build and optionally the examples on
+  Windows, with a short `SUMMARY.txt`.
+
 ## [0.3.0] - 2026-11-17
 
 Fit quality, plasma, a second shadow source, parametrised metrics, forecasts,

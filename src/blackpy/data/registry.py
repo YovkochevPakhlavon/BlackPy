@@ -329,7 +329,19 @@ def load_file(path) -> Dataset:
         raise RegistryError(f"Dataset file not found: {path}")
     content = path.read_bytes()
     raw = yaml.safe_load(content)
-    return parse_dataset(raw, sha256=hashlib.sha256(content).hexdigest(), origin=str(path))
+    return parse_dataset(raw, sha256=file_hash(content), origin=str(path))
+
+
+def file_hash(content: bytes) -> str:
+    """SHA-256 of a dataset file with CRLF and CR line endings normalised to LF.
+
+    Git on Windows checks text files out with CRLF line endings by default
+    (``core.autocrlf``), and editors may save them that way. Hashing the raw
+    bytes would give the same dataset a different hash on Windows than on
+    Linux or macOS, and fit results would then appear to use different data.
+    Files that already use LF line endings keep the hash of their raw bytes.
+    """
+    return hashlib.sha256(content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")).hexdigest()
 
 
 def available() -> builtins.list[str]:

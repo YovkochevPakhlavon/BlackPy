@@ -217,7 +217,10 @@ class Dataset:
         example a published uncertainty that could not be reproduced). Unlike
         ``todo`` items they cannot be closed by checking the paper again.
     sha256 : str
-        Hash of the YAML file, stored in fit results for reproducibility.
+        SHA-256 hash of the YAML file with its line endings normalised to LF,
+        stored in fit results for reproducibility. The same file therefore has
+        the same hash on every operating system, whatever line endings the
+        checkout or an editor gave it.
     """
 
     id: str
