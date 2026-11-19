@@ -222,21 +222,20 @@ each other.
 
 ## 5. Open questions for the maintainer
 
+Still open (they wait for papers to be read or authors to answer; see `TO_DO.md`).
+The questions the owner answered on 2026-11-19 are decisions 45 to 53 (section 9).
+
 - Which QPO pair should be the default for XTE J1550-564 and GRS 1915+105?
-- Should using a dataset with `verified_by_human: false` be an error unless
-  the user opts in, once the registry has been checked?
-- Should metric parameter bounds optionally restrict to the black hole range?
-  (For rotating metrics the likelihood now does this through the declared
-  domain; observables still do not.)
-- Repository URL: set in 1.0 to `https://github.com/YovkochevPakhlavon/BlackPy`
-  (`pyproject.toml`, `CITATION.cff`, `mkdocs.yml`); to be confirmed (`TO_DO.md`).
-- GRO J1655-40 spin: the registry stores 0.290 (abstract and text of Motta et
-  al. 2014) although their Table 3 and the exact solution give 0.286. Keep
-  the text value, or store the table value?
-- Should `Delta C` follow Bambi et al. (2019) as now, or the Johannsen &
-  Psaltis (2010) asymmetry that EHT M87* Paper VI refers to (twice the rms)?
-- Should the rotating entries be merged into `CATALOGUE` in a later major
-  version?
+  The current pairs (Miller et al. 2001: 268/188 Hz; Strohmayer 2001:
+  41.5/69.2 Hz) stay the defaults until Remillard (2004) and the source of the
+  276/184 Hz pair have been read.
+- GRO J1655-40 spin: keep the Table 3 value 0.286 as the main entry (0.290 of
+  the text stays under `other_values`), subject to the owner's check against the
+  published MNRAS version.
+- The factor 4 of the `bambi2019` definition of Delta C is empirical (it
+  reproduces Fig. 1 of Bambi et al. 2019; their printed Eq. (5) does not). It
+  stays labelled empirical until its origin is found (a later paper or the
+  authors); then theory section 17 is updated.
 
 ## 6. Roadmap
 
@@ -361,3 +360,35 @@ status sections of the v0.2 and v0.3 sessions were replaced by this one.
     points, so that a weekly CI job can run every example; unset, every example
     is unchanged. One assertion (example 13, forecast versus sampler) is skipped
     in quick mode because the short chain is too noisy for it.
+
+### Owner decisions of 2026-11-19 (open questions answered)
+
+45. **Unverified data stay a warning in 1.x.** `UnverifiedDataWarning` is not
+    turned into an error even after the registry has been checked: that would be
+    a breaking change. Revisit for 2.0.
+46. **Parameter bounds of observables are not restricted to the black hole
+    range.** Observables stay defined for naked singularities and report them as
+    horizonless; fits of rotating metrics restrict through
+    `require_black_hole=True` and the declared domain.
+47. **Repository URL confirmed**: `https://github.com/YovkochevPakhlavon/BlackPy`
+    (`pyproject.toml`, `CITATION.cff`, `mkdocs.yml`).
+48. **Delta C default stays `fractional_rms`.** It is the only definition fully
+    specified by a published formula with its normalisation, and it is the
+    quantity of the EHT M87* circularity statement (Paper I). `jp_asymmetry` and
+    `bambi2019` remain available by name.
+49. **`CATALOGUE` and `ROTATING_CATALOGUE` stay separate in 1.x** (decision 16);
+    merging them is a 2.0 question.
+50. **M87\* mass prior: stellar dynamics is the default**, and every result says
+    which prior it used (`shadow_mass_prior`). The gas-dynamics mass stays
+    available; it gives delta = 0.78 ± 0.3, in 2.6 sigma tension with a
+    Schwarzschild-like shadow, so studies should report both.
+51. **KRZ keeps the full Kerr polar function** (decision 35), not the printed
+    truncation, which is not Kerr off the equator; the printed w_01 of the
+    rotating dilaton black hole has the wrong sign. Documented in theory
+    section 21.2.
+52. **RZ coefficients of Reissner–Nordström are accepted as derived** (the RZ
+    paper does not treat RN; theory section 21.1 and its test).
+53. **NUTS sampler: a roadmap item for a later 1.x**, as an optional extra
+    (needs gradients through the root finders by implicit differentiation; see
+    `docs/roadmap.md` and `verification/v0.3.md`, section 7); emcee and dynesty
+    stay the required samplers.

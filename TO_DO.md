@@ -7,7 +7,7 @@ says what, why, how, and how to tell it is done. Delete this file after the
 release.
 
 Reference: the session's report is `verification/v1.0.md`; decisions are in
-`DESIGN_NOTES.md` (section 10 and "Status at 1.0").
+`DESIGN_NOTES.md` (section 9 and "Status at 1.0").
 
 ## 1. Decisions to confirm
 
@@ -22,26 +22,26 @@ For each item: my recommendation in **bold**. Record the decision in
   were not found in an accessible original. **Keep the current defaults until the
   originals are read (section 2: Remillard 2004 and the 276/184 Hz source); then
   decide.** Done when the YAML `todo` entries are closed.
-- [ ] **Should unverified data become an error once the registry is checked?**
+- [x] **Should unverified data become an error once the registry is checked?**
   Owner decision 4 keeps `UnverifiedDataWarning` for 1.0. **Keep the warning in
-  1.x** (an error would be a breaking change); revisit for 2.0.
-- [ ] **Should metric parameter bounds optionally restrict to the black hole
+  1.x** (an error would be a breaking change); revisit for 2.0. *Decided 2026-11-19: DESIGN_NOTES decision 45.*
+- [x] **Should metric parameter bounds optionally restrict to the black hole
   range for observables?** **No for 1.x**: observables stay defined for naked
   singularities (reported as horizonless), and fits of rotating metrics already
-  restrict through `require_black_hole=True`.
-- [ ] **Repository URL.** Done: `https://github.com/YovkochevPakhlavon/BlackPy`
+  restrict through `require_black_hole=True`. *Decided 2026-11-19: DESIGN_NOTES decision 46.*
+- [x] **Repository URL.** Done: `https://github.com/YovkochevPakhlavon/BlackPy`
   is in `pyproject.toml`, `CITATION.cff` and `mkdocs.yml`. Confirm, then delete
-  this item from section 5 of `DESIGN_NOTES.md`.
+  this item from section 5 of `DESIGN_NOTES.md`. *Decided 2026-11-19: DESIGN_NOTES decision 47.*
 - [ ] **GRO J1655-40 spin: 0.290 (text) or 0.286 (Table 3)?** Dataset version 3
   already stores the Table 3 value 0.286 as the main entry and keeps 0.290 under
   `other_values`. **Keep 0.286** (it is also the exact RPM solution); confirm
   against the MNRAS version (section 2).
-- [ ] **Delta C: Bambi et al. (2019) or Johannsen & Psaltis (2010)?** Since 0.3
+- [x] **Delta C: Bambi et al. (2019) or Johannsen & Psaltis (2010)?** Since 0.3
   every use names its definition (`fractional_rms` default, `jp_asymmetry`,
   `bambi2019`). **Keep `fractional_rms` as default**: it is the only one fully
-  specified by a published formula with its normalisation.
-- [ ] **Merge `ROTATING_CATALOGUE` into `CATALOGUE`?** Owner decision 5: no for
-  1.x. **Revisit only for 2.0.**
+  specified by a published formula with its normalisation. *Decided 2026-11-19: DESIGN_NOTES decision 48.*
+- [x] **Merge `ROTATING_CATALOGUE` into `CATALOGUE`?** Owner decision 5: no for
+  1.x. **Revisit only for 2.0.** *Decided 2026-11-19: DESIGN_NOTES decision 49.*
 
 ### From `verification/v0.3.md`, section 7
 
@@ -49,19 +49,19 @@ For each item: my recommendation in **bold**. Record the decision in
   Fig. 1 of Bambi et al. 2019 to the accuracy of the figure; their printed
   Eq. (5) does not). **Keep it labelled empirical**; if you can, ask the authors
   or find the normalisation in a later paper, and update theory section 17.
-- [ ] **Which M87\* mass prior should a published bound use?** The bound
+- [x] **Which M87\* mass prior should a published bound use?** The bound
   4.31–6.08 M exists only for the stellar-dynamics prior; the gas-dynamics mass
   gives delta = 0.78 ± 0.3 (2.6 sigma tension with any Schwarzschild-like
   shadow). **Keep stellar dynamics as default and always print which prior was
-  used** (as `shadow_mass_prior` does now).
-- [ ] **KRZ truncation**: BlackPy keeps the full Kerr polar function (the
+  used** (as `shadow_mass_prior` does now). *Decided 2026-11-19: DESIGN_NOTES decision 50.*
+- [x] **KRZ truncation**: BlackPy keeps the full Kerr polar function (the
   printed truncation is not Kerr off the equator) and the printed w_01 of the
   rotating dilaton black hole has the wrong sign. **Keep BlackPy's choice**; the
-  theory page documents it.
-- [ ] **RZ coefficients of Reissner–Nordström** were derived (the paper does not
-  treat RN). **Accept**, or check against a later paper that tabulates them.
-- [ ] **NUTS sampler** (not attempted; needs implicit differentiation of the root
-  finders). **Roadmap item for a later 1.x**, as an optional extra.
+  theory page documents it. *Decided 2026-11-19: DESIGN_NOTES decision 51.*
+- [x] **RZ coefficients of Reissner–Nordström** were derived (the paper does not
+  treat RN). **Accept**, or check against a later paper that tabulates them. *Decided 2026-11-19: DESIGN_NOTES decision 52.*
+- [x] **NUTS sampler** (not attempted; needs implicit differentiation of the root
+  finders). **Roadmap item for a later 1.x**, as an optional extra. *Decided 2026-11-19: DESIGN_NOTES decision 53.*
 
 ### From the registry (`open_questions`)
 
