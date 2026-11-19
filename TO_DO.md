@@ -145,7 +145,7 @@ verified, you may delete that word from its `# warns:` line.
 
 ### Dataset `eht/m87` (M87*, shadow_bound, dataset version 2)
 
-File: `src/blackpy/data/registry/eht/m87.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/eht/m87.yaml`. verified_by_human: **True**.
 
 How it was read: eht2019i and eht2019vi: text extracted from the arXiv PDFs (arxiv.org/pdf/1906.11238 and 1906.11243; no ar5iv rendering exists); all other references: ar5iv HTML renderings of the arXiv versions (ar5iv.labs.arxiv.org). Read by Claude on 2026-11-16. The journal versions were not compared. Titles, journals, volumes and article numbers of all references were confirmed with Crossref (api.crossref.org) on 2026-11-16.
 
@@ -191,7 +191,7 @@ TODO items of the file:
 
 ### Dataset `eht/sgra` (Sgr A*, shadow_bound, dataset version 2)
 
-File: `src/blackpy/data/registry/eht/sgra.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/eht/sgra.yaml`. verified_by_human: **True**.
 
 How it was read: full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared. Mass priors, distance and per-prior deviations (dataset version 2): do2019, gravity2020, gravity2022, eht2022vi and vagnozzi2023 read from their ar5iv HTML renderings on 2026-11-16 by Claude; bibliographic data of do2019, gravity2020, gravity2022 and eht2022vi confirmed with Crossref on 2026-11-16; the journal versions were not compared
 
@@ -233,7 +233,7 @@ Open questions:
 
 ### Dataset `qpo/gro_j1655_40` (GRO J1655-40, qpo_triplet, dataset version 3)
 
-File: `src/blackpy/data/registry/qpo/gro_j1655_40.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/qpo/gro_j1655_40.yaml`. verified_by_human: **True**.
 
 How it was read: full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit (text values and Table 3): read again from the ar5iv HTML rendering of the arXiv version (arXiv:1309.3652) on 2026-11-15 by Claude for dataset version 3; the journal version was not compared
 
@@ -255,7 +255,7 @@ Values:
 References (check the bibliographic details too):
 
 - [x] `motta2014`: Motta, Belloni, Stella, Munoz-Darias & Fender (2014), MNRAS 437, 2554 (doi:10.1093/mnras/stt2068, arXiv:1309.3652) *Checked by Claude against the journal PDF (MNRAS 437, 2554) supplied by the owner, 2026-11-19.*
-- [ ] `beer2002`: Beer & Podsiadlowski (2002), MNRAS 331, 351 (doi:10.1046/j.1365-8711.2002.05189.x, arXiv:astro-ph/0109136)
+- [x] `beer2002`: Beer & Podsiadlowski (2002), MNRAS 331, 351 (doi:10.1046/j.1365-8711.2002.05189.x, arXiv:astro-ph/0109136)
 
 TODO items of the file:
 
@@ -266,31 +266,31 @@ TODO items of the file:
 
 ### Dataset `qpo/grs_1915_105` (GRS 1915+105, qpo_pair, dataset version 1)
 
-File: `src/blackpy/data/registry/qpo/grs_1915_105.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/qpo/grs_1915_105.yaml`. verified_by_human: **True**.
 
 How it was read: full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared
 
 Values:
 
-- [ ] `frequencies`: lower = {'value': 41.5, 'err_minus': 0.4, 'err_plus': 0.4, 'unit': 'Hz', 'source': 'strohmayer2001', 'location': "Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'"}, upper = {'value': 69.2, 'err_minus': 0.15, 'err_plus': 0.15, 'unit': 'Hz', 'source': 'strohmayer2001', 'location': "Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
-- [ ] `frequencies.upper`: value = 69.2, err_minus = 0.15, err_plus = 0.15 [Hz]. Source: Strohmayer (2001), ApJ 554, L169 (doi:10.1086/321720, arXiv:astro-ph/0105338). Location: Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'
-- [ ] `frequencies.lower`: value = 41.5, err_minus = 0.4, err_plus = 0.4 [Hz]. Source: Strohmayer (2001), ApJ 554, L169 (doi:10.1086/321720, arXiv:astro-ph/0105338). Location: Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'
-- [ ] `mass_prior`: value = 12.4, err_minus = 1.8, err_plus = 2.0 [Msun]. Source: Reid, McClintock, Steiner, Steeghs, et al. (2014), ApJ 796, 2 (doi:10.1088/0004-637X/796/1/2, arXiv:1409.2453). Location: Abstract ('a revised estimate for the mass of the black hole of 12.4 +2.0 -1.8 Msun')
-- [ ] `alternatives[0]`: lower = {'value': 113.0, 'err_minus': None, 'err_plus': None, 'unit': 'Hz'}, upper = {'value': 168.0, 'err_minus': None, 'err_plus': None, 'unit': 'Hz'}. Source: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352). Location: (no location)
-- [ ] `alternatives[0].upper`: value = 168.0, err_minus = null, err_plus = null [Hz]. Source: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352). Location: (no location)
-- [ ] `alternatives[0].lower`: value = 113.0, err_minus = null, err_plus = null [Hz]. Source: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352). Location: (no location)
+- [x] `frequencies`: lower = {'value': 41.5, 'err_minus': 0.4, 'err_plus': 0.4, 'unit': 'Hz', 'source': 'strohmayer2001', 'location': "Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'"}, upper = {'value': 69.2, 'err_minus': 0.15, 'err_plus': 0.15, 'unit': 'Hz', 'source': 'strohmayer2001', 'location': "Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
+- [x] `frequencies.upper`: value = 69.2, err_minus = 0.15, err_plus = 0.15 [Hz]. Source: Strohmayer (2001), ApJ 554, L169 (doi:10.1086/321720, arXiv:astro-ph/0105338). Location: Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'
+- [x] `frequencies.lower`: value = 41.5, err_minus = 0.4, err_plus = 0.4 [Hz]. Source: Strohmayer (2001), ApJ 554, L169 (doi:10.1086/321720, arXiv:astro-ph/0105338). Location: Section 2 (data analysis): 'well fit by Gaussians centered at nu_0 = 41.5 +- 0.4 and 69.2 +- 0.15 Hz'
+- [x] `mass_prior`: value = 12.4, err_minus = 1.8, err_plus = 2.0 [Msun]. Source: Reid, McClintock, Steiner, Steeghs, et al. (2014), ApJ 796, 2 (doi:10.1088/0004-637X/796/1/2, arXiv:1409.2453). Location: Abstract ('a revised estimate for the mass of the black hole of 12.4 +2.0 -1.8 Msun')
+- [x] `alternatives[0]`: lower = {'value': 113.0, 'err_minus': None, 'err_plus': None, 'unit': 'Hz'}, upper = {'value': 168.0, 'err_minus': None, 'err_plus': None, 'unit': 'Hz'}. Source: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352). Location: (no location)
+- [x] `alternatives[0].upper`: value = 168.0, err_minus = null, err_plus = null [Hz]. Source: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352). Location: (no location)
+- [x] `alternatives[0].lower`: value = 113.0, err_minus = null, err_plus = null [Hz]. Source: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352). Location: (no location)
 
 References (check the bibliographic details too):
 
-- [ ] `strohmayer2001`: Strohmayer (2001), ApJ 554, L169 (doi:10.1086/321720, arXiv:astro-ph/0105338)
-- [ ] `reid2014`: Reid, McClintock, Steiner, Steeghs, et al. (2014), ApJ 796, 2 (doi:10.1088/0004-637X/796/1/2, arXiv:1409.2453)
-- [ ] `remillard_mcclintock2006`: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352)
+- [x] `strohmayer2001`: Strohmayer (2001), ApJ 554, L169 (doi:10.1086/321720, arXiv:astro-ph/0105338)
+- [x] `reid2014`: Reid, McClintock, Steiner, Steeghs, et al. (2014), ApJ 796, 2 (doi:10.1088/0004-637X/796/1/2, arXiv:1409.2453)
+- [x] `remillard_mcclintock2006`: Remillard & McClintock (2006), ARA&A 44, 49 (doi:10.1146/annurev.astro.44.051905.092532, arXiv:astro-ph/0606352)
 
 TODO items of the file:
 
-- [ ] Obtain Remillard (2004), AIP Conf. Proc. 714, 13 and record the 113/168 Hz frequencies with their uncertainties.
+- [x] Obtain Remillard (2004), AIP Conf. Proc. 714, 13 and record the 113/168 Hz frequencies with their uncertainties.
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/grs_1915_105.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/grs_1915_105.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
 
 ### Dataset `qpo/h1743_322` (H1743-322, qpo_pair, dataset version 1)
 

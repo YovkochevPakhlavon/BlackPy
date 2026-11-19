@@ -69,4 +69,4 @@ notes: >
   Miller et al. (2001) state that the two QPOs are 'likely present simultaneously' but
   cannot exclude a single feature moving in frequency. Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
 todo:
-  - "Locate the original source of the widely used pair 276 +- 3 Hz / 184 +- 5 Hz (probably Remillard et al. 2002 figures or Remillard & McClintock 2006) and decide which pair should be the default."
+  - "Locate the original source of the widely used pair 276 +- 3 Hz / 184 +- 5 Hz (probably Remillard et al. 2002 figures or Remillard & McClintock 2006) and decide which pair should be the default. Remillard (2004, AIP Conf. Proc. 714, 13; read 2026-11-19) shows 184 and 276 Hz only as labels in Fig. 3 (panels 'XTE J1550 (type A)' and '(type B)'), without uncertainties, and refers to Remillard et al. (2002, ApJ 580, 1030) for the pairs; that paper was not accessed."

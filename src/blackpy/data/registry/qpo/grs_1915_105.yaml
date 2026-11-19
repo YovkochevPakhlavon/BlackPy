@@ -36,10 +36,16 @@ intended_models: [RP, ER]
 alternatives:
   - description: >
       A second pair near 113 Hz and 168 Hz (3:2 ratio), attributed to Remillard (2004) by
-      the review of Remillard & McClintock (2006), Section 'High-frequency QPOs'. The
-      review gives the frequencies without uncertainties; the original (Remillard 2004,
-      AIP Conf. Proc. 714, 13) was not accessed, so the uncertainties are null.
-    source: remillard_mcclintock2006
+      the review of Remillard & McClintock (2006), Section 'High-frequency QPOs'. Remillard
+      (2004) gives the two frequencies only as labels in Fig. 3 ('GRS1915 (type nu) 113 Hz'
+      and 'GRS1915 (type theta) 168 Hz'), without uncertainties, and the two QPOs are shown
+      in power spectra of different variability classes (nu and theta): they are not a
+      simultaneous detection. The text (p. 17) refers to refs. [28] and [29] (Remillard et
+      al. 2002, ApJ 580, 1030; Remillard et al. 2003, BAAS 35, 648) for the 3:2 pairs.
+      Uncertainties stay null; not usable as a QPO pair without them.
+    source: remillard2004
+    location: "remillard2004, Fig. 3 (panels 'GRS1915 (type nu)' and 'GRS1915 (type theta)'); text p. 17"
+    simultaneous: false
     upper: {value: 168.0, err_minus: null, err_plus: null, unit: Hz}
     lower: {value: 113.0, err_minus: null, err_plus: null, unit: Hz}
 references:
@@ -53,15 +59,19 @@ references:
     doi: "10.1088/0004-637X/796/1/2"
     arxiv: "1409.2453"
     role: "independent (dynamical) black hole mass"
+  remillard2004:
+    citation: "Remillard (2004), AIP Conf. Proc. 714, 13 (X-Ray Timing 2003: Rossi and Beyond)"
+    doi: "10.1063/1.1780992"
+    role: "113/168 Hz labels (Fig. 3); the 41/67 Hz pair as a slower pair seen mostly in the thermal-dominant state (p. 17)"
   remillard_mcclintock2006:
     citation: "Remillard & McClintock (2006), ARA&A 44, 49"
     doi: "10.1146/annurev.astro.44.051905.092532"
     arxiv: "astro-ph/0606352"
     role: "secondary source for the 113/168 Hz pair"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared. remillard2004: PDF of the AIP proceedings (pp. 13-20) supplied by the owner, read by Claude on 2026-11-19; bibliographic data confirmed with Crossref"
 notes: >
   The 41/67 Hz pair is not in a 3:2 ratio (ratio about 1.67). Many QPO-fitting papers use
   the 113/168 Hz pair instead; that pair is listed under 'alternatives' with null
   uncertainties because its original source could not be accessed. Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
 todo:
-  - "Obtain Remillard (2004), AIP Conf. Proc. 714, 13 and record the 113/168 Hz frequencies with their uncertainties."
+  - "Remillard (2004) was read (2026-11-19): it prints 113 and 168 Hz only as figure labels, without uncertainties, from different variability classes. Uncertainties for the 113/168 Hz pair would need the original analysis (Remillard et al. 2002, ApJ 580, 1030, or Remillard et al. 2003, BAAS 35, 648, refs. [28] and [29] of Remillard 2004), not accessed."
