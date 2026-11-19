@@ -3,7 +3,7 @@ id: qpo/xte_j1859_226
 object: XTE J1859+226
 data_type: qpo_triplet
 dataset_version: "4"
-verified_by_human: false
+verified_by_human: true
 description: >
   QPO triplet in RXTE/PCA observation 40124-01-07-00 (1999-2000 outburst): type-C QPO and
   the lower and upper high-frequency QPOs.

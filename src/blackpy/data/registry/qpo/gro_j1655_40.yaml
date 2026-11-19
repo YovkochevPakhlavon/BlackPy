@@ -3,7 +3,7 @@ id: qpo/gro_j1655_40
 object: GRO J1655-40
 data_type: qpo_triplet
 dataset_version: "3"
-verified_by_human: false
+verified_by_human: true
 description: >
   Three QPOs detected simultaneously with RXTE/PCA: the type-C low-frequency QPO and
   the lower and upper high-frequency QPOs (Sample B1 of Motta et al. 2014).

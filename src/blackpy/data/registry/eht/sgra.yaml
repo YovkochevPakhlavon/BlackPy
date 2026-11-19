@@ -3,7 +3,7 @@ id: eht/sgra
 object: Sgr A*
 data_type: shadow_bound
 dataset_version: "2"
-verified_by_human: false
+verified_by_human: true
 description: >
   Bounds on the shadow radius of Sgr A* in units of its mass, derived by Vagnozzi et al.
   (2023) from the EHT 2017 image by averaging the Keck- and VLTI-based estimates of the

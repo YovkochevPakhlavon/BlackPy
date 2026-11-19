@@ -3,7 +3,7 @@ id: qpo/xte_j1550_564
 object: XTE J1550-564
 data_type: qpo_pair
 dataset_version: "1"
-verified_by_human: false
+verified_by_human: true
 description: >
   Two high-frequency QPOs fitted independently in the sum of the six RXTE/PCA observations
   of the April-May 2000 outburst that show the higher-frequency QPO (6-60 keV).

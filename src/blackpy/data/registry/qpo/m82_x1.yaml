@@ -3,7 +3,7 @@ id: qpo/m82_x1
 object: M82 X-1
 data_type: qpo_pair
 dataset_version: "1"
-verified_by_human: false
+verified_by_human: true
 description: >
   Stable twin-peak (3:2) QPOs in the six-year average RXTE/PCA power spectrum (3-13 keV)
   of the intermediate-mass black hole candidate M82 X-1.
@@ -43,7 +43,7 @@ references:
     doi: "10.1038/nature13710"
     arxiv: "1501.03180"
     role: "QPO frequencies; QPO-based mass estimates"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared. Checked on 2026-11-19: the abstract of the journal version (Nature 513, 74-76, nature.com; screenshot from the owner) prints 3.32 +- 0.06 Hz, 5.07 +- 0.06 Hz, 428 +- 105 Msun and 415 +- 63 Msun, as stored; the main text and Fig. 1 are behind the paywall and were checked against arXiv only"
 notes: >
   No mass measurement independent of QPO modelling exists for M82 X-1 in the sources
   accessed. BlackPy raises a CircularInferenceWarning when this mass prior is used.

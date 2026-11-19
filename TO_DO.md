@@ -16,12 +16,12 @@ For each item: my recommendation in **bold**. Record the decision in
 
 ### From `DESIGN_NOTES.md`, section 5
 
-- [ ] **Default QPO pair for XTE J1550-564 and GRS 1915+105.** The registry uses
+- [x] **Default QPO pair for XTE J1550-564 and GRS 1915+105.** The registry uses
   the independently fitted pairs it could read (Miller et al. 2001: 268/188 Hz;
   Strohmayer 2001: 41.5/69.2 Hz); the widely used 276/184 and 168/113 Hz pairs
   were not found in an accessible original. **Keep the current defaults until the
   originals are read (section 2: Remillard 2004 and the 276/184 Hz source); then
-  decide.** Done when the YAML `todo` entries are closed. *GRS 1915+105 decided 2026-11-19 (DESIGN_NOTES decision 54: 41.5/69.2 Hz stays); XTE J1550-564 still open.*
+  decide.** Done when the YAML `todo` entries are closed. *GRS 1915+105 decided 2026-11-19 (DESIGN_NOTES decision 54: 41.5/69.2 Hz stays); XTE J1550-564 still open.* *XTE J1550-564 decided 2026-11-19 (DESIGN_NOTES decision 56: Miller et al. 2001, 268/188 Hz).*
 - [x] **Should unverified data become an error once the registry is checked?**
   Owner decision 4 keeps `UnverifiedDataWarning` for 1.0. **Keep the warning in
   1.x** (an error would be a breaking change); revisit for 2.0. *Decided 2026-11-19: DESIGN_NOTES decision 45.*
@@ -262,7 +262,7 @@ TODO items of the file:
 - [x] Human check of Table 2 of Motta et al. (2014) against the published MNRAS version. *Done 2026-11-19 against the journal version; removed from the file's `todo`.*
 - [x] Human check of the RPM results (abstract, Sec. 4.1, Table 3) and of the 0.290 / 0.286 discrepancy against the published MNRAS version. Since dataset version 3 the Table 3 values are the main entries and the text values are stored under other_values. *Done 2026-11-19 against the journal version; removed from the file's `todo`.*
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/gro_j1655_40.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/gro_j1655_40.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
 
 ### Dataset `qpo/grs_1915_105` (GRS 1915+105, qpo_pair, dataset version 1)
 
@@ -300,24 +300,24 @@ How it was read: full text read from the ar5iv HTML rendering of the arXiv versi
 
 Values:
 
-- [ ] `frequencies`: lower = {'value': 165.0, 'err_minus': 5.0, 'err_plus': 9.0, 'unit': 'Hz', 'source': 'homan2005', 'location': "Section 3 (high-frequency QPOs): 'This gave a frequency of 165 +9 -5 Hz ... (a 3 sigma detection)'", 'note': '3 sigma detection with the Q value fixed to 6.'}, upper = {'value': 241.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz', 'source': 'homan2005', 'location': "Section 3 (high-frequency QPOs): 'A fit to the second part (see Fig. 7) gives nu_max = 241 +- 3'"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
-- [ ] `frequencies.upper`: value = 241.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Homan, Miller, Wijnands, van der Klis, et al. (2005), ApJ 623, 383 (doi:10.1086/424994, arXiv:astro-ph/0406334). Location: Section 3 (high-frequency QPOs): 'A fit to the second part (see Fig. 7) gives nu_max = 241 +- 3'
-- [ ] `frequencies.lower`: value = 165.0, err_minus = 5.0, err_plus = 9.0 [Hz]. Source: Homan, Miller, Wijnands, van der Klis, et al. (2005), ApJ 623, 383 (doi:10.1086/424994, arXiv:astro-ph/0406334). Location: Section 3 (high-frequency QPOs): 'This gave a frequency of 165 +9 -5 Hz ... (a 3 sigma detection)'
+- [x] `frequencies`: lower = {'value': 165.0, 'err_minus': 5.0, 'err_plus': 9.0, 'unit': 'Hz', 'source': 'homan2005', 'location': "Section 3 (high-frequency QPOs): 'This gave a frequency of 165 +9 -5 Hz ... (a 3 sigma detection)'", 'note': '3 sigma detection with the Q value fixed to 6.'}, upper = {'value': 241.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz', 'source': 'homan2005', 'location': "Section 3 (high-frequency QPOs): 'A fit to the second part (see Fig. 7) gives nu_max = 241 +- 3'"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
+- [x] `frequencies.upper`: value = 241.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Homan, Miller, Wijnands, van der Klis, et al. (2005), ApJ 623, 383 (doi:10.1086/424994, arXiv:astro-ph/0406334). Location: Section 3 (high-frequency QPOs): 'A fit to the second part (see Fig. 7) gives nu_max = 241 +- 3'
+- [x] `frequencies.lower`: value = 165.0, err_minus = 5.0, err_plus = 9.0 [Hz]. Source: Homan, Miller, Wijnands, van der Klis, et al. (2005), ApJ 623, 383 (doi:10.1086/424994, arXiv:astro-ph/0406334). Location: Section 3 (high-frequency QPOs): 'This gave a frequency of 165 +9 -5 Hz ... (a 3 sigma detection)'
 - [ ] `mass_prior`: value = null, err_minus = null, err_plus = null [Msun]. Source: not recorded in the entry (see the location and the references below). Location: (no location)
-- [ ] `alternatives[0]`: lower = {'value': 166.0, 'err_minus': 5.0, 'err_plus': 5.0, 'unit': 'Hz'}, upper = {'value': 242.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz'}. Source: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025). Location: (no location)
-- [ ] `alternatives[0].upper`: value = 242.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025). Location: (no location)
-- [ ] `alternatives[0].lower`: value = 166.0, err_minus = 5.0, err_plus = 5.0 [Hz]. Source: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025). Location: (no location)
+- [x] `alternatives[0]`: lower = {'value': 166.0, 'err_minus': 5.0, 'err_plus': 5.0, 'unit': 'Hz'}, upper = {'value': 242.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz'}. Source: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025). Location: (no location)
+- [x] `alternatives[0].upper`: value = 242.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025). Location: (no location)
+- [x] `alternatives[0].lower`: value = 166.0, err_minus = 5.0, err_plus = 5.0 [Hz]. Source: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025). Location: (no location)
 
 References (check the bibliographic details too):
 
-- [ ] `homan2005`: Homan, Miller, Wijnands, van der Klis, et al. (2005), ApJ 623, 383 (doi:10.1086/424994, arXiv:astro-ph/0406334)
-- [ ] `remillard2006`: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025)
+- [x] `homan2005`: Homan, Miller, Wijnands, van der Klis, et al. (2005), ApJ 623, 383 (doi:10.1086/424994, arXiv:astro-ph/0406334)
+- [x] `remillard2006`: Remillard, McClintock, Orosz & Levine (2006), ApJ 637, 1002 (doi:10.1086/498556, arXiv:astro-ph/0407025)
 
 TODO items of the file:
 
-- [ ] Mass prior: null. Find an independent mass estimate (and record whether it relies on QPO or jet modelling), or keep the source out of joint fits.
+- [ ] Mass prior: null. Find an independent mass estimate (and record whether it relies on QPO or jet modelling), or keep the source out of joint fits. *2026-11-19: only a QPO-based estimate exists (about 11.5 Msun, remillard2006 Sec. IV, no uncertainty, not independent); recorded as a note, mass prior stays null. A known gap, it does not block the flag.*
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/h1743_322.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/h1743_322.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
 
 ### Dataset `qpo/m82_x1` (M82 X-1, qpo_pair, dataset version 1)
 
@@ -327,20 +327,20 @@ How it was read: full text read from the ar5iv HTML rendering of the arXiv versi
 
 Values:
 
-- [ ] `frequencies`: lower = {'value': 3.32, 'err_minus': 0.06, 'err_plus': 0.06, 'unit': 'Hz', 'source': 'pasham2014', 'location': "Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption"}, upper = {'value': 5.07, 'err_minus': 0.06, 'err_plus': 0.06, 'unit': 'Hz', 'source': 'pasham2014', 'location': "Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
-- [ ] `frequencies.upper`: value = 5.07, err_minus = 0.06, err_plus = 0.06 [Hz]. Source: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180). Location: Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption
-- [ ] `frequencies.lower`: value = 3.32, err_minus = 0.06, err_plus = 0.06 [Hz]. Source: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180). Location: Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption
-- [ ] `mass_prior`: value = 415.0, err_minus = 63.0, err_plus = 63.0 [Msun]. Source: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180). Location: Abstract ('using the relativistic precession model, from which we get a value of 415 +- 63 Msun')
+- [x] `frequencies`: lower = {'value': 3.32, 'err_minus': 0.06, 'err_plus': 0.06, 'unit': 'Hz', 'source': 'pasham2014', 'location': "Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption"}, upper = {'value': 5.07, 'err_minus': 0.06, 'err_plus': 0.06, 'unit': 'Hz', 'source': 'pasham2014', 'location': "Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
+- [x] `frequencies.upper`: value = 5.07, err_minus = 0.06, err_plus = 0.06 [Hz]. Source: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180). Location: Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption
+- [x] `frequencies.lower`: value = 3.32, err_minus = 0.06, err_plus = 0.06 [Hz]. Source: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180). Location: Abstract; main text ('two power spectral peaks at 3.32 +- 0.06 Hz ... and 5.07 +- 0.06 Hz'); Figure 1 caption
+- [x] `mass_prior`: value = 415.0, err_minus = 63.0, err_plus = 63.0 [Msun]. Source: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180). Location: Abstract ('using the relativistic precession model, from which we get a value of 415 +- 63 Msun')
 
 References (check the bibliographic details too):
 
-- [ ] `pasham2014`: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180)
+- [x] `pasham2014`: Pasham, Strohmayer & Mushotzky (2014), Nature 513, 74 (doi:10.1038/nature13710, arXiv:1501.03180)
 
 TODO items of the file:
 
-- [ ] No independent mass prior. Use a broad uninformative prior instead, or exclude the source from tests of non-Kerr metrics.
+- [x] No independent mass prior. Use a broad uninformative prior instead, or exclude the source from tests of non-Kerr metrics.
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/m82_x1.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/m82_x1.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
 
 ### Dataset `qpo/xte_j1550_564` (XTE J1550-564, qpo_pair, dataset version 1)
 
@@ -350,23 +350,23 @@ How it was read: full text read from the ar5iv HTML rendering of the arXiv versi
 
 Values:
 
-- [ ] `frequencies`: lower = {'value': 188.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz', 'source': 'miller2001', 'location': "Figure 4 caption ('The lower-frequency QPO: 188 +- 3 Hz'); also Section 3", 'note': '3.5 sigma single-trial detection.'}, upper = {'value': 268.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz', 'source': 'miller2001', 'location': "Figure 4 caption ('The higher-frequency QPO: 268 +- 3 Hz'); also Section 3"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
-- [ ] `frequencies.upper`: value = 268.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Miller, Wijnands, Homan, Belloni, et al. (2001), ApJ 563, 928 (doi:10.1086/324027, arXiv:astro-ph/0105371). Location: Figure 4 caption ('The higher-frequency QPO: 268 +- 3 Hz'); also Section 3
-- [ ] `frequencies.lower`: value = 188.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Miller, Wijnands, Homan, Belloni, et al. (2001), ApJ 563, 928 (doi:10.1086/324027, arXiv:astro-ph/0105371). Location: Figure 4 caption ('The lower-frequency QPO: 188 +- 3 Hz'); also Section 3
-- [ ] `mass_prior`: value = 9.1, err_minus = 0.61, err_plus = 0.61 [Msun]. Source: Orosz, Steiner, McClintock, Torres, et al. (2011), ApJ 730, 75 (doi:10.1088/0004-637X/730/2/75, arXiv:1101.2499). Location: Abstract and Section IV.1 ('The adopted value for the mass of the black hole is 9.10 +- 0.61 Msun (Table 2)')
-- [ ] `alternatives[1]`: lower = null, upper = null. Source: not recorded in the entry (see the location and the references below). Location: (no location)
+- [x] `frequencies`: lower = {'value': 188.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz', 'source': 'miller2001', 'location': "Figure 4 caption ('The lower-frequency QPO: 188 +- 3 Hz'); also Section 3", 'note': '3.5 sigma single-trial detection.'}, upper = {'value': 268.0, 'err_minus': 3.0, 'err_plus': 3.0, 'unit': 'Hz', 'source': 'miller2001', 'location': "Figure 4 caption ('The higher-frequency QPO: 268 +- 3 Hz'); also Section 3"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
+- [x] `frequencies.upper`: value = 268.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Miller, Wijnands, Homan, Belloni, et al. (2001), ApJ 563, 928 (doi:10.1086/324027, arXiv:astro-ph/0105371). Location: Figure 4 caption ('The higher-frequency QPO: 268 +- 3 Hz'); also Section 3
+- [x] `frequencies.lower`: value = 188.0, err_minus = 3.0, err_plus = 3.0 [Hz]. Source: Miller, Wijnands, Homan, Belloni, et al. (2001), ApJ 563, 928 (doi:10.1086/324027, arXiv:astro-ph/0105371). Location: Figure 4 caption ('The lower-frequency QPO: 188 +- 3 Hz'); also Section 3
+- [x] `mass_prior`: value = 9.1, err_minus = 0.61, err_plus = 0.61 [Msun]. Source: Orosz, Steiner, McClintock, Torres, et al. (2011), ApJ 730, 75 (doi:10.1088/0004-637X/730/2/75, arXiv:1101.2499). Location: Abstract and Section IV.1 ('The adopted value for the mass of the black hole is 9.10 +- 0.61 Msun (Table 2)')
+- [x] `alternatives[1]`: lower = null, upper = null. Source: not recorded in the entry (see the location and the references below). Location: (no location)
 
 References (check the bibliographic details too):
 
-- [ ] `miller2001`: Miller, Wijnands, Homan, Belloni, et al. (2001), ApJ 563, 928 (doi:10.1086/324027, arXiv:astro-ph/0105371)
-- [ ] `remillard2002`: Remillard, Muno, McClintock & Orosz (2002), ApJ 580, 1030 (doi:10.1086/343791, arXiv:astro-ph/0202305)
-- [ ] `orosz2011`: Orosz, Steiner, McClintock, Torres, et al. (2011), ApJ 730, 75 (doi:10.1088/0004-637X/730/2/75, arXiv:1101.2499)
+- [x] `miller2001`: Miller, Wijnands, Homan, Belloni, et al. (2001), ApJ 563, 928 (doi:10.1086/324027, arXiv:astro-ph/0105371)
+- [x] `remillard2002`: Remillard, Muno, McClintock & Orosz (2002), ApJ 580, 1030 (doi:10.1086/343791, arXiv:astro-ph/0202305)
+- [x] `orosz2011`: Orosz, Steiner, McClintock, Torres, et al. (2011), ApJ 730, 75 (doi:10.1088/0004-637X/730/2/75, arXiv:1101.2499)
 
 TODO items of the file:
 
-- [ ] Locate the original source of the widely used pair 276 +- 3 Hz / 184 +- 5 Hz (probably Remillard et al. 2002 figures or Remillard & McClintock 2006) and decide which pair should be the default.
+- [x] Locate the original source of the widely used pair 276 +- 3 Hz / 184 +- 5 Hz (probably Remillard et al. 2002 figures or Remillard & McClintock 2006) and decide which pair should be the default.
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/xte_j1550_564.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/xte_j1550_564.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
 
 ### Dataset `qpo/xte_j1859_226` (XTE J1859+226, qpo_triplet, dataset version 3)
 
@@ -376,31 +376,31 @@ How it was read: full text read from the ar5iv HTML rendering of the arXiv versi
 
 Values:
 
-- [ ] `frequencies`: lower = {'value': 128.6, 'err_minus': 1.8, 'err_plus': 1.6, 'unit': 'Hz', 'source': 'motta2022', 'location': "Table 2, block 'Triplet', row 'Lower HFQPO', column 'Frequency [Hz]'"}, upper = {'value': 227.5, 'err_minus': 2.4, 'err_plus': 2.1, 'unit': 'Hz', 'source': 'motta2022', 'location': "Table 2, block 'Triplet', row 'Upper HFQPO', column 'Frequency [Hz]'"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
-- [ ] `frequencies.upper`: value = 227.5, err_minus = 2.4, err_plus = 2.1 [Hz]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Table 2, block 'Triplet', row 'Upper HFQPO', column 'Frequency [Hz]'
-- [ ] `frequencies.lower`: value = 128.6, err_minus = 1.8, err_plus = 1.6 [Hz]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Table 2, block 'Triplet', row 'Lower HFQPO', column 'Frequency [Hz]'
-- [ ] `frequencies.low`: value = 3.65, err_minus = 0.01, err_plus = 0.01 [Hz]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Table 2, block 'Triplet', row 'Type-C', column 'Frequency [Hz]'
-- [ ] `spin`: value = 0.149, err_minus = 0.005, err_plus = 0.005. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Abstract, Sec. 3 ('a BH spin a* = 0.149 +- 0.005') and Table 3
-- [ ] `published_fit.mass`: value = 7.85, err_minus = 0.46, err_plus = 0.46 [Msun]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Abstract, Sec. 3 ('a BH mass M = (7.85 +- 0.46) Msun') and Table 3
-- [ ] `published_fit.radius`: value = 6.85, err_minus = 0.18, err_plus = 0.18 [G M / c^2]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Sec. 3 ('a QPO emission radius R_QPO = (6.85 +- 0.18) Rg') and Table 3
-- [ ] `mass_prior`: value = 7.8, err_minus = 1.9, err_plus = 1.9 [Msun]. Source: Yanes-Rizo, Torres, Casares, Motta, et al. (2022), MNRAS 517, 1476 (doi:10.1093/mnras/stac2719, arXiv:2209.10395). Location: Abstract ('we obtained an updated black hole mass of M_1 = 7.8 +- 1.9 Msun'); the same value is quoted by Motta et al. (2022), Sections 4 and 5
+- [x] `frequencies`: lower = {'value': 128.6, 'err_minus': 1.8, 'err_plus': 1.6, 'unit': 'Hz', 'source': 'motta2022', 'location': "Table 2, block 'Triplet', row 'Lower HFQPO', column 'Frequency [Hz]'"}, upper = {'value': 227.5, 'err_minus': 2.4, 'err_plus': 2.1, 'unit': 'Hz', 'source': 'motta2022', 'location': "Table 2, block 'Triplet', row 'Upper HFQPO', column 'Frequency [Hz]'"}. Source: not recorded in the entry (see the location and the references below). Location: (no location)
+- [x] `frequencies.upper`: value = 227.5, err_minus = 2.4, err_plus = 2.1 [Hz]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Table 2, block 'Triplet', row 'Upper HFQPO', column 'Frequency [Hz]'
+- [x] `frequencies.lower`: value = 128.6, err_minus = 1.8, err_plus = 1.6 [Hz]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Table 2, block 'Triplet', row 'Lower HFQPO', column 'Frequency [Hz]'
+- [x] `frequencies.low`: value = 3.65, err_minus = 0.01, err_plus = 0.01 [Hz]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Table 2, block 'Triplet', row 'Type-C', column 'Frequency [Hz]'
+- [x] `spin`: value = 0.149, err_minus = 0.005, err_plus = 0.005. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Abstract, Sec. 3 ('a BH spin a* = 0.149 +- 0.005') and Table 3
+- [x] `published_fit.mass`: value = 7.85, err_minus = 0.46, err_plus = 0.46 [Msun]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Abstract, Sec. 3 ('a BH mass M = (7.85 +- 0.46) Msun') and Table 3
+- [x] `published_fit.radius`: value = 6.85, err_minus = 0.18, err_plus = 0.18 [G M / c^2]. Source: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376). Location: Sec. 3 ('a QPO emission radius R_QPO = (6.85 +- 0.18) Rg') and Table 3
+- [x] `mass_prior`: value = 7.8, err_minus = 1.9, err_plus = 1.9 [Msun]. Source: Yanes-Rizo, Torres, Casares, Motta, et al. (2022), MNRAS 517, 1476 (doi:10.1093/mnras/stac2719, arXiv:2209.10395). Location: Abstract ('we obtained an updated black hole mass of M_1 = 7.8 +- 1.9 Msun'); the same value is quoted by Motta et al. (2022), Sections 4 and 5
 
 References (check the bibliographic details too):
 
-- [ ] `motta2022`: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376)
-- [ ] `yanesrizo2022`: Yanes-Rizo, Torres, Casares, Motta, et al. (2022), MNRAS 517, 1476 (doi:10.1093/mnras/stac2719, arXiv:2209.10395)
+- [x] `motta2022`: Motta, Belloni, Stella, Pappas, et al. (2022), MNRAS 517, 1469 (doi:10.1093/mnras/stac2142, arXiv:2209.10376)
+- [x] `yanesrizo2022`: Yanes-Rizo, Torres, Casares, Motta, et al. (2022), MNRAS 517, 1476 (doi:10.1093/mnras/stac2719, arXiv:2209.10395)
 
 TODO items of the file:
 
-- [ ] The dynamical mass was read from the abstract of Yanes-Rizo et al. (2022) only; confirm it in the body of the paper.
-- [ ] Human check of Table 2 of Motta et al. (2022) against the published MNRAS version.
-- [ ] Human check of the RPM results (abstract, Sec. 3, Table 3) against the published MNRAS version.
+- [x] The dynamical mass was read from the abstract of Yanes-Rizo et al. (2022) only; confirm it in the body of the paper.
+- [x] Human check of Table 2 of Motta et al. (2022) against the published MNRAS version.
+- [x] Human check of the RPM results (abstract, Sec. 3, Table 3) against the published MNRAS version.
 
 Open questions:
 
 - [ ] Published RPM uncertainties are about 2.7 times larger than error propagation gives. Motta et al. (2022; abstract, Sec. 3, Table 3) quote M = 7.85 +- 0.46 Msun, a = 0.149 +- 0.005, R = 6.85 +- 0.18 Rg and state that they follow Motta et al. (2014) at every step. Propagating the Table 2 frequency uncertainties through the same RPM equations (Monte Carlo with split-normal errors, and independently a BlackPy fit with flat priors) gives +- 0.175 Msun, +- 0.0018 and +- 0.067 Rg: smaller by factors 2.6, 2.8 and 2.7, nearly the same factor for all three quantities, while the central values agree. For GRO J1655-40 the same procedure reproduces the published uncertainties. The origin of the larger published errors is not known (see verification/v0.2.md, section 2.7, and examples/06_rpm_published_results.py). The frequencies in this file are unaffected; only the published_fit uncertainties are in question.
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/xte_j1859_226.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/qpo/xte_j1859_226.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
 
 ## 3. Formulas and sources not fully verified
 

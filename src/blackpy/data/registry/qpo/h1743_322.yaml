@@ -3,7 +3,7 @@ id: qpo/h1743_322
 object: H1743-322
 data_type: qpo_pair
 dataset_version: "1"
-verified_by_human: false
+verified_by_human: true
 description: >
   Two high-frequency QPOs in the second part of one RXTE/PCA observation of the 2003
   outburst (5.8-20.9 keV); the lower peak was fitted with its Q value fixed to 6.
@@ -33,6 +33,14 @@ mass_prior:
   independent: null
   source: null
   location: ""
+  note: >
+    The only mass estimate found (by the owner, 2026-11-19; confirmed in the arXiv text
+    by Claude) is QPO-based: remillard2006, Sec. IV (Discussion): 'If the black hole in
+    H1743-322 has a similar value of a* as the other BHBs, then the HFQPOs (with
+    nu_0 ~ 81 Hz) suggests: M_x = 931/nu_0 ~ 11.5 Msun', from an empirical
+    frequency-mass relation fitted to three sources. It is derived from the same
+    HFQPOs, assumes the spin, and has no uncertainty, so it is not stored as a prior:
+    used in a QPO fit of this source it would be circular.
 intended_models: [RP, ER]
 alternatives:
   - description: >
@@ -57,7 +65,8 @@ source_access: "full text read from the ar5iv HTML rendering of the arXiv versio
 notes: >
   H1743-322 has no dynamically measured black hole mass in the sources accessed, so the
   mass prior is null and the dataset cannot be used in a fit unless the user supplies an
-  explicit mass prior.
+  explicit mass prior. The QPO-scaling estimate of about 11.5 Msun (remillard2006, Sec. IV)
+  is not independent of QPO modelling and has no uncertainty (see mass_prior.note).
 bibliography_check: "Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14."
 todo:
-  - "Mass prior: null. Find an independent mass estimate (and record whether it relies on QPO or jet modelling), or keep the source out of joint fits."
+  - "Mass prior: null. No independent mass estimate was found (searched by the owner, 2026-11-19); the only estimate, about 11.5 Msun from QPO scaling (remillard2006, Sec. IV), is not independent. Keep the source out of joint fits unless an independent mass appears; a user fit needs an explicit prior on M_h1743_322."

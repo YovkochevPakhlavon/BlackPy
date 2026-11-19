@@ -3,7 +3,7 @@ id: qpo/grs_1915_105
 object: GRS 1915+105
 data_type: qpo_pair
 dataset_version: "1"
-verified_by_human: false
+verified_by_human: true
 description: >
   Simultaneous 41 Hz and 67 Hz QPOs discovered in archival RXTE data (13-27 keV band);
   Gaussian centroid frequencies.
@@ -74,4 +74,4 @@ notes: >
   the 113/168 Hz pair instead; that pair is listed under 'alternatives' with null
   uncertainties because its original source could not be accessed. Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
 todo:
-  - "Remillard (2004) was read (2026-11-19): it prints 113 and 168 Hz only as figure labels, without uncertainties, from different variability classes. Uncertainties for the 113/168 Hz pair would need the original analysis (Remillard et al. 2002, ApJ 580, 1030, or Remillard et al. 2003, BAAS 35, 648, refs. [28] and [29] of Remillard 2004), not accessed."
+  - "Remillard (2004) was read (2026-11-19): it prints 113 and 168 Hz only as figure labels, without uncertainties, from different variability classes. Remillard et al. (2002, ApJ 580, 1030, ref. [28]; journal version read 2026-11-19) treat XTE J1550-564 and GRO J1655-40 only and mention GRS 1915+105 only for the 40/67 Hz pair. The remaining candidate is Remillard et al. (2003, BAAS 35, 648, ref. [29]), a meeting abstract, not accessed."
