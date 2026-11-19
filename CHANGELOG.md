@@ -6,7 +6,35 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0rc1] - 2026-11-19
+
+Release candidate of 1.0: a stabilisation release with no new physics. The public
+API is frozen and documented, the package builds, installs from a wheel and passes
+its tests against the declared minimum dependency versions, and a user guide shows
+every calculation and plot with tested outputs.
+
+### Compatibility
+
+From 1.0 on BlackPy follows semantic versioning. The **public API** is the set of
+names in `__all__` of `blackpy`, of its sub-packages and public modules, and
+`blackpy.errors` (listed in `docs/api.md`). Within 1.x no public name is removed and
+no documented behaviour changes without a deprecation period of at least one minor
+release, during which the old name emits a `DeprecationWarning` naming its
+replacement; removals happen only in 2.0. Result bundles written by 0.x load in 1.x
+(format 0) and bundles carry a format number from now on. Numerical results may
+change in the last digits between releases (dependency updates, round-off) but not
+beyond the tolerances of the test-suite. Registry values are not part of this
+promise: they change, with a new `dataset_version`, whenever a human check finds an
+error.
+
+The only breaking rename, `inclination` → `inclination_deg`, keeps the old name
+working throughout 1.x (see "Deprecated").
+
 ### Added
+- `scripts/check_windows.ps1`: one command that installs BlackPy and runs the
+  linter, the tests, the documentation build and optionally the examples on
+  Windows, with a short `SUMMARY.txt` (`-ExamplesQuick` runs the examples in quick
+  mode).
 - Public-API snapshot test (`tests/test_public_api.py`) and a written deprecation
   policy (`CONTRIBUTING.md`): within 1.x no public name disappears without a
   deprecation period.
@@ -28,7 +56,9 @@ All notable changes to this project are documented here. The format follows
   `blackpy.plot.forecast` (Fisher-forecast ellipses, alone or on a corner plot);
   examples 13 to 15 use them (example 13 writes `forecast_vs_fit.png`).
 - Packaging: wheel and minimum-dependency CI jobs, weekly examples job, GitHub Pages
-  and PyPI release workflows (trusted publishing); `build` and `twine` in the `dev`
+  and PyPI release workflows (trusted publishing); the full suite moved from `ci.yml`
+  to its own workflow `full.yml`, run on manual dispatch (it timed out after 60 min
+  as a CI job); `build` and `twine` in the `dev`
   extra; examples honour `BLACKPY_EXAMPLES_QUICK=1`; `check_windows.ps1 -ExamplesQuick`.
 - `scripts/registry_checklist.py` lists every registry number with its paper and
   location, for human verification.
@@ -48,6 +78,15 @@ All notable changes to this project are documented here. The format follows
   documentation (roadmap page).
 - The M87\* registry entry states `unit: deg` on its alternative inclination value
   (no number changed).
+- Documentation reorganised for 1.0: `docs/quickstart.md` is "BlackPy in five
+  minutes"; the README and the home page start from the user guide; "What version
+  0.3 covers" became "What BlackPy covers" and the list of missing features moved to
+  `docs/roadmap.md`; the release history of the registry moved from `docs/data.md`
+  to this changelog, and the data page has a step-by-step guide for your own data;
+  `docs/theory.md` has a topic index (section numbers unchanged; section 25 is now
+  "Further catalogue metrics").
+- The verification reports moved to `verification/` (`v0.1.md` to `v1.0.md`).
+- Trove classifier `Development Status :: 4 - Beta`; Python 3.10 to 3.13 listed.
 
 ### Deprecated
 - The parameter names `inclination` and `inclination_<source>` (in `priors`, `fixed`,
@@ -70,11 +109,12 @@ removed in 2.0.
   line endings: a registry file checked out with CRLF on Windows has the same hash
   as on Linux and macOS (`blackpy.data.registry.file_hash`). Hashes of files with
   LF line endings are unchanged. `.gitattributes` keeps text files in LF.
-
-### Added
-- `scripts/check_windows.ps1`: one command that installs BlackPy and runs the
-  linter, the tests, the documentation build and optionally the examples on
-  Windows, with a short `SUMMARY.txt`.
+- LaTeX labels of per-source parameters escape underscores in object names
+  (`M_{\rm src\_a}`), so corner plots of sources such as `src_a` render correctly.
+- Three tests no longer depend on details of NumPy >= 2.0 (`np.trapezoid`), SciPy >=
+  1.15 (CODATA 2022 table) or on round-off at the exact photon-orbit radius r = 3 M,
+  where the sign of the existence condition differs between JAX versions; they now
+  pass with the declared minimum versions.
 
 ## [0.3.0] - 2026-11-17
 

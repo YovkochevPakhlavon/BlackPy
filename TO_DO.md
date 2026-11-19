@@ -439,7 +439,8 @@ current report in `verification/`.
 - [ ] **Push** this session's commits: `git push origin main` (Claude never
   pushes). Done when GitHub shows the commit "Version 1.0.0rc1".
 - [ ] **Watch CI** (Actions tab, workflow "CI"): jobs `lint`, `quick` (Linux,
-  macOS, Windows; Python 3.10–3.13), `full`, `docs`, `wheel`, `min-deps`. The
+  macOS, Windows; Python 3.10–3.13), `docs`, `wheel`, `min-deps`. The full suite
+  is a separate, manually started workflow (below). The
   workflows have never run on GitHub.
   - `min-deps` fails: open the log; if a dependency resolution fails, compare with
     `.github/min-requirements.txt` (tested locally on Python 3.10.20, macOS
@@ -452,6 +453,17 @@ current report in `verification/`.
     by round-off between platforms. Round that snippet's print further (in
     `docs/user_guide.md`), then `.venv/bin/python scripts/update_doc_outputs.py
     docs/user_guide.md` and commit.
+- [ ] **Run the full suite once** by hand: Actions → "Full test suite" → Run
+  workflow (`.github/workflows/full.yml`; manual only, timeout 180 min, because
+  the former `full` job of `ci.yml` timed out after 60 min on GitHub). Done when
+  it passes; locally it takes about 20 minutes with four workers.
+- [ ] **Enable the weekly full run when the repository becomes public**: in
+  `.github/workflows/full.yml` uncomment the `schedule:` block (two lines).
+- [ ] **macOS runners were not available** on the private repository's last CI
+  run. If the `quick` jobs on `macos-latest` stay queued, remove `macos-latest`
+  from the `os:` matrix in `.github/workflows/ci.yml` (macOS is covered by the
+  local runs in `verification/v1.0.md`) and put it back once runners are
+  available or the repository is public.
 - [ ] **Run the examples workflow once** by hand (Actions → "Examples" → Run
   workflow); it also runs weekly. Done when all 15 pass.
 - [ ] **On the Windows laptop, re-run the check on the final code with a fresh

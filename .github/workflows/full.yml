@@ -1,0 +1,31 @@
+name: Full test suite
+
+# The full suite (slow tests included: sampler runs, symbolic 4D tensors, coverage
+# and false-alarm studies) takes about 20 minutes on four cores locally and timed out
+# after 60 minutes in the former "full" job of ci.yml on GitHub's runners. It runs only
+# on manual dispatch for now (Actions -> "Full test suite" -> Run workflow), so that it
+# does not use the minutes of the private repository every week.
+on:
+  workflow_dispatch:
+  # Enable when the repository becomes public (TO_DO.md, section 4):
+  # schedule:
+  #   - cron: "23 3 * * 0"   # weekly, Sunday 03:23 UTC
+
+env:
+  MPLBACKEND: Agg
+
+jobs:
+  full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Full tests
+        run: python -m pytest -n auto --dist loadfile -q --durations=20

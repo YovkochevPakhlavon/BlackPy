@@ -10,6 +10,7 @@ the roadmap. Conventions that every contributor must follow are in
 src/blackpy/
   constants.py        CODATA / IAU constants, Hz conversion
   _numerics.py        derivatives, root finding, quadrature (the shared toolbox)
+  _deprecation.py     deprecation warnings and aliases (v1.0); _links.py: documentation URLs
   errors.py           exceptions and warning classes
   metric/             base.py (Metric, StaticSpherical), axisymmetric.py
                       (StationaryAxisymmetric), rotating.py (Azreg-Ainou generator),
@@ -29,7 +30,8 @@ src/blackpy/
   data/               schema, loader, registry/*.yaml
   infer/              priors, likelihood, Fit (emcee/dynesty), results,
                       quality.py (fit quality), forecast.py (Fisher) (v0.3)
-  plot/               profiles, corner, LaTeX tables
+  plot/               profiles, shadows, corner, residuals, LaTeX tables, predictions
+                      (deflection, disk flux, forecast ellipses; v1.0)
   qnm.py, thermo.py   stubs
 ```
 
@@ -226,7 +228,8 @@ each other.
 - Should metric parameter bounds optionally restrict to the black hole range?
   (For rotating metrics the likelihood now does this through the declared
   domain; observables still do not.)
-- Repository URL for `pyproject.toml` and `CITATION.cff` (currently a placeholder).
+- Repository URL: set in 1.0 to `https://github.com/YovkochevPakhlavon/BlackPy`
+  (`pyproject.toml`, `CITATION.cff`, `mkdocs.yml`); to be confirmed (`TO_DO.md`).
 - GRO J1655-40 spin: the registry stores 0.290 (abstract and text of Motta et
   al. 2014) although their Table 3 and the exact solution give 0.286. Keep
   the text value, or store the table value?
@@ -235,90 +238,42 @@ each other.
 - Should the rotating entries be merged into `CATALOGUE` in a later major
   version?
 
-## 6. Roadmap (interfaces reserved)
+## 6. Roadmap
 
-**Guiding principle (since v0.3).** BlackPy is "metric in, constraints out".
-A feature is scheduled if it feeds a likelihood, makes a fit more
-trustworthy, or widens the set of metrics that can be fitted.
+Moved to the public documentation in 1.0: [`docs/roadmap.md`](docs/roadmap.md)
+(error messages of stubs point to its hosted version). Guiding principle,
+unchanged since v0.3: BlackPy is "metric in, constraints out"; a feature is
+scheduled if it feeds a likelihood, makes a fit more trustworthy, or widens the
+set of metrics that can be fitted.
 
-| Feature | Reserved interface | Status |
-|---|---|---|
-| Original Newman-Janis algorithm | `metric.future.newman_janis` (use `rotating_from_static`) | not planned: the Azreg-Ainou version covers it |
-| Thermodynamics | `blackpy.thermo` (stubs) | **not scheduled**: there are no thermodynamic data, so nothing would feed a likelihood |
-| Quasinormal modes | `blackpy.qnm.quasinormal_modes` (stub) | **not scheduled**: without field equations only test-field modes can be computed, and these cannot be compared with ringdown observations for non-vacuum metrics |
-| S2 orbit data | new `data_type` in the registry schema; needs ODE integration | later |
-| Shadows of non-separable metrics | not planned inside BlackPy (ray tracing; Gradus.jl) | out of scope |
-| Continuum-fitting and iron-line likelihoods | none | out of scope: they need ray tracing of the disk image |
-| Event horizon when `g^rr = 0` depends on theta | solve `g^rr + g^thth (dH/dtheta)^2 = 0`; `horizon_profile` reports the case | later |
+## 7. Status at 1.0 (2026-11-19)
 
-The v0.2 version of this table also listed plasma, lensing and the RZ/KRZ
-parametrisations; all three were implemented in v0.3 (lensing for static
-metrics only).
+**Done.** The specification `BLACKPY_v1.0_PROMPT.md` (Parts A to F, including the
+optional Part D) is implemented and committed, one commit per part (`git log`).
+The code is labelled **1.0.0rc1**. Results, the wheel and minimum-version checks,
+the error-message audit and the known limitations are in `verification/v1.0.md`.
 
-All observable functions take the abstract `Metric` as first argument, so new
-metric classes can be added without changing the public API.
+- Public API frozen and snapshot-tested (decision 38); deprecated aliases warn.
+- One rule for angles; `inclination_deg` (decision 39). Versioned result bundles
+  (decision 40).
+- User guide with tested snippets (decision 41); the docs build strictly with
+  anchor validation.
+- Packaging: wheel and sdist build and pass `twine check`; the installed wheel
+  passes the quick subset; the declared minimum versions pass it on Python 3.10
+  (decision 42). CI, docs and release workflows are written but have **never run
+  on GitHub** (nothing is pushed by Claude).
 
-## 7. Status at the end of the v0.2 session (2026-11-15)
+**Left, all for the owner** (ordered checklist with commands: `TO_DO.md`):
+decisions to confirm (section 5 above and `TO_DO.md`, section 1), human
+verification of every registry value (all `verified_by_human: false`), pushing and
+watching CI, re-running the Windows check on the final code, GitHub Pages, PyPI
+trusted publishing, the 1.0.0 label, tag, release and Zenodo DOI.
 
-**Done** (each part committed separately; see `git log`):
+**History.** What each version added is in `CHANGELOG.md`; what was tested and
+read for each version is in `verification/` (`v0.1.md` to `v1.0.md`). The
+status sections of the v0.2 and v0.3 sessions were replaced by this one.
 
-- Part A: constants against `scipy.constants`; exact Bardeen/Hayward
-  critical values; coverage test with noisy data; event-horizon wording.
-- B1: `StationaryAxisymmetric`, Kerr, Kerr-Newman, Johannsen,
-  `rotating_from_static`.
-- B2: horizons, ergosurface, 4D curvature (numeric and symbolic), effective
-  source and energy conditions.
-- B3: equatorial orbits, both epicyclic frequencies, ISCO, nodal precession,
-  11 QPO models with rotation, analytic RPM solution.
-- B4: shadows for separable metrics, observer at infinity and ZAMO at finite
-  distance, shape observables.
-- B5: triplet likelihood, spin bounds, rotating shadow likelihood with
-  inclination, two new warnings, examples 05 to 08.
-- Documentation: `how_it_works.md`, `tutorial.md`, LaTeX theory for
-  rotation, `verification/v0.2.md`.
-
-**Left for later sessions:**
-
-- Human verification of every registry value (unchanged from v0.1).
-- CI has still never run (nothing is pushed): Linux and Windows untested.
-  The symbolic time limit has no hard interrupt on Windows.
-- A `plot` helper for shadow contours (done in v0.3: `blackpy.plot.shadow`).
-- The roadmap of the time listed "v0.3: plasma, lensing, QNMs,
-  thermodynamics". QNMs and thermodynamics were later removed from v0.3 on
-  purpose (section 6); see section 8 for the v0.3 status.
-
-## 8. Status at the end of the v0.3 work (2026-11-17)
-
-The whole specification `BLACKPY_v0.3_PROMPT.md` (Part A, B1 to B8) is
-implemented and committed, one commit per part or smaller (`git log`).
-Version 0.3.0. Results, tolerances, papers read and limitations are in
-`verification/v0.3.md`.
-
-**Not done, by decision:**
-
-- The optional gradient-based (NUTS) sampler of B5. The log-likelihood is
-  differentiable only in forward mode (the safeguarded Newton iteration is a
-  `while_loop`, which reverse-mode autodiff cannot traverse). A NUTS sampler
-  would need either gradients by `jax.jacfwd` (cost proportional to the
-  number of parameters, acceptable for the 3 to 6 parameters of typical
-  fits) or implicit differentiation of the root finders (`jax.custom_jvp`
-  on `refine_root` with the implicit-function theorem), which would also
-  enable reverse mode. The sampler itself (BlackJAX or NumPyro) would be an
-  optional extra `blackpy-gr[nuts]`, imported lazily; every integrity guard
-  works on samples and would apply unchanged. Not attempted because it adds
-  a dependency and the specification says to skip it in case of doubt.
-- Lensing by rotating metrics (equatorial plane): "if time allows" in the
-  specification; not attempted.
-
-**Left for later sessions:**
-
-- Human verification of every registry value (all `verified_by_human:
-  false`), including the new M87\* and Sgr A\* entries.
-- CI has never run (nothing is pushed); Linux and Windows are untested.
-- Open questions recorded in the registry files and in `verification/v0.3.md`
-  (section 7).
-
-## 9. Decisions added in v0.3
+## 8. Decisions added in v0.3
 
 31. **Degrees of freedom** = fitted Gaussian data + informative Gaussian
     priors - free parameters (theory section 18). Interval likelihoods and
@@ -343,7 +298,7 @@ Version 0.3.0. Results, tolerances, papers read and limitations are in
     paper's `a`) so that `rotating_from_static` can add a spin; the
     power-law plasma index is `k` (Bardeen already has `q`).
 
-## 10. Decisions added in v1.0
+## 9. Decisions added in v1.0
 
 38. **Public API and deprecation policy.** The public API is the set of
     names in `__all__` of `blackpy` and of its sub-packages and public
@@ -378,3 +333,31 @@ Version 0.3.0. Results, tolerances, papers read and limitations are in
     0.3) and are upgraded on loading (inclination columns renamed); a newer
     format is refused with the BlackPy version that wrote it. Fixtures of
     both formats (`tests/data/`) guard loading for all of 1.x.
+41. **Documentation snippets are tests.** `tests/test_docs.py` executes the
+    Python blocks of the README, the quickstart, the data page and the user
+    guide in order (one namespace per page) and compares what they print with
+    the "Output" block that follows. Exceptions to exact comparison, both
+    explicit in the page: "Output (sampler)" blocks are compared with a tolerance
+    of 0.05 on numbers (Monte Carlo chains can differ in the last digits between
+    platforms), and "Output (registry data)" blocks are run but not compared,
+    because tests must not depend on unverified registry values. Warnings are
+    part of the contract: a `# warns:` comment lists the BlackPy warnings a block
+    emits, and the set must match. Outputs and figures are regenerated from the
+    snippets themselves (`scripts/update_doc_outputs.py`, `docs/make_figures.py`).
+    The user-guide test is slow (samplers, about two minutes); the others are quick.
+42. **Dependency bounds.** The lower bounds of `pyproject.toml` (jax 0.4.30,
+    numpy 1.24, scipy 1.10, sympy 1.12, matplotlib 3.7, corner 2.2, pyyaml 6.0,
+    emcee 3.1, dynesty 2.1) were installed together on Python 3.10 and pass the
+    quick subset; they are pinned in `.github/min-requirements.txt` for the
+    `min-deps` CI job. Lower versions were not explored. JAX 0.6.2 is the last
+    release for Python 3.10 (JAX >= 0.7.0 requires Python >= 3.11, from the PyPI
+    metadata), so 3.10 users run JAX <= 0.6.2. No upper bounds: they would block
+    users' security updates, and CI on the latest versions catches breakage.
+43. **`build` and `twine` in the `dev` extra** (development tools, not runtime
+    dependencies): they build the sdist and wheel and check their metadata,
+    locally and in CI. They are not installed by `pip install blackpy-gr`.
+44. **Examples in quick mode.** `BLACKPY_EXAMPLES_QUICK=1` divides the sampler
+    steps and predictive draws by ten (at least 200) and uses 100 dynesty live
+    points, so that a weekly CI job can run every example; unset, every example
+    is unchanged. One assertion (example 13, forecast versus sampler) is skipped
+    in quick mode because the short chain is too noisy for it.

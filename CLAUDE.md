@@ -20,7 +20,7 @@ Read `DESIGN_NOTES.md` for the reasoning behind the decisions listed here.
 | Dependencies | numpy, scipy, matplotlib, corner, pyyaml, emcee, dynesty, jax, sympy. Anything else must be justified in `DESIGN_NOTES.md` |
 | Tooling | pyproject.toml (hatchling), pytest, ruff, GitHub Actions CI, MkDocs |
 | Language | English everywhere (code, comments, docs, commits) |
-| Version | 0.3.0 (single source: `src/blackpy/_version.py`) |
+| Version | 1.0.0rc1 (single source: `src/blackpy/_version.py`); the owner sets 1.0.0 |
 
 ## Design principle: "symbolic in, numeric core"
 
@@ -110,6 +110,27 @@ safeguarded-Newton root finding, Gauss-Legendre quadrature.
 - Every catalogue metric is one file with its reference and at least one test.
 - `ruff check` and `ruff format --check` must pass (line length 100).
 
+## Public API and documentation (since 1.0)
+
+- **Public API** = the names in `__all__` of `blackpy`, its sub-packages and
+  public modules, plus `blackpy.errors`; everything else is private.
+  `tests/test_public_api.py` snapshots it. Semantic versioning: a public name
+  is removed or changes behaviour only in a major release, after at least one
+  minor release with a `DeprecationWarning` that names the replacement
+  (`blackpy._deprecation`). Adding names is allowed: update `__all__`, the
+  snapshot, `docs/api.md` and the user guide.
+- **Angles**: every angle in the public API is in radians; a quantity in
+  degrees has `_deg` in its name (the fit parameter `inclination_deg`).
+- **User-guide snippets are tested** (`tests/test_docs.py`): every Python block
+  of `docs/user_guide.md`, `docs/quickstart.md`, `docs/data.md` and `README.md`
+  runs, and its printed output must match the page. After a deliberate change,
+  regenerate with `scripts/update_doc_outputs.py` and `docs/make_figures.py`
+  and review the diff. Never weaken an integrity guard to quieten a snippet.
+- User-facing messages point to the public documentation (`blackpy._links`),
+  never to repository files (`DESIGN_NOTES.md`, `verification/`), which a
+  `pip install` does not contain.
+- Verification reports live in `verification/` (`v1.0.md` is the current one).
+
 ## Data-integrity rules (registry under `src/blackpy/data/registry/`)
 
 - **Never write a number from memory.** A value may enter a YAML file only
@@ -176,12 +197,15 @@ python3 -m venv .venv                      # once
 .venv/bin/python -m pytest -m "not slow"                         # without pytest-xdist
 .venv/bin/ruff check src tests examples && .venv/bin/ruff format --check src tests examples
 .venv/bin/python -m mkdocs build --strict  # documentation
+.venv/bin/python -m build && .venv/bin/twine check dist/*         # sdist and wheel
+.venv/bin/python scripts/update_doc_outputs.py docs/user_guide.md # refresh doc outputs
+.venv/bin/python docs/make_figures.py                            # refresh doc figures
 ```
 
 ## Workflow
 
-- Read `DESIGN_NOTES.md` section 8 first: it records what is done and what
-  is left.
+- Read `DESIGN_NOTES.md` section 7 ("Status at 1.0") first: it records what is
+  done and what is left; `TO_DO.md` is the owner's release checklist.
 - Build bottom-up: constants, metric, geometry, orbits, light, data, infer, plot.
 - Run the tests after each module; commit small, meaningful changes.
 - Never report a test as passing without having run it.

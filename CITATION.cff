@@ -5,10 +5,17 @@ type: software
 authors:
   - family-names: Yovqochev
     given-names: Pahlavon
-version: 0.3.0
-date-released: "2026-11-17"
+    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"   # TO_DO.md, section 5: add the author's ORCID
+version: 1.0.0rc1
+date-released: "2026-11-19"
 license: MIT
 repository-code: "https://github.com/YovkochevPakhlavon/BlackPy"
+url: "https://yovkochevpakhlavon.github.io/BlackPy/"
+# doi: "10.5281/zenodo.XXXXXXX"   # TO_DO.md, section 5: Zenodo DOI after the first GitHub release
+# identifiers:
+#   - type: doi
+#     value: "10.5281/zenodo.XXXXXXX"
+#     description: "Zenodo archive of this release"
 keywords:
   - general relativity
   - black holes
