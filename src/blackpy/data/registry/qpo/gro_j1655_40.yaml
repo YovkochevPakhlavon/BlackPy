@@ -45,7 +45,7 @@ spin:
     - value: 0.290
       err_minus: 0.003
       err_plus: 0.003
-      location: "Abstract, Sec. 4.1 ('a = 0.290 +- 0.003'), caption of Fig. 3 and Sec. 5"
+      location: "Abstract, Sec. 4.1 ('a = 0.290 +- 0.003'), legend of the spin panel of Fig. 3 ('Mean = 0.290'), caption of Fig. 4, Secs. 5 and 6"
       note: "Value quoted in the text; it differs from Table 3 of the same paper by more than its uncertainty and cannot be a rounding of 0.286."
 published_fit:
   mass:
@@ -61,7 +61,7 @@ published_fit:
       - value: 5.31
         err_minus: 0.07
         err_plus: 0.07
-        location: "Abstract, Sec. 4.1 ('M = (5.31 +- 0.07) Msun'), caption of Fig. 3 and Sec. 5"
+        location: "Abstract, Sec. 4.1 ('M = (5.31 +- 0.07) Msun'), legend of the mass panel of Fig. 3, caption of Fig. 4, Secs. 5 and 6"
         note: "Rounded form of the Table 3 value."
   radius:
     value: 5.677
@@ -76,7 +76,7 @@ published_fit:
       - value: 5.68
         err_minus: 0.04
         err_plus: 0.04
-        location: "Sec. 4.1 ('R = (5.68 +- 0.04) Rg')"
+        location: "Sec. 4.1 ('R = (5.68 +- 0.04) Rg') and legend of the radius panel of Fig. 3"
         note: "Rounded form of the Table 3 value."
       - value: 5.68
         err_minus: 0.03
@@ -104,11 +104,8 @@ references:
     doi: "10.1046/j.1365-8711.2002.05189.x"
     arxiv: "astro-ph/0109136"
     role: "independent (dynamical) black hole mass"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit (text values and Table 3): read again from the ar5iv HTML rendering of the arXiv version (arXiv:1309.3652) on 2026-11-15 by Claude for dataset version 3; the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit (text values and Table 3): read again from the ar5iv HTML rendering of the arXiv version (arXiv:1309.3652) on 2026-11-15 by Claude for dataset version 3; the journal version was not compared. Journal version (MNRAS 437, 2554-2565, PDF from academic.oup.com supplied by the owner) compared on 2026-11-19 by Claude: Table 2 (Sample B1: 17.3 +- 0.1, 298 +- 4, 441 +- 2 Hz), Table 3 (5.307 / 0.066, 0.286 / 0.003, 5.677 / 0.035) and the text values (abstract, Secs. 4.1, 5, 6; Figs. 3 and 4) agree with this file; only the locations of the text values were made more precise (Fig. 3 legends and Fig. 4 caption, not the caption of Fig. 3). The mass prior (beer2002) was checked by the owner"
 notes: >
   In the ar5iv rendering of Table 2 the three observations 10255-01-06-01, 10255-01-07-00
   and 10255-01-17-00 form Sample B1 and share one set of QPO parameters. The same three
   values are quoted by Stuchlik & Kolos (2016, A&A 586, A130, Eq. 2). Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
-todo:
-  - "Human check of Table 2 of Motta et al. (2014) against the published MNRAS version."
-  - "Human check of the RPM results (abstract, Sec. 4.1, Table 3) and of the 0.290 / 0.286 discrepancy against the published MNRAS version. Since dataset version 3 the Table 3 values are the main entries and the text values are stored under other_values."
