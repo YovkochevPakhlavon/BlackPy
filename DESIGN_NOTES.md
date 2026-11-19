@@ -223,13 +223,8 @@ each other.
 ## 5. Open questions for the maintainer
 
 Still open (they wait for papers to be read or authors to answer; see `TO_DO.md`).
-The questions the owner answered on 2026-11-19 are decisions 45 to 55 (section 9).
+The questions the owner answered on 2026-11-19 are decisions 45 to 56 (section 9).
 
-- Which QPO pair should be the default for XTE J1550-564? The current pair
-  (Miller et al. 2001: 268/188 Hz) stays the default until the source of the
-  276/184 Hz pair has been read (Remillard 2004 shows it only as figure labels
-  and refers to Remillard et al. 2002, ApJ 580, 1030). GRS 1915+105 is decided
-  (decision 54).
 - The factor 4 of the `bambi2019` definition of Delta C is empirical (it
   reproduces Fig. 1 of Bambi et al. 2019; their printed Eq. (5) does not). It
   stays labelled empirical until its origin is found (a later paper or the
@@ -400,3 +395,10 @@ status sections of the v0.2 and v0.3 sessions were replaced by this one.
     entry.** The journal version (MNRAS 437, 2554) was compared on 2026-11-19 and
     prints the same values as the arXiv version (Table 3: 0.286; text: 0.290);
     0.290 stays under `other_values`.
+56. **XTE J1550-564: the default QPO pair stays 268 ± 3 / 188 ± 3 Hz** (Miller et
+    al. 2001), the only pair found in an original source with independently fitted
+    frequencies and uncertainties. Remillard et al. (2002; journal and arXiv
+    versions) give only 'near 184 and 276 Hz' and harmonic-locked fits, and state
+    that no individual observation shows both HFQPOs; Remillard (2004) shows them
+    only as figure labels. The widely quoted 276 ± 3 / 184 ± 5 Hz was not found in
+    any original source and is not stored.

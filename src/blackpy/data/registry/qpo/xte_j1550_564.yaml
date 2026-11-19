@@ -21,7 +21,7 @@ frequencies:
     err_plus: 3.0
     unit: Hz
     source: miller2001
-    location: "Figure 4 caption ('The lower-frequency QPO: 188 +- 3 Hz'); also Section 3"
+    location: "Figure 4 caption ('The lower-frequency QPO: 188 +- 3 Hz'); also Section 3 (p. 5 of the arXiv version: 'We note evidence for a second fast QPO, at 188 +- 3 Hz')"
     note: "3.5 sigma single-trial detection."
 simultaneous: true
 mass_prior:
@@ -37,15 +37,21 @@ intended_models: [RP, ER]
 alternatives:
   - description: >
       Harmonic (3:2-locked) fits to averaged power spectra by Remillard et al. (2002),
-      Table 1: only one frequency is free per fit, so these are not independent pairs.
-      Group '1998-99 A': 281.7 (1.5) Hz with 187.8 Hz; '1998-99 B': 278.0 Hz with
-      185.3 (3.7) Hz; '2000 Apr 30-May 9': 270.3 (3.0) Hz with 180.22 Hz.
+      Table 1 of the journal version: only one frequency is free per fit (its 1 sigma
+      error in parentheses), so these are not independent pairs. Group '1998-99 A':
+      281.7 (1.5) Hz with 187.8 Hz; '1998-99 B': 277.7 Hz with 185.1 (3.5) Hz;
+      '1998 Sep 19': 187.4 (5.6) Hz only; '2000 Apr 30-May 9': 269.4 (2.7) Hz with
+      179.6 Hz (6-30 keV). The arXiv version (astro-ph/0202305), read earlier, prints
+      278.0 with 185.3 (3.7) Hz and 270.3 (3.0) with 180.22 Hz for the last two groups;
+      the journal values are the published ones and replace them.
     source: remillard2002
+    location: "remillard2002, Table 1 ('QPO Fit Parameters'), journal version (ApJ 580, 1035)"
   - description: >
-      The pair '276 +- 3 Hz, 184 +- 5 Hz' used in many QPO-fitting papers. The text of
-      Remillard et al. (2002) only says 'near 184 and 276 Hz'; the values with these
-      uncertainties were NOT found in any original source accessed, so they are not
-      recorded here.
+      The pair '276 +- 3 Hz, 184 +- 5 Hz' used in many QPO-fitting papers. Remillard et
+      al. (2002) say only 'near 184 and 276 Hz' (abstract, Sec. 3.3; the same in the
+      journal and arXiv versions) and Remillard (2004) shows the two only as figure
+      labels; the values with these uncertainties were NOT found in any original source
+      accessed, so they are not recorded here.
     upper: null
     lower: null
 references:
@@ -64,9 +70,9 @@ references:
     doi: "10.1088/0004-637X/730/2/75"
     arxiv: "1101.2499"
     role: "independent (dynamical) black hole mass"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared. On 2026-11-19: remillard2002 compared with its journal version (ApJ 580, 1030-1042, PDF supplied by the owner) by Claude, which changed the harmonic-fit values quoted under alternatives; miller2001 checked by the owner against the arXiv PDF (Sec. 3, p. 5), which Remillard et al. (2002, Sec. 3.2) quote as '268 +- 3 Hz (7.8 sigma) and 188 +- 3 Hz (3.5 sigma)'"
 notes: >
   Miller et al. (2001) state that the two QPOs are 'likely present simultaneously' but
   cannot exclude a single feature moving in frequency. Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
 todo:
-  - "Locate the original source of the widely used pair 276 +- 3 Hz / 184 +- 5 Hz (probably Remillard et al. 2002 figures or Remillard & McClintock 2006) and decide which pair should be the default. Remillard (2004, AIP Conf. Proc. 714, 13; read 2026-11-19) shows 184 and 276 Hz only as labels in Fig. 3 (panels 'XTE J1550 (type A)' and '(type B)'), without uncertainties, and refers to Remillard et al. (2002, ApJ 580, 1030) for the pairs; that paper was not accessed."
+  - "The original source of the widely used pair 276 +- 3 Hz / 184 +- 5 Hz was not found: Remillard et al. (2002; arXiv and journal versions) and Remillard (2004) give only 'near 184 and 276 Hz' or figure labels, and Remillard et al. (2002, Sec. 3.3) state that no individual observation shows both HFQPOs. Not checked: Remillard & McClintock (2006) tables and later QPO-fitting papers that quote the pair (they would be secondary sources). The default stays Miller et al. (2001): owner decision of 2026-11-19 (DESIGN_NOTES decision 56)."
