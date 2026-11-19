@@ -8,6 +8,7 @@ import numpy as np
 
 from blackpy import light
 from blackpy.data import ShadowDataset, load
+from blackpy.data.registry import warn_if_unverified
 from blackpy.light.rotating import (
     check_delta_c_definition,
     check_inclination_radians,
@@ -133,6 +134,7 @@ def shadow(
         dataset = load(band) if isinstance(band, str) else band
         if not isinstance(dataset, ShadowDataset):
             raise TypeError("band must be a ShadowDataset or the registry id of one.")
+        warn_if_unverified(dataset, "plot.shadow(band=...)")
         if band_level not in dataset.bounds or None in dataset.bounds[band_level]:
             raise ValueError(
                 f"Dataset '{dataset.id}' has no complete '{band_level}' bound. "

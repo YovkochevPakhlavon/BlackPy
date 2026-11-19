@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `UnverifiedDataWarning` is now also emitted outside fits whenever registry
+  values are used: `blackpy.lensing.strong_field_observables(dataset=...)`,
+  `blackpy.plot.shadow(band=...)` and `blackpy.infer.inclination_prior`
+  (helper `blackpy.data.registry.warn_if_unverified`).
+
+### Fixed
+- The tests accept registry files whose `verified_by_human` flag the owner has
+  set to `true`; documentation snippets may list `UnverifiedDataWarning` and no
+  longer emit it once their datasets are verified.
+
 ## [1.0.0rc1] - 2026-11-19
 
 Release candidate of 1.0: a stabilisation release with no new physics. The public

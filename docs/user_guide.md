@@ -728,10 +728,13 @@ print(round(bp.lensing.einstein_ring_angle(10.0, 4.0, 8.0), 3))
 ```
 
 With `dataset="eht/sgra"` (or `"eht/m87"`) the mass and distance come from
-the registry; `mass_prior=` chooses which mass. These are predictions, so
-no warning is emitted, but the registry values are still unverified:
+the registry; `mass_prior=` chooses which mass. These are predictions, but
+the numbers still come from the registry, so an unverified dataset emits
+`UnverifiedDataWarning`, as in fits (also `plot.shadow(band=...)` and
+`inclination_prior`):
 
 ```python
+# warns: UnverifiedDataWarning
 sgra_lens = bp.lensing.strong_field_observables(rn, dataset="eht/sgra", mass_prior="vlti", Q=0.5)
 print(round(float(sgra_lens.theta_infinity), 2), "microarcseconds")
 ```
@@ -1306,7 +1309,7 @@ when you publish.
 
 | Warning | Triggered when | What to do |
 |---|---|---|
-| `UnverifiedDataWarning` | a fit or a forecast uses registry data with `verified_by_human: false` (all of them, for now) | check the values against the papers before publishing (the registry records where each one is printed) |
+| `UnverifiedDataWarning` | a fit, a forecast, `strong_field_observables(dataset=...)`, `plot.shadow(band=...)` or `inclination_prior` uses registry data with `verified_by_human: false` (all of them, for now) | check the values against the papers before publishing (the registry records where each one is printed) |
 | `CircularInferenceWarning` | a mass prior is not independent of the data it is combined with: a QPO mass derived from QPO modelling, or a shadow mass derived from the same image (`shadow_mass_prior="eht_ring"`) | pass an independent prior (`priors={"M_<source>": ...}`, `shadow_mass_prior=` another key) or drop the source |
 | `PriorDominatedWarning` | the posterior of a metric parameter is indistinguishable from its prior (also in forecasts) | do not call the result a constraint; get more informative data or priors |
 | `ConvergenceWarning` | an emcee chain is shorter than 50 autocorrelation times | increase `nsteps` / `max_steps`, or use dynesty |

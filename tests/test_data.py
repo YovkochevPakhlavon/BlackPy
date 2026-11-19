@@ -205,3 +205,47 @@ def test_open_questions_are_loaded_and_listed(capsys):
     assert bp.data.load("qpo/gro_j1655_40").open_questions == ()
     bp.data.list()
     assert "OPEN QUESTION:" in capsys.readouterr().out
+
+
+def _registry_copy(dataset_id, verified):
+    """A registry dataset with its flag set explicitly (independent of the file's state)."""
+    raw = yaml.safe_load((bp.data.registry_path() / f"{dataset_id}.yaml").read_bytes())
+    return bp.data.parse_dataset({**raw, "verified_by_human": verified})
+
+
+def test_registry_readers_outside_fits_warn_about_unverified_data(schwarzschild):
+    """Lens masses, plotted bands and inclination priors warn like fits do."""
+    import math
+    import warnings
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from blackpy.errors import UnverifiedDataWarning
+    from blackpy.infer import inclination_prior
+
+    for verified in (False, True):
+        sgra = _registry_copy("eht/sgra", verified)
+        m87 = _registry_copy("eht/m87", verified)
+        calls = {
+            "strong_field_observables": (
+                lambda d: bp.lensing.strong_field_observables(
+                    schwarzschild, dataset=d, mass_prior="vlti"
+                ),
+                sgra,
+            ),
+            "plot.shadow": (lambda d: bp.plot.shadow(schwarzschild, math.pi / 2, band=d), sgra),
+            "inclination_prior": (inclination_prior, m87),
+        }
+        for name, (call, dataset) in calls.items():
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                call(dataset)
+            found = [w for w in caught if issubclass(w.category, UnverifiedDataWarning)]
+            assert len(found) == (0 if verified else 1), (name, verified)
+            if found:
+                assert "verified_by_human: false" in str(found[0].message)
+                assert found[0].filename == __file__, name  # points at the caller
+        plt.close("all")

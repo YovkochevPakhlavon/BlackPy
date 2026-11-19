@@ -182,7 +182,11 @@ class StrongFieldObservables(NamedTuple):
 
 
 def _lens(mass_msun, distance_kpc, dataset, mass_prior):
-    """Mass (solar masses) and distance (kpc), given directly or by a shadow dataset."""
+    """Mass (solar masses) and distance (kpc), given directly or by a shadow dataset.
+
+    Warns (``UnverifiedDataWarning``) when the dataset has not been verified by a human;
+    the warning points at the caller of :func:`strong_field_observables`.
+    """
     if dataset is None:
         if mass_msun is None or distance_kpc is None:
             raise TypeError(
@@ -191,6 +195,7 @@ def _lens(mass_msun, distance_kpc, dataset, mass_prior):
             )
         return float(mass_msun), float(distance_kpc)
     from blackpy.data import ShadowDataset, load
+    from blackpy.data.registry import warn_if_unverified
 
     data = load(dataset) if isinstance(dataset, str) else dataset
     if not isinstance(data, ShadowDataset) or data.distance is None or not data.mass_priors:
@@ -211,6 +216,7 @@ def _lens(mass_msun, distance_kpc, dataset, mass_prior):
             f"Unknown unit in '{data.id}': mass in '{prior.unit}', distance in '{distance.unit}'. "
             "Pass the lens as mass_msun=... and distance_kpc=... instead."
         )
+    warn_if_unverified(data, "strong_field_observables", stacklevel=4)
     return prior.value * units[prior.unit], distance.value * lengths[distance.unit]
 
 
@@ -242,9 +248,10 @@ def strong_field_observables(
     dataset : ShadowDataset or registry id, optional
         Take mass and distance from a shadow dataset instead (``"eht/sgra"``,
         ``"eht/m87"``); ``mass_prior`` selects which of its mass
-        measurements (default: the first one its shadow bound assumes). The
-        registry values are unverified by a human, and mass and distance of
-        such sources are correlated: only their ratio enters here.
+        measurements (default: the first one its shadow bound assumes). Mass
+        and distance of such sources are correlated: only their ratio enters
+        here. A dataset not yet verified by a human emits
+        :class:`~blackpy.errors.UnverifiedDataWarning`, as in fits.
     plasma, **params
         As in :func:`strong_deflection_limit`.
 

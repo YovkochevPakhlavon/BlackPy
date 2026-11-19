@@ -45,6 +45,7 @@ import numpy as np
 
 from blackpy._deprecation import warn_deprecated
 from blackpy.data import QPODataset, ShadowDataset, load
+from blackpy.data.registry import warn_if_unverified
 from blackpy.errors import (
     BlackPyError,
     CircularInferenceWarning,
@@ -976,6 +977,7 @@ def inclination_prior(dataset, *, low: float = 0.0, high: float = 90.0) -> Gauss
             f"Dataset '{dataset.id}' has no measured inclination with an uncertainty. Pass your "
             "own prior, e.g. Gaussian(mean, sigma, low=0, high=90) in degrees."
         )
+    warn_if_unverified(dataset, "inclination_prior", stacklevel=3)
     return Gaussian(measured.value, measured.sigma, low=low, high=high)
 
 

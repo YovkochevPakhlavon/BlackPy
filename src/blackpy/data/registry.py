@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import builtins
 import hashlib
+import warnings
 from importlib import resources
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,35 @@ _REQUIRED = (
     "verified_by_human",
     "references",
 )
+
+
+def warn_if_unverified(dataset: Dataset, use: str, stacklevel: int = 3) -> None:
+    """Emit :class:`~blackpy.errors.UnverifiedDataWarning` if ``dataset`` is unverified.
+
+    For functions outside the likelihood that take numbers from a registry
+    dataset (lens masses and distances, plotted bounds, inclination priors), so
+    that every use of unverified data is visible, as it is in fits.
+
+    Parameters
+    ----------
+    dataset : Dataset
+    use : str
+        What takes the values, for the message (e.g. ``"strong_field_observables"``).
+    stacklevel : int
+        Passed to :func:`warnings.warn`; 3 points at the caller of a public
+        function that calls this helper directly.
+    """
+    if dataset.verified_by_human:
+        return
+    from blackpy.errors import UnverifiedDataWarning
+
+    warnings.warn(
+        f"Dataset '{dataset.id}' has not been verified by a human against its source "
+        f"(verified_by_human: false); {use} uses its values. Check them before publishing "
+        "results.",
+        UnverifiedDataWarning,
+        stacklevel=stacklevel,
+    )
 
 
 def registry_path() -> Path:

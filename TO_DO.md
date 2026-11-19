@@ -90,9 +90,9 @@ These would be breaking changes; recorded here as **decisions for 2.0**:
 - [ ] **Positional `r_obs`** in `shadow_contour`, `shadow_observables`,
   `shadow_angular_radius`, but keyword-only in `plot.shadow`. **2.0: make it
   keyword-only everywhere.**
-- [ ] **`strong_field_observables(dataset=...)`** reads registry masses and
+- [x] **`strong_field_observables(dataset=...)`** reads registry masses and
   distances without an `UnverifiedDataWarning` (it is a prediction, not a fit).
-  **Recommendation: add the warning in 1.1** (adding a warning is not breaking).
+  **Recommendation: add the warning in 1.1** (adding a warning is not breaking). *Done before 1.0.0 (2026-11-19): it warns now, and so do `plot.shadow(band=...)` and `inclination_prior`.*
 - [ ] **Shadow `bounds` in the registry have no `source` field** (the source is
   named in the `location` text). **Add `source:` to the bounds in a future
   dataset version** (schema-compatible).
