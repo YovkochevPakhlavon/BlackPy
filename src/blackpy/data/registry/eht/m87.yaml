@@ -2,7 +2,7 @@ schema_version: 1
 id: eht/m87
 object: M87*
 data_type: shadow_bound
-dataset_version: "1"
+dataset_version: "2"
 verified_by_human: false
 description: >
   Bound on the shadow radius of M87* in units of its mass, from the EHT 2017 image. The
@@ -31,16 +31,16 @@ fractional_deviation:
 assumed_mass_priors: [stellar_dynamics]
 mass_priors:
   stellar_dynamics:
-    value: 6.14
-    err_minus: 0.62
-    err_plus: 1.07
+    value: 6.2
+    err_minus: 0.6
+    err_plus: 1.1
     unit: "1e9 Msun"
     method: "stellar dynamics (Gemini/NIFS spectroscopy, axisymmetric orbit models), rescaled by the EHT to a distance of 16.8 Mpc"
     independent: true
-    source: eht2019vi
-    location: "Table 9 (Appendix I), row 'Stellar dynamics, M': 6.14 +1.07 -0.62 x 1e9 Msun (median and 68% interval); also Table 7"
+    source: eht2019i
+    location: "eht2019i, Table 1, row 'M(stars)': 6.2 +1.1 -0.6 x 1e9 Msun (prior estimate, 'rederived from likelihood distributions (Paper VI)'); journal version (ApJL 875, L1), checked by the owner"
     note: "Independent of the EHT image. The EHT image favours this measurement over the gas-dynamical one."
-    preferred_reason: "The shadow bound needs the mass at the distance adopted for the image (16.8 Mpc); the EHT rederived it from the likelihood of the original paper. The original value is kept below."
+    preferred_reason: "The shadow bound needs the mass at the distance adopted for the image (16.8 Mpc); the EHT rederived it from the likelihood of the original paper. The owner chose the value printed in the journal version of Paper I (dataset version 2; Paper VI, Table 9, prints the same quantity with one more digit). The original measurement at 17.9 Mpc is kept below."
     other_values:
       - value: 6.6
         err_minus: 0.4
@@ -61,16 +61,16 @@ mass_priors:
       unit: ""
       location: "Sec. 9.5: delta = -0.01 +- 0.17 for the stellar-dynamics prior"
   gas_dynamics:
-    value: 3.45
-    err_minus: 0.26
-    err_plus: 0.85
+    value: 3.5
+    err_minus: 0.3
+    err_plus: 0.9
     unit: "1e9 Msun"
     method: "gas dynamics (HST/STIS emission-line kinematics of the nuclear gas disk, Keplerian thin-disk model), rescaled by the EHT to a distance of 16.8 Mpc"
     independent: true
-    source: eht2019vi
-    location: "Table 9 (Appendix I), row 'Gas dynamics, M': 3.45 +0.85 -0.26 x 1e9 Msun; also Table 7"
+    source: eht2019i
+    location: "eht2019i, Table 1, row 'M(gas)': 3.5 +0.9 -0.3 x 1e9 Msun (prior estimate, 'rederived from likelihood distributions (Paper VI)'); journal version (ApJL 875, L1), checked by the owner"
     note: "Independent of the EHT image, but in conflict with it: the EHT mass is 'inconsistent with the gas dynamics measurement ... at the ~99% confidence level' (eht2019vi, Sec. 9.2). Psaltis et al. (2020) give this prior negligible weight. With it the shadow is 78% larger than the Schwarzschild prediction."
-    preferred_reason: "As for stellar_dynamics: the value rederived by the EHT at 16.8 Mpc is used; the original is kept below."
+    preferred_reason: "As for stellar_dynamics: the value rederived by the EHT at 16.8 Mpc, as printed in the journal version of Paper I (dataset version 2), is used; the original is kept below."
     other_values:
       - value: 3.5
         err_minus: 0.7
@@ -196,7 +196,7 @@ references:
     doi: "10.3847/1538-4357/aaafcc"
     arxiv: "1802.06166"
     role: "jet viewing angle adopted by the EHT"
-source_access: "eht2019i and eht2019vi: text extracted from the arXiv PDFs (arxiv.org/pdf/1906.11238 and 1906.11243; no ar5iv rendering exists); all other references: ar5iv HTML renderings of the arXiv versions (ar5iv.labs.arxiv.org). Read by Claude on 2026-11-16. The journal versions were not compared. Titles, journals, volumes and article numbers of all references were confirmed with Crossref (api.crossref.org) on 2026-11-16."
+source_access: "eht2019i and eht2019vi: text extracted from the arXiv PDFs (arxiv.org/pdf/1906.11238 and 1906.11243; no ar5iv rendering exists); all other references: ar5iv HTML renderings of the arXiv versions (ar5iv.labs.arxiv.org). Read by Claude on 2026-11-16. Checked by the owner on 2026-11-19: eht2019i against the journal version (ApJL 875, L1, Table 1; the M87* masses of dataset version 2 are taken from it), every other value against the arXiv versions. Titles, journals, volumes and article numbers of all references were confirmed with Crossref (api.crossref.org) on 2026-11-16."
 notes: >
   Three caveats that a fit with this dataset inherits. (i) The measured quantity is the
   emission-ring diameter; the step to theta_g uses GRMHD simulations in the Kerr metric,
@@ -208,6 +208,4 @@ notes: >
   0.60'); the order was fixed by comparison with Table 1 of Paper I, where M(stars) is
   typeset as 6.2 (+1.1, -0.6).
 todo:
-  - "Human check of every number against the published ApJL versions, in particular the signs of the asymmetric uncertainties in Tables 7 and 9 of Paper VI (read from a PDF text extraction)."
   - "No 2-sigma bound on r_sh/M was found in the papers read; only the 68% interval is stored, so shadow_likelihood='interval' needs shadow_level='1sigma'."
-  - "The three distance papers combined by the EHT (Bird et al. 2010; Blakeslee et al. 2009; Cantiello et al. 2018) were not read."
