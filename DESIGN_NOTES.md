@@ -223,15 +223,13 @@ each other.
 ## 5. Open questions for the maintainer
 
 Still open (they wait for papers to be read or authors to answer; see `TO_DO.md`).
-The questions the owner answered on 2026-11-19 are decisions 45 to 53 (section 9).
+The questions the owner answered on 2026-11-19 are decisions 45 to 55 (section 9).
 
-- Which QPO pair should be the default for XTE J1550-564 and GRS 1915+105?
-  The current pairs (Miller et al. 2001: 268/188 Hz; Strohmayer 2001:
-  41.5/69.2 Hz) stay the defaults until Remillard (2004) and the source of the
-  276/184 Hz pair have been read.
-- GRO J1655-40 spin: keep the Table 3 value 0.286 as the main entry (0.290 of
-  the text stays under `other_values`), subject to the owner's check against the
-  published MNRAS version.
+- Which QPO pair should be the default for XTE J1550-564? The current pair
+  (Miller et al. 2001: 268/188 Hz) stays the default until the source of the
+  276/184 Hz pair has been read (Remillard 2004 shows it only as figure labels
+  and refers to Remillard et al. 2002, ApJ 580, 1030). GRS 1915+105 is decided
+  (decision 54).
 - The factor 4 of the `bambi2019` definition of Delta C is empirical (it
   reproduces Fig. 1 of Bambi et al. 2019; their printed Eq. (5) does not). It
   stays labelled empirical until its origin is found (a later paper or the
@@ -392,3 +390,13 @@ status sections of the v0.2 and v0.3 sessions were replaced by this one.
     (needs gradients through the root finders by implicit differentiation; see
     `docs/roadmap.md` and `verification/v0.3.md`, section 7); emcee and dynesty
     stay the required samplers.
+54. **GRS 1915+105: the default QPO pair stays 41.5 ± 0.4 / 69.2 ± 0.15 Hz**
+    (Strohmayer 2001), the only pair detected simultaneously and published with
+    uncertainties. Remillard (2004, AIP Conf. Proc. 714, 13) gives 113 and 168 Hz
+    only as figure labels, without uncertainties, from power spectra of
+    different variability classes; that pair stays under `alternatives`
+    (`simultaneous: false`) and is not usable in a likelihood as it is.
+55. **GRO J1655-40 spin: 0.286 (Table 3 of Motta et al. 2014) stays the main
+    entry.** The journal version (MNRAS 437, 2554) was compared on 2026-11-19 and
+    prints the same values as the arXiv version (Table 3: 0.286; text: 0.290);
+    0.290 stays under `other_values`.

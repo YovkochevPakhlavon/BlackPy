@@ -21,7 +21,7 @@ For each item: my recommendation in **bold**. Record the decision in
   Strohmayer 2001: 41.5/69.2 Hz); the widely used 276/184 and 168/113 Hz pairs
   were not found in an accessible original. **Keep the current defaults until the
   originals are read (section 2: Remillard 2004 and the 276/184 Hz source); then
-  decide.** Done when the YAML `todo` entries are closed.
+  decide.** Done when the YAML `todo` entries are closed. *GRS 1915+105 decided 2026-11-19 (DESIGN_NOTES decision 54: 41.5/69.2 Hz stays); XTE J1550-564 still open.*
 - [x] **Should unverified data become an error once the registry is checked?**
   Owner decision 4 keeps `UnverifiedDataWarning` for 1.0. **Keep the warning in
   1.x** (an error would be a breaking change); revisit for 2.0. *Decided 2026-11-19: DESIGN_NOTES decision 45.*
@@ -32,10 +32,10 @@ For each item: my recommendation in **bold**. Record the decision in
 - [x] **Repository URL.** Done: `https://github.com/YovkochevPakhlavon/BlackPy`
   is in `pyproject.toml`, `CITATION.cff` and `mkdocs.yml`. Confirm, then delete
   this item from section 5 of `DESIGN_NOTES.md`. *Decided 2026-11-19: DESIGN_NOTES decision 47.*
-- [ ] **GRO J1655-40 spin: 0.290 (text) or 0.286 (Table 3)?** Dataset version 3
+- [x] **GRO J1655-40 spin: 0.290 (text) or 0.286 (Table 3)?** Dataset version 3
   already stores the Table 3 value 0.286 as the main entry and keeps 0.290 under
   `other_values`. **Keep 0.286** (it is also the exact RPM solution); confirm
-  against the MNRAS version (section 2).
+  against the MNRAS version (section 2). *Decided 2026-11-19 after the comparison with the MNRAS version: DESIGN_NOTES decision 55.*
 - [x] **Delta C: Bambi et al. (2019) or Johannsen & Psaltis (2010)?** Since 0.3
   every use names its definition (`fractional_rms` default, `jp_asymmetry`,
   `bambi2019`). **Keep `fractional_rms` as default**: it is the only one fully
