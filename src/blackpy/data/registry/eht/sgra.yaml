@@ -49,7 +49,7 @@ mass_priors:
         err_minus: 0.064
         err_plus: 0.064
         source: do2019
-        location: "do2019, main text and Table 1: 'M_BH = (3.984 +- 0.058 +- 0.026) x 1e6 Msun and R_0 = 7,971 +- 59 +- 32 pc', for the fit with the redshift parameter free"
+        location: "do2019, main text and Table 1: 'M_BH = (3.984 +- 0.058 +- 0.026) x 1e6 Msun and R_0 = 7,971 +- 59 +- 32 pc', for the fit with the redshift parameter free. In Table 1 of the journal version (Science 365, 664, p. 3) 3.984 and 7.971 are the 'Maximum likelihood' column; the statistical (0.058, 0.059) and jackknife systematic (0.026, 0.032) uncertainties are columns five and six; the median ('Estimation') is 3.975 and 7.959"
         note: "Fit that does not assume general relativity; uncertainties added in quadrature by BlackPy."
     theta_g:
       value: 4.92
@@ -141,7 +141,7 @@ references:
     doi: "10.1051/0004-6361/202037813"
     arxiv: "2004.07187"
     role: "earlier VLTI mass and distance (the paper cited by Vagnozzi et al.)"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared. Mass priors, distance and per-prior deviations (dataset version 2): do2019, gravity2020, gravity2022, eht2022vi and vagnozzi2023 read from their ar5iv HTML renderings on 2026-11-16 by Claude; bibliographic data of do2019, gravity2020, gravity2022 and eht2022vi confirmed with Crossref on 2026-11-16; the journal versions were not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared. Mass priors, distance and per-prior deviations (dataset version 2): do2019, gravity2020, gravity2022, eht2022vi and vagnozzi2023 read from their ar5iv HTML renderings on 2026-11-16 by Claude; bibliographic data of do2019, gravity2020, gravity2022 and eht2022vi confirmed with Crossref on 2026-11-16. Checked by the owner on 2026-11-19: do2019, Table 1, against the journal version (Science 365, 664); the first pages of gravity2022 (A&A 657, L12; abstract: M = 4.30e6 Msun with a precision of about 0.25%) and gravity2020 (A&A 636, L5) against the journal versions; every other value against the arXiv versions. The journal versions of vagnozzi2023 and eht2022vi were not available"
 notes: >
   The arXiv text gives 4.55 <~ r_sh/M <~ 5.22 (1 sigma, Eq. 7) and 4.21 <~ r_sh/M <~ 5.56
   (2 sigma, Eq. 8). These differ in the last digit of the lower limits from the values
@@ -153,4 +153,3 @@ open_questions:
   - "Which Keck numbers are right? Do et al. (2019), as read from ar5iv, give M = 3.964 x 1e6 Msun and R_0 = 7946 pc for the fit that assumes general relativity, whereas EHT Sgr A* Paper VI (Sec. 2.1) quotes 3.951 x 1e6 Msun and 7935 pc for it, and Vagnozzi et al. (2023, Table 1) print 3.951 and 7.953 kpc. The differences (0.3% in mass) are far below the 6.5% uncertainty of the shadow bound, so the default likelihood is unaffected."
 todo:
   - "Human check of Eqs. (5)-(8) against the published CQG version (lower limits 4.55/4.21 vs 4.54/4.20)."
-  - "Human check of the mass priors and distances added in dataset version 2 against the published papers; the number of the GRAVITY (2020) orbit table in the journal version was not determined."

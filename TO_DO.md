@@ -197,9 +197,9 @@ How it was read: full text read from the ar5iv HTML rendering of the arXiv versi
 
 Values:
 
-- [ ] `bounds.1sigma`: lower = 4.55, upper = 5.22. Source: not recorded in the entry (see the location and the references below). Location: Eq. (7)
-- [ ] `bounds.2sigma`: lower = 4.21, upper = 5.56. Source: not recorded in the entry (see the location and the references below). Location: Eq. (8)
-- [ ] `fractional_deviation`: value = -0.06, err_minus = 0.065, err_plus = 0.065. Source: Vagnozzi, Roy, Tsai, Visinelli, et al. (2023), Class. Quantum Grav. 40, 165007 (doi:10.1088/1361-6382/acd97b, arXiv:2205.07787). Location: Eq. (5): delta ~ -0.060 +- 0.065, with r_sh/M = 3 sqrt(3) (delta + 1)
+- [x] `bounds.1sigma`: lower = 4.55, upper = 5.22. Source: not recorded in the entry (see the location and the references below). Location: Eq. (7)
+- [x] `bounds.2sigma`: lower = 4.21, upper = 5.56. Source: not recorded in the entry (see the location and the references below). Location: Eq. (8)
+- [x] `fractional_deviation`: value = -0.06, err_minus = 0.065, err_plus = 0.065. Source: Vagnozzi, Roy, Tsai, Visinelli, et al. (2023), Class. Quantum Grav. 40, 165007 (doi:10.1088/1361-6382/acd97b, arXiv:2205.07787). Location: Eq. (5): delta ~ -0.060 +- 0.065, with r_sh/M = 3 sqrt(3) (delta + 1)
 - [ ] `mass_priors.keck`: value = 3.964, err_minus = 0.054, err_plus = 0.054 [1e6 Msun]. Source: Do, Hees, Ghez, et al. (2019), Science 365, 664 (doi:10.1126/science.aav8137, arXiv:1907.10731). Location: Main text (results) and Supplementary text ('fit 2'): 'If we assume GR is true, then M_BH = (3.964 +- 0.047 +- 0.026) x 1e6 Msun and R_0 = 7,946 +- 50 +- 32 pc' (statistical, then systematic from a jackknife analysis)
 - [ ] `mass_priors.keck.other_values[0]`: value = 3.951, err_minus = 0.047, err_plus = 0.047. Source: Event Horizon Telescope Collaboration (2022), Astrophys. J. Lett. 930, L17 (Sgr A* Paper VI) (doi:10.3847/2041-8213/ac6756, arXiv:2311.09484). Location: eht2022vi, Sec. 2.1: 'M = (3.951 +- 0.047) x 1e6 Msun' with 'R_0 = (7935 +- 50) pc', attributed to the posterior of Do et al. (2019) that assumes general relativity; the same mass is in Table 1 of vagnozzi2023
 - [ ] `mass_priors.keck.other_values[1]`: value = 3.984, err_minus = 0.064, err_plus = 0.064. Source: Do, Hees, Ghez, et al. (2019), Science 365, 664 (doi:10.1126/science.aav8137, arXiv:1907.10731). Location: do2019, main text and Table 1: 'M_BH = (3.984 +- 0.058 +- 0.026) x 1e6 Msun and R_0 = 7,971 +- 59 +- 32 pc', for the fit with the redshift parameter free
@@ -223,7 +223,7 @@ References (check the bibliographic details too):
 TODO items of the file:
 
 - [ ] Human check of Eqs. (5)-(8) against the published CQG version (lower limits 4.55/4.21 vs 4.54/4.20).
-- [ ] Human check of the mass priors and distances added in dataset version 2 against the published papers; the number of the GRAVITY (2020) orbit table in the journal version was not determined.
+- [x] Human check of the mass priors and distances added in dataset version 2 against the published papers; the number of the GRAVITY (2020) orbit table in the journal version was not determined. *Done by the owner on 2026-11-19: do2019 Table 1 and the GRAVITY first pages against the journals, the rest against arXiv; removed from the file's `todo`.*
 
 Open questions:
 
