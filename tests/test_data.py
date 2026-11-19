@@ -33,8 +33,11 @@ def test_registry_contains_initial_targets():
 def test_every_dataset_loads_and_documents_its_sources(dataset_id):
     d = bp.data.load(dataset_id)
     assert d.id == dataset_id and len(d.sha256) == 64
-    # Rule: nothing is human-verified until the owner flips the flag by hand.
-    assert d.verified_by_human is False
+    # Rule: only the owner flips the flag, by hand, after checking the papers. The test
+    # accepts either state (it must not fail when the owner verifies a file); it checks
+    # that the flag is a real boolean and that the status shown to users agrees with it.
+    assert isinstance(d.verified_by_human, bool)
+    assert ("not human-verified" in d.status) is (not d.verified_by_human)
     assert d.references and d.source_access
     for ref in d.references.values():
         assert ref.citation
@@ -91,7 +94,12 @@ def test_list_prints_verification_status(capsys):
     datasets = bp.data.list()
     out = capsys.readouterr().out
     assert len(datasets) == len(EXPECTED)
-    assert "not human-verified" in out and "TODO" in out and "qpo/gro_j1655_40" in out
+    assert "human-verified" in out and "qpo/gro_j1655_40" in out
+    for d in datasets:
+        if d.todo:
+            assert "TODO" in out
+        if not d.verified_by_human:
+            assert "not human-verified" in out
 
 
 def test_dataset_hash_does_not_depend_on_line_endings(tmp_path):

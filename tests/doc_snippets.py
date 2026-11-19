@@ -18,7 +18,10 @@ Conventions in the documentation:
 * A line ``# warns: CategoryA, CategoryB`` in a block lists the BlackPy warnings the
   block emits; the set must match exactly. A block without it must emit none.
   Warnings that are not :class:`blackpy.errors.BlackPyWarning` (for example from
-  dependencies) are ignored.
+  dependencies) are ignored. One exception: ``UnverifiedDataWarning`` depends on the
+  ``verified_by_human`` flags that the owner sets by hand in the registry, so a block
+  that documents it may stop emitting it once its datasets are verified; a block that
+  emits it must still document it.
 """
 
 from __future__ import annotations
@@ -36,6 +39,8 @@ REGISTRY_OUTPUT_INFO = 'text title="Output (registry data)"'
 SAMPLER_OUTPUT_INFO = 'text title="Output (sampler)"'
 NUMBER = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
 SAMPLER_TOLERANCE = 0.05
+# Warnings that disappear when the owner verifies registry files (see the module docstring).
+DATA_DEPENDENT_WARNINGS = {"UnverifiedDataWarning"}
 
 
 @dataclass
@@ -128,7 +133,12 @@ def check(result: Result) -> list[str]:
     if result.error is not None:
         problems.append(f"{where}: raised {type(result.error).__name__}: {result.error}")
         return problems
-    if result.warned != result.snippet.warns:
+    optional = DATA_DEPENDENT_WARNINGS
+    documented = result.snippet.warns
+    same_warnings = result.warned - optional == documented - optional and (
+        result.warned & optional <= documented
+    )
+    if not same_warnings:
         problems.append(
             f"{where}: emits {sorted(result.warned)}, documented: {sorted(result.snippet.warns)}"
         )

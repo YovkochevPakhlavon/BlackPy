@@ -89,7 +89,7 @@ def test_registry_triplets_carry_published_spin():
         assert data.is_triplet and data.spin is not None and data.spin.is_complete
         assert data.spin.independent is False and data.spin.source in data.references
         assert "RPM" in data.published_fit["mass"].note and data.spin.location
-        assert set(data.published_fit) == {"mass", "radius"} and not data.verified_by_human
+        assert set(data.published_fit) == {"mass", "radius"}
     assert bp.data.load("qpo/xte_j1550_564").spin is None
 
 

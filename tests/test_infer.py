@@ -5,6 +5,7 @@ import warnings
 
 import numpy as np
 import pytest
+import yaml
 from scipy import integrate
 
 import blackpy as bp
@@ -231,10 +232,19 @@ def test_integrity_guards_on_registry_data(rn):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UnverifiedDataWarning)
             Fit(rn, "qpo/gro_j1655_40", "RP", {"Q": Uniform(0, 1)})
+    # The warning follows the flag of the dataset, whatever the owner has set in the
+    # registry file: an unverified copy warns, a verified copy does not.
+    raw = yaml.safe_load((bp.data.registry_path() / "qpo" / "gro_j1655_40.yaml").read_bytes())
+    unverified = bp.data.parse_dataset({**raw, "verified_by_human": False})
+    verified = bp.data.parse_dataset({**raw, "verified_by_human": True})
     with pytest.warns(UnverifiedDataWarning, match="verified_by_human"):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", IgnoredDataWarning)
-            Fit(rn, "qpo/gro_j1655_40", "RP", {"Q": Uniform(0, 1)})
+            Fit(rn, unverified, "RP", {"Q": Uniform(0, 1)})
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", IgnoredDataWarning)
+        warnings.simplefilter("error", UnverifiedDataWarning)
+        Fit(rn, verified, "RP", {"Q": Uniform(0, 1)})
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", BlackPyWarning)
         # A null mass in the registry is an explicit error with the remedy...

@@ -86,7 +86,8 @@ def ring(**changes):
 def test_m87_entry_documents_what_is_measured():
     """Schema and bookkeeping of eht/m87 (no numerical value is tested)."""
     m87 = bp.data.load("eht/m87")
-    assert isinstance(m87, ShadowDataset) and m87.verified_by_human is False and m87.is_complete
+    assert isinstance(m87, ShadowDataset) and m87.is_complete
+    assert isinstance(m87.verified_by_human, bool)  # set by the owner, by hand
     # The measured quantity is the ring, not the shadow, and the file says so.
     assert set(m87.measured) >= {"ring_diameter", "theta_g"}
     assert "not of the shadow" in m87.measured["ring_diameter"].note

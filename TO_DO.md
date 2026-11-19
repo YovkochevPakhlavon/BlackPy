@@ -137,7 +137,11 @@ Claude: when every value of a file is confirmed, edit the file and change
 wrong, correct it, update its `location`/`source_access`, and increase
 `dataset_version` by one. Then run the quick tests (they check schema and
 loading, not numbers) and commit with a message naming the paper versions you
-checked. `UnverifiedDataWarning` disappears for that dataset.
+checked. `UnverifiedDataWarning` disappears for that dataset. The tests accept
+either state of the flag (checked on a copy of the registry with every flag set
+to `true`), and documentation snippets that list `# warns: UnverifiedDataWarning`
+still pass when the warning disappears; once every dataset a snippet uses is
+verified, you may delete that word from its `# warns:` line.
 
 ### Dataset `eht/m87` (M87*, shadow_bound, dataset version 1)
 
