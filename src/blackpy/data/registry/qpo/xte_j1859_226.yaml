@@ -2,7 +2,7 @@ schema_version: 1
 id: qpo/xte_j1859_226
 object: XTE J1859+226
 data_type: qpo_triplet
-dataset_version: "3"
+dataset_version: "4"
 verified_by_human: false
 description: >
   QPO triplet in RXTE/PCA observation 40124-01-07-00 (1999-2000 outburst): type-C QPO and
@@ -15,6 +15,7 @@ frequencies:
     unit: Hz
     source: motta2022
     location: "Table 2, block 'Triplet', row 'Upper HFQPO', column 'Frequency [Hz]'"
+    note: "The weaker of the two HFQPOs: Table 2 gives 3.45 sigma for the upper and 4.25 sigma for the lower HFQPO, while the text of Sec. 3 states them the other way round (upper 4.25, lower 3.45 sigma); the journal and arXiv versions agree on this. The width of the upper HFQPO was constrained to < 20 Hz in the fit (Table 2 caption)."
   lower:
     value: 128.6
     err_minus: 1.8
@@ -62,11 +63,23 @@ mass_prior:
   err_minus: 1.9
   err_plus: 1.9
   unit: Msun
-  method: "dynamical: optical spectro-photometry in quiescence (GTC and WHT, 2017)"
+  method: "dynamical: GTC spectroscopy and WHT photometry in quiescence (2017); K2 from the radial-velocity curve combined with the K2-FWHM(H alpha) correlation, mass ratio and inclination from empirical H alpha profile correlations (Casares 2016; Casares et al. 2022), not from light-curve modelling"
   independent: true
   source: yanesrizo2022
-  location: "Abstract ('we obtained an updated black hole mass of M_1 = 7.8 +- 1.9 Msun'); the same value is quoted by Motta et al. (2022), Sections 4 and 5"
-  note: "Read from the arXiv abstract (arXiv API) only; the body of the paper was not read."
+  location: "Abstract, Sec. 4 (Eq. 6: 'M1 = 7.8 +- 1.9 ... at 1 sigma confidence level') and Sec. 5; the same value is quoted by Motta et al. (2022), Secs. 4 and 5"
+  note: "Independent of QPO modelling. The inclination (66.6 +- 4.3 deg) comes from an empirical H alpha trough-depth correlation because flickering prevented light-curve modelling (Sec. 3.3)."
+  preferred_reason: "The value the paper adopts (abstract, Secs. 4 and 5), from the combined K2 = 562 +- 40 km/s; the two other estimates of the same paper are kept below."
+  other_values:
+    - value: 7.4
+      err_minus: 2.5
+      err_plus: 2.5
+      location: "Sec. 4, footnote 6: with K2 from the radial-velocity curve alone"
+      note: "Same method with a less precise K2."
+    - value: 7.7
+      err_minus: 1.5
+      err_plus: 1.5
+      location: "Sec. 4, Eq. (7): from the H alpha double-peak width W and the orbital period (Casares et al. 2022), quoted with about 20 per cent uncertainty"
+      note: "Empirical scaling, not the dynamical solution of Eq. (6)."
 intended_models: [RP]
 references:
   motta2022:
@@ -79,14 +92,10 @@ references:
     doi: "10.1093/mnras/stac2719"
     arxiv: "2209.10395"
     role: "independent (dynamical) black hole mass"
-source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit: read from the ar5iv HTML rendering of the arXiv version on 2026-11-15 by Claude (re-read the same day for dataset version 3, which only adds open_questions); the journal version was not compared"
+source_access: "full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit: read from the ar5iv HTML rendering of the arXiv version on 2026-11-15 by Claude (re-read the same day for dataset version 3, which only adds open_questions); the journal version was not compared. On 2026-11-19 both papers were compared with their journal versions (MNRAS 517, 1469-1475 and 1476-1482; PDFs supplied by the owner) by Claude: Table 2 and Table 3 of motta2022 and the mass of yanesrizo2022 agree with this file; dataset version 4 adds the body-of-paper location of the dynamical mass, its two other estimates and a note on the HFQPO significances"
 notes: >
   The RPM mass obtained by Motta et al. (2022) themselves, M = 7.85 +- 0.46 Msun, is a
   Kerr QPO fit and must NOT be used as a mass prior (circular inference).
   Journal volume and page numbers of all references were checked against Crossref (api.crossref.org) on 2026-11-14.
 open_questions:
   - "Published RPM uncertainties are about 2.7 times larger than error propagation gives. Motta et al. (2022; abstract, Sec. 3, Table 3) quote M = 7.85 +- 0.46 Msun, a = 0.149 +- 0.005, R = 6.85 +- 0.18 Rg and state that they follow Motta et al. (2014) at every step. Propagating the Table 2 frequency uncertainties through the same RPM equations (Monte Carlo with split-normal errors, and independently a BlackPy fit with flat priors) gives +- 0.175 Msun, +- 0.0018 and +- 0.067 Rg: smaller by factors 2.6, 2.8 and 2.7, nearly the same factor for all three quantities, while the central values agree. For GRO J1655-40 the same procedure reproduces the published uncertainties. The origin of the larger published errors is not known (see verification/v0.2.md, section 2.7, and examples/06_rpm_published_results.py). The frequencies in this file are unaffected; only the published_fit uncertainties are in question."
-todo:
-  - "The dynamical mass was read from the abstract of Yanes-Rizo et al. (2022) only; confirm it in the body of the paper."
-  - "Human check of Table 2 of Motta et al. (2022) against the published MNRAS version."
-  - "Human check of the RPM results (abstract, Sec. 3, Table 3) against the published MNRAS version."
