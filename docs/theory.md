@@ -419,10 +419,20 @@ page does not give them (*not checked against a source*).
 **Bayes factors.** With nested sampling, \(\ln B_{10} = \ln Z_1 - \ln Z_0\)
 from two runs. With MCMC, the Savage–Dickey density ratio for a nested null
 \(\theta = \theta_0\) and factorising priors (Dickey 1971, Ann. Math. Stat.
-42, 204; Verdinelli & Wasserman 1995, J. Am. Stat. Assoc. 90, 614; *cited
-from memory, not yet checked against either paper*):
+42, 204; Verdinelli & Wasserman 1995, J. Am. Stat. Assoc. 90, 614):
 
 \[ B_{01} = \frac{p(\theta_0 \mid D)}{\pi(\theta_0)} . \]
+
+**Status: verified** (journal versions supplied by the owner, read
+2026-11-21). Dickey (1971), Sec. 3, Theorem "Savage's Density Ratio",
+Eqs. (3.8)–(3.9), p. 208: if the prior of the other parameters under the null
+equals the conditional prior of the full model at \(\theta = \theta_0\), the
+likelihood ratio of the null equals the ratio of posterior to prior density
+at \(\theta_0\). Verdinelli & Wasserman (1995), Sec. 2.1, Eq. (1), p. 615,
+state the same with \(B = m_0/m\) (Sec. 1), i.e. \(B_{01}\), and give the
+correction factor when the condition fails. In BlackPy the priors are
+specified parameter by parameter (they factorise) and the null fixes
+\(\theta\) without changing the other priors, so the condition holds.
 
 The posterior density is a Gaussian kernel estimate; if \(\theta_0\) is on a
 prior boundary the samples are reflected about it. If no samples reach
@@ -1088,10 +1098,14 @@ well and agrees within \(\sqrt{p(1-p)/J}\). The p-value of datum \(k\) is
 twice. In the discussion printed with Gelman et al. (1996), Rubin (p. 790)
 shows that \(p_b\) is "centered at .5 but less variable than a uniform
 random variable, and thus will have conservative operating characteristics".
-Meng (1994), Ann. Stat. 22, 1142 (abstract read; the body was not
-accessible) states that the Type I error of an \(\alpha\)-level posterior
-predictive test "is often close to but less than \(\alpha\) and will never
-exceed \(2\alpha\)". Two consequences are built in:
+Meng (1994), Ann. Stat. 22, 1142, states in the abstract that the Type I
+error of an \(\alpha\)-level posterior predictive test "is often close to but
+less than \(\alpha\) and will never exceed \(2\alpha\)". **Status: verified**
+against the journal version (JSTOR scan supplied by the owner, read
+2026-11-21): Sec. 5, Theorem 1 (p. 1156) and Lemma 1, Eqs. (5.4)–(5.6)
+(p. 1157), where the probability is taken under the prior predictive
+distribution (5.2), i.e. with the parameters drawn from their prior under
+the null. Two consequences are built in:
 
 - a value near 0.5 is *not* evidence of a good fit (with few degrees of
   freedom it is what one always gets; with none, the check is undefined);

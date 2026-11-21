@@ -222,13 +222,9 @@ each other.
 
 ## 5. Open questions for the maintainer
 
-Still open (they wait for papers to be read or authors to answer; see `TO_DO.md`).
-The questions the owner answered on 2026-11-19 are decisions 45 to 56 (section 9).
-
-- The factor 4 of the `bambi2019` definition of Delta C is empirical (it
-  reproduces Fig. 1 of Bambi et al. 2019; their printed Eq. (5) does not). It
-  stays labelled empirical until its origin is found (a later paper or the
-  authors); then theory section 17 is updated.
+None open. The questions the owner answered on 2026-11-19 are decisions 45 to
+56 and those of 2026-11-21 decision 57 (section 9). The factor 4 of the
+`bambi2019` definition of Delta C stays labelled empirical (decision 57).
 
 ## 6. Roadmap
 
@@ -256,9 +252,9 @@ the error-message audit and the known limitations are in `verification/v1.0.md`.
   on GitHub** (nothing is pushed by Claude).
 
 **Left, all for the owner** (ordered checklist with commands: `TO_DO.md`):
-decisions to confirm (section 5 above and `TO_DO.md`, section 1), the open
-items of `TO_DO.md`, section 3 (human verification of the registry is done: all
-eight datasets `verified_by_human: true`, 2026-11-19), pushing and
+the remaining open decisions of `TO_DO.md`, section 1 (every source item of
+section 3 was read or closed on 2026-11-21, decision 57; human verification of the registry is done: all eight
+datasets `verified_by_human: true`, 2026-11-19); pushing and
 watching CI, re-running the Windows check on the final code, GitHub Pages, PyPI
 trusted publishing, the 1.0.0 label, tag, release and Zenodo DOI.
 
@@ -403,3 +399,15 @@ status sections of the v0.2 and v0.3 sessions were replaced by this one.
     that no individual observation shows both HFQPOs; Remillard (2004) shows them
     only as figure labels. The widely quoted 276 ± 3 / 184 ± 5 Hz was not found in
     any original source and is not stored.
+57. **The remaining unread sources of `TO_DO.md`, section 3, are closed
+    without reading them** (2026-11-21). The papers that BlackPy's formulas
+    rest on were read on 2026-11-21 (verification/v1.0.md, section 10). Not
+    pursued: Garfinkle, Horowitz & Strominger (1991) (Gibbons & Maeda 1988
+    confirms the metric); the original QPO-model papers (every model was
+    checked against Table 1 of Stuchlík & Kološ 2016); Page & Thorne's
+    prefactor (fixed by the Newtonian limit and the Kerr closed form);
+    Novikov & Thorne (1973); Hawking & Ellis (1973); Bardeen (1973); Kerr
+    (1963), Newman et al. (1965) and Boyer & Lindquist (1967); RZ Fig. 1; and
+    the origin of the factor 4 of `bambi2019`, which stays labelled empirical
+    (the default Delta C is `fractional_rms`). The theory page keeps saying
+    which of these sources were not accessed.

@@ -52,11 +52,12 @@ posterior (their Eq. (9)).
 twice, to obtain the posterior and to be compared with it, so the p-value is
 "centered at .5 but less variable than a uniform random variable, and thus
 will have conservative operating characteristics" (Rubin 1996, comment on
-Gelman et al., Statistica Sinica 6, 787). Meng (1994, Ann. Stat. 22, 1142)
-shows that the frequency with which a posterior predictive p-value falls
-below :math:`\alpha` is "often close to but less than" :math:`\alpha` and
-never exceeds :math:`2\alpha` (when the true parameters are distributed as
-the prior). A value near 0.5 is therefore *not* evidence of a good fit when
+Gelman et al., Statistica Sinica 6, 787). Meng (1994, Ann. Stat. 22, 1142,
+Sec. 5, Lemma 1 and Eq. (5.6)) shows that the frequency with which a
+posterior predictive p-value falls below :math:`\alpha` is "often close to
+but less than" :math:`\alpha` and never exceeds :math:`2\alpha` (when the
+true parameters are distributed as the prior). A value near 0.5 is therefore
+*not* evidence of a good fit when
 there are few degrees of freedom; a small value is strong evidence of a bad
 one. The warning threshold :data:`POOR_FIT_P_VALUE` is 0.05: with a
 conservative p-value a stricter threshold would almost never fire, and the

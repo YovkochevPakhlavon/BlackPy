@@ -391,8 +391,9 @@ class FitResult:
 
         .. math:: B_{01} = \frac{p(\theta_0 \mid D)}{\pi(\theta_0)}
 
-        (Dickey 1971, Ann. Math. Stat. 42, 204; Verdinelli & Wasserman 1995,
-        J. Am. Stat. Assoc. 90, 614). The posterior density is estimated with
+        (Dickey 1971, Ann. Math. Stat. 42, 204, Sec. 3, Eqs. (3.8)-(3.9);
+        Verdinelli & Wasserman 1995, J. Am. Stat. Assoc. 90, 614, Sec. 2.1,
+        Eq. (1)). The posterior density is estimated with
         a Gaussian kernel density estimate of the samples (Silverman's
         rule-of-thumb bandwidth for a single parameter). If
         :math:`\theta_0` lies on a prior boundary the samples are reflected

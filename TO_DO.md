@@ -45,10 +45,12 @@ For each item: my recommendation in **bold**. Record the decision in
 
 ### From `verification/v0.3.md`, section 7
 
-- [ ] **The factor 4 of the `bambi2019` definition** is empirical (it reproduces
+- [x] **The factor 4 of the `bambi2019` definition** is empirical (it reproduces
   Fig. 1 of Bambi et al. 2019 to the accuracy of the figure; their printed
   Eq. (5) does not). **Keep it labelled empirical**; if you can, ask the authors
   or find the normalisation in a later paper, and update theory section 17.
+  *Decided 2026-11-21: stays labelled empirical, not pursued (the default
+  definition is `fractional_rms`); DESIGN_NOTES decision 57.*
 - [x] **Which M87\* mass prior should a published bound use?** The bound
   4.31–6.08 M exists only for the stellar-dynamics prior; the gas-dynamics mass
   gives delta = 0.78 ± 0.3 (2.6 sigma tension with any Schwarzschild-like
@@ -416,36 +418,49 @@ current report in `verification/`.
   Eq. (20). Their distances are angular-diameter distances; the code's
   D_LS = D_OS - D_OL is right only at Galactic and nearby-galaxy distances (now
   said in the docstring and on the theory page).*
-- [ ] **Factor 4 of `bambi2019`**: empirical, from the pixels of Fig. 1 of Bambi
+- [x] **Factor 4 of `bambi2019`**: empirical, from the pixels of Fig. 1 of Bambi
   et al. (2019).
-- [ ] **Page–Thorne prefactor** 3/(2M) of Eq. (15n): fixed by the Newtonian limit
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
+- [x] **Page–Thorne prefactor** 3/(2M) of Eq. (15n): fixed by the Newtonian limit
   because the "3" is unreadable in the scan of Page & Thorne (1974).
-- [ ] **Novikov & Thorne (1973)** (Les Houches): not accessed.
-- [ ] **Hawking & Ellis (1973)**, section 4.3 (classification of T, energy
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
+- [x] **Novikov & Thorne (1973)** (Les Houches): not accessed.
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
+- [x] **Hawking & Ellis (1973)**, section 4.3 (classification of T, energy
   conditions): not accessed; the classification follows Martín-Moruno & Visser
   (2018), which was read.
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
 - [x] **Gibbons & Maeda (1988)**: *read on 2026-11-21. Eqs. (4.15)-(4.19), D = 4,
   g_2 = 1, give BlackPy's GMGHS line element with m + b = M and b = Q^2/2
   (Gaussian charge); new test `test_gmghs_equals_gibbons_maeda`.*
-- [ ] **Garfinkle, Horowitz & Strominger (1991)**, Phys. Rev. D 43, 3140, and its
+- [x] **Garfinkle, Horowitz & Strominger (1991)**, Phys. Rev. D 43, 3140, and its
   erratum: not accessed (optional now that Gibbons & Maeda confirms the metric).
-- [ ] **Meng (1994)**, Ann. Stat. 22, 1142: abstract only (posterior predictive
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
+- [x] **Meng (1994)**, Ann. Stat. 22, 1142: abstract only (posterior predictive
   p-values are conservative).
+  *2026-11-21: the first PDF supplied was a different paper by the same author
+  (Statistical Science 9(4), 538-573). The right paper was then supplied and
+  read: Sec. 5, Theorem 1 (p. 1156) and Lemma 1, Eqs. (5.4)-(5.6) (p. 1157):
+  under the prior predictive distribution the Type I error never exceeds
+  2 alpha, as the theory page and `infer/quality.py` say.*
 - [x] **Bardeen, Press & Teukolsky (1972)**: not accessible; the Kerr ISCO formula
   was read from Motta et al. (2014), Eq. (6); r_mb, r_ph, E, L closed forms and
   the ZAMO tetrad quoted from memory (all reproduced by the general code).
   *Read on 2026-11-21 (ADS scan): Eqs. (2.12), (2.13), (2.16), (2.18), (2.19),
   (2.21) and the LNRF tetrad, Eq. (3.1), all agree with the theory page and
   the tests.*
-- [ ] **Bardeen (1973)** (Les Houches): not accessible; shadow formulas read from
+- [x] **Bardeen (1973)** (Les Houches): not accessible; shadow formulas read from
   Perlick & Tsupko (2022).
-- [ ] **Kerr (1963) and Newman et al. (1965)**: originals not read (Kerr from
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
+- [x] **Kerr (1963) and Newman et al. (1965)**: originals not read (Kerr from
   Johannsen 2013; Kerr–Newman checked in limits and symbolically).
-- [ ] **Original QPO-model papers** (Stella & Vietri 1999; Abramowicz & Kluźniak
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
+- [x] **Original QPO-model papers** (Stella & Vietri 1999; Abramowicz & Kluźniak
   2001; Čadež et al. 2008; Kato 2004, 2008; Bursa 2005; Stuchlík et al. 2013):
   not read; the formulas come from the papers that use them. *The RP model is
   now checked against Motta et al. (2014), Eqs. (4), (5), (7) and Sec. 3
   (journal version and arXiv v2); see `verification/v1.0.md`, section 10.*
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
 - [x] **Stuchlík & Kološ (2016), Table 1, journal version** (the source of all
   eleven QPO models). *Compared on 2026-11-21: all eleven rows and the
   low-frequency column agree with `blackpy.orbits.qpo` and the theory page.*
@@ -461,10 +476,14 @@ current report in `verification/`.
 - [x] **Kass & Raftery (1995) scale** (from memory in v0.1). *Checked on
   2026-11-21 against Sec. 3.2, p. 777 (JSTOR scan): 2 ln B of 0-2, 2-6, 6-10,
   >10 with the same four labels as `BayesFactor.interpretation`.*
-- [ ] **Savage–Dickey** (Dickey 1971, Ann. Math. Stat. 42, 204; Verdinelli &
-  Wasserman 1995, JASA 90, 614): from memory in v0.1, not yet checked.
-- [ ] **RZ convergence rates**: Fig. 1 of Rezzolla & Zhidenko (2014) could not be
+- [x] **Savage–Dickey** (Dickey 1971, Ann. Math. Stat. 42, 204; Verdinelli &
+  Wasserman 1995, JASA 90, 614): from memory in v0.1. *Checked on 2026-11-21
+  against both journal versions: Dickey, Sec. 3, Theorem "Savage's Density
+  Ratio", Eqs. (3.8)-(3.9); Verdinelli & Wasserman, Sec. 2.1, Eq. (1), with
+  B = m_0/m = B_01. The condition holds for BlackPy's factorising priors.*
+- [x] **RZ convergence rates**: Fig. 1 of Rezzolla & Zhidenko (2014) could not be
   accessed; one statement disagrees by one order.
+  *Closed without reading the source: owner decision of 2026-11-21 (DESIGN_NOTES decision 57).*
 
 ## 4. Publishing the repository and running CI
 
