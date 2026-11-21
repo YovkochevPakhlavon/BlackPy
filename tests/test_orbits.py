@@ -146,8 +146,10 @@ def test_sds_isco_osco_and_static_radius(sds):
 
 
 def test_sds_critical_lambda_symbolic(sds):
-    """ISCO and OSCO merge at r = 15/2, Lambda = 4/5625 (theory, section 6): the double
-    root of r f f'' - 2 r f'^2 + 3 f f'; the other double root lies on the horizon."""
+    """ISCO and OSCO merge at r = 15/2, Lambda = 4/5625: Stuchlik & Hledik (1999), Phys. Rev.
+    D 60, 044006, Sec. II.A, Eqs. (23)-(24) (y_c = 12/15^4 with y = Lambda M^2/3; journal
+    version read). Here: the double root of r f f'' - 2 r f'^2 + 3 f f'; the other double
+    root lies on the horizon."""
     import sympy as sp
 
     r, lam = sp.symbols("r Lambda", positive=True)
