@@ -145,6 +145,25 @@ def test_sds_isco_osco_and_static_radius(sds):
         ob.marginally_bound_orbit(sds, Lambda=lam)
 
 
+def test_sds_critical_lambda_symbolic(sds):
+    """ISCO and OSCO merge at r = 15/2, Lambda = 4/5625 (theory, section 6): the double
+    root of r f f'' - 2 r f'^2 + 3 f f'; the other double root lies on the horizon."""
+    import sympy as sp
+
+    r, lam = sp.symbols("r Lambda", positive=True)
+    f = 1 - 2 / r - lam * r**2 / 3
+    fp = sp.diff(f, r)
+    num = sp.numer(sp.together(r * f * sp.diff(fp, r) - 2 * r * fp**2 + 3 * f * fp))
+    roots = sp.solve([num, sp.diff(num, r)], [r, lam], dict=True)
+    merger = [s for s in roots if f.subs(s) > 0]
+    assert merger == [{r: sp.Rational(15, 2), lam: sp.Rational(4, 5625)}]
+    assert [f.subs(s) for s in roots if s not in merger] == [0]
+    # The numerical ISCO and OSCO close in on r = 15/2 just below the critical value.
+    orbits = ob.marginally_stable_orbits(sds, Lambda=(1 - 1e-6) * 4 / 5625)
+    assert [o.kind for o in orbits] == ["ISCO", "OSCO"]
+    assert all(abs(o.radius - 7.5) < 0.05 for o in orbits)
+
+
 def test_naked_rn_singularity_orbits(rn):
     """1 < Q^2 < 9/8: two photon spheres, two disjoint regions of circular orbits."""
     regions = ob.circular_orbit_region(rn, Q=1.05)

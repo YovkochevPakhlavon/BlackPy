@@ -249,8 +249,16 @@ With rotation \(\Omega_\theta \ne \Omega_\phi\); see section 14.
 - Reissner–Nordström: \(\Omega_r^2 = f^2 V''/(2E^2)\) with
   \(V = f(1 + L^2/r^2)\), derived independently with sympy in the test-suite.
 - Schwarzschild–de Sitter: ISCO and OSCO merge at \(\Lambda = 4/5625\)
-  (Stuchlík & Hledík 1999, Phys. Rev. D 60, 044006; *the value is quoted from
-  memory of that paper and reproduced numerically by BlackPy*).
+  (Stuchlík & Hledík 1999, Phys. Rev. D 60, 044006). **Status: derived.**
+  For \(f = 1 - 2/r - \Lambda r^2/3\) the numerator of \(N\) is
+  \(-6\,(4\Lambda r^4 - 15\Lambda r^3 - 3r + 18)\). ISCO and OSCO merge where
+  it has a double root in \(r\); solving it together with its \(r\)-derivative
+  (sympy) gives two solutions. The merger is
+  \(r = 15/2\), \(\Lambda = 4/5625 = 36/15^4\), with \(f = 18/25 > 0\). The
+  other solution, \(r = 3\), \(\Lambda = 1/9\), has \(f = 0\): it is the
+  degenerate (Nariai) horizon, not a merger of orbits. BlackPy reproduces the
+  critical value numerically. *The original paper was not re-read; the value
+  rests on this derivation.*
 
 ## 7. Frequencies in physical units
 
@@ -298,6 +306,20 @@ papers were not read for this project.*
 
 In spherical symmetry \(\nu_\theta = \nu_\phi\), so RP = RP1 = RP2 = ER1 and
 ER3 = TD.
+
+**RP model, checked against the paper that fits it.** Motta et al. (2014),
+MNRAS 437, 2554 (arXiv:1309.3652), Sec. 3, identify the upper HFQPO with
+\(\nu_\phi\), the lower HFQPO with the periastron precession
+\(\nu_{\rm per} = \nu_\phi - \nu_r\) (their Eq. 4) and the type-C QPO with the
+fundamental of the nodal precession \(\nu_{\rm nod} = \nu_\phi - \nu_\theta\)
+(their Eq. 5), not with \(2\nu_{\rm nod}\) as in the original neutron-star
+version; Eq. (7) writes the three as functions of \(r\), \(a\) and \(M\). This
+agrees with the RP row of the table and with the low-frequency assignment.
+**Status: verified** for the RP model: the journal version, Eq. (7), was
+compared in an earlier session with the PDF supplied by the owner; Eqs. (4),
+(5) and (7) and Sec. 3 were read again from the arXiv v2 HTML on 2026-11-21.
+The other ten rows are still transcribed from the arXiv version of Stuchlík &
+Kološ (2016).
 
 Check: the 3:2 resonance radii in Schwarzschild are \(r = 27/4\) (RP) and
 \(r = 54/5\) (ER).
@@ -379,7 +401,13 @@ interval. The joint log-likelihood is the sum over datasets.
 estimated by emcee; a chain counts as converged if its length exceeds
 \(50\,\tau_{\max}\). Burn-in is \(5\,\tau_{\max}\) and thinning
 \(\tau_{\min}/2\) (Foreman-Mackey et al. 2013, PASP 125, 306, and the emcee
-documentation; *cited from memory*).
+documentation). **Status of the 50 \(\tau\) criterion: verified** against the
+emcee tutorial "Autocorrelation analysis & convergence"
+(emcee.readthedocs.io, stable, read 2026-11-21), which finds that chains
+longer than about \(50\,\tau\) are often sufficient and advises not to trust
+an estimate of \(\tau\) with fewer than \(F\tau\) samples for some
+\(F \ge 50\). The burn-in and thinning factors are BlackPy conventions; that
+page does not give them (*not checked against a source*).
 
 **Bayes factors.** With nested sampling, \(\ln B_{10} = \ln Z_1 - \ln Z_0\)
 from two runs. With MCMC, the Savage–Dickey density ratio for a nested null

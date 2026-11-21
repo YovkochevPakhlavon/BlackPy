@@ -431,10 +431,19 @@ current report in `verification/`.
   Johannsen 2013; Kerr–Newman checked in limits and symbolically).
 - [ ] **Original QPO-model papers** (Stella & Vietri 1999; Abramowicz & Kluźniak
   2001; Čadež et al. 2008; Kato 2004, 2008; Bursa 2005; Stuchlík et al. 2013):
-  not read; the formulas come from the papers that use them.
-- [ ] **From memory in v0.1**: Stuchlík & Hledík (1999) value Lambda = 4/5625
-  (reproduced numerically); emcee's 50-tau criterion; Savage–Dickey (Dickey
-  1971; Verdinelli & Wasserman 1995); the Kass & Raftery (1995) scale.
+  not read; the formulas come from the papers that use them. *The RP model is
+  now checked against Motta et al. (2014), Eqs. (4), (5), (7) and Sec. 3
+  (journal version and arXiv v2); see `verification/v1.0.md`, section 10.*
+- [x] **Stuchlík & Hledík (1999) value Lambda = 4/5625** (from memory in v0.1).
+  *Derived with sympy on 2026-11-21: ISCO and OSCO merge at r = 15/2,
+  Lambda = 4/5625; the other double root (r = 3, Lambda = 1/9) is the
+  degenerate horizon. The original paper was not re-read.*
+- [x] **emcee's 50-tau criterion** (from memory in v0.1). *Checked on
+  2026-11-21 against the emcee tutorial "Autocorrelation analysis &
+  convergence" (about 50 tau; F >= 50). Burn-in 5 tau and thinning tau/2 are
+  BlackPy conventions, not from that page.*
+- [ ] **From memory in v0.1**: Savage–Dickey (Dickey 1971; Verdinelli &
+  Wasserman 1995); the Kass & Raftery (1995) scale.
 - [ ] **RZ convergence rates**: Fig. 1 of Rezzolla & Zhidenko (2014) could not be
   accessed; one statement disagrees by one order.
 
