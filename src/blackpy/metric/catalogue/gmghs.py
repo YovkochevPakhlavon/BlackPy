@@ -3,8 +3,10 @@
 References
 ----------
 G. W. Gibbons & K. Maeda, Nucl. Phys. B 298 (1988) 741; D. Garfinkle, G. T.
-Horowitz & A. Strominger, Phys. Rev. D 43 (1991) 3140. **Neither original was
-accessible** (both predate arXiv). The metric is taken from the static
+Horowitz & A. Strominger, Phys. Rev. D 43 (1991) 3140. Gibbons & Maeda was
+read later: their Eqs. (4.15)-(4.19) with D = 4, g_2 = 1 give this line
+element (see the theory page); Garfinkle, Horowitz & Strominger was not
+accessed. The metric was originally taken from the static
 (a = 0) limit of the Einstein-frame metric of A. Sen, Phys. Rev. Lett. 69
 (1992) 1006, hep-th/9204046 (read), whose static limit is the GMGHS solution
 (Kocherlakota et al. 2021, Phys. Rev. D 103, 104047, footnote 2, read). The

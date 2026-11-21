@@ -408,8 +408,12 @@ From `verification/v0.1.md` to `v0.3.md` (and theory.md). For each: read the
 source if you can get it, then change the status in `docs/theory.md` and in the
 current report in `verification/`.
 
-- [ ] **Einstein ring formula** (`lensing.einstein_ring_angle`): the standard lens
-  equation, written **from memory** (marked in the docstring).
+- [x] **Einstein ring formula** (`lensing.einstein_ring_angle`): the standard lens
+  equation, written **from memory** (marked in the docstring). *Checked on
+  2026-11-21 against Narayan & Bartelmann (astro-ph/9606001v2), Sec. 2.1.4,
+  Eq. (20). Their distances are angular-diameter distances; the code's
+  D_LS = D_OS - D_OL is right only at Galactic and nearby-galaxy distances (now
+  said in the docstring and on the theory page).*
 - [ ] **Factor 4 of `bambi2019`**: empirical, from the pixels of Fig. 1 of Bambi
   et al. (2019).
 - [ ] **Page–Thorne prefactor** 3/(2M) of Eq. (15n): fixed by the Newtonian limit
@@ -418,13 +422,19 @@ current report in `verification/`.
 - [ ] **Hawking & Ellis (1973)**, section 4.3 (classification of T, energy
   conditions): not accessed; the classification follows Martín-Moruno & Visser
   (2018), which was read.
-- [ ] **GMGHS originals** (Gibbons & Maeda 1988; Garfinkle, Horowitz & Strominger
-  1991): not accessed; the metric is the a = 0 limit of Sen (1992).
+- [x] **Gibbons & Maeda (1988)**: *read on 2026-11-21. Eqs. (4.15)-(4.19), D = 4,
+  g_2 = 1, give BlackPy's GMGHS line element with m + b = M and b = Q^2/2
+  (Gaussian charge); new test `test_gmghs_equals_gibbons_maeda`.*
+- [ ] **Garfinkle, Horowitz & Strominger (1991)**, Phys. Rev. D 43, 3140, and its
+  erratum: not accessed (optional now that Gibbons & Maeda confirms the metric).
 - [ ] **Meng (1994)**, Ann. Stat. 22, 1142: abstract only (posterior predictive
   p-values are conservative).
-- [ ] **Bardeen, Press & Teukolsky (1972)**: not accessible; the Kerr ISCO formula
+- [x] **Bardeen, Press & Teukolsky (1972)**: not accessible; the Kerr ISCO formula
   was read from Motta et al. (2014), Eq. (6); r_mb, r_ph, E, L closed forms and
   the ZAMO tetrad quoted from memory (all reproduced by the general code).
+  *Read on 2026-11-21 (ADS scan): Eqs. (2.12), (2.13), (2.16), (2.18), (2.19),
+  (2.21) and the LNRF tetrad, Eq. (3.1), all agree with the theory page and
+  the tests.*
 - [ ] **Bardeen (1973)** (Les Houches): not accessible; shadow formulas read from
   Perlick & Tsupko (2022).
 - [ ] **Kerr (1963) and Newman et al. (1965)**: originals not read (Kerr from
@@ -434,16 +444,23 @@ current report in `verification/`.
   not read; the formulas come from the papers that use them. *The RP model is
   now checked against Motta et al. (2014), Eqs. (4), (5), (7) and Sec. 3
   (journal version and arXiv v2); see `verification/v1.0.md`, section 10.*
+- [x] **Stuchlík & Kološ (2016), Table 1, journal version** (the source of all
+  eleven QPO models). *Compared on 2026-11-21: all eleven rows and the
+  low-frequency column agree with `blackpy.orbits.qpo` and the theory page.*
 - [x] **Stuchlík & Hledík (1999) value Lambda = 4/5625** (from memory in v0.1).
   *Derived with sympy on 2026-11-21: ISCO and OSCO merge at r = 15/2,
   Lambda = 4/5625; the other double root (r = 3, Lambda = 1/9) is the
-  degenerate horizon. The original paper was not re-read.*
+  degenerate horizon. The original was read on 2026-11-21: Sec. II.A,
+  Eqs. (2), (23), (24), y_c = 12/15^4 with y = Lambda M^2/3, at r = 15/2.*
 - [x] **emcee's 50-tau criterion** (from memory in v0.1). *Checked on
   2026-11-21 against the emcee tutorial "Autocorrelation analysis &
   convergence" (about 50 tau; F >= 50). Burn-in 5 tau and thinning tau/2 are
   BlackPy conventions, not from that page.*
-- [ ] **From memory in v0.1**: Savage–Dickey (Dickey 1971; Verdinelli &
-  Wasserman 1995); the Kass & Raftery (1995) scale.
+- [x] **Kass & Raftery (1995) scale** (from memory in v0.1). *Checked on
+  2026-11-21 against Sec. 3.2, p. 777 (JSTOR scan): 2 ln B of 0-2, 2-6, 6-10,
+  >10 with the same four labels as `BayesFactor.interpretation`.*
+- [ ] **Savage–Dickey** (Dickey 1971, Ann. Math. Stat. 42, 204; Verdinelli &
+  Wasserman 1995, JASA 90, 614): from memory in v0.1, not yet checked.
 - [ ] **RZ convergence rates**: Fig. 1 of Rezzolla & Zhidenko (2014) could not be
   accessed; one statement disagrees by one order.
 

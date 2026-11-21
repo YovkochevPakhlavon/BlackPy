@@ -55,6 +55,21 @@ def test_gmghs(gmghs, schwarzschild):
     assert "event horizon" in report.lower()
 
 
+def test_gmghs_equals_gibbons_maeda(gmghs):
+    """Gibbons & Maeda (1988), Eqs. (4.17)-(4.19) with D = 4, g_2 = 1, kappa^2 = 8 pi, M = 1:
+    ds^2 = F^2 ds_T^2, F = (1 + alpha/r)^(1/2); r_H = 2(1 + sqrt2 S), alpha = -2 sqrt2 S for the
+    dimensionless scalar charge S, and Q_GM^2 = 4 pi alpha (Eq. 4.15, rationalised units)."""
+    r = np.geomspace(2.5, 300.0, 25)
+    for charge in (0.4, 0.9, 1.3):
+        scalar = -(charge**2) / (2.0 * math.sqrt(2.0))  # alpha = Q_Gaussian^2 = Q_GM^2 / (4 pi)
+        r_h, alpha = 2.0 * (1.0 + math.sqrt(2.0) * scalar), -2.0 * math.sqrt(2.0) * scalar
+        conformal = 1.0 + alpha / r  # F^2
+        lapse = 1.0 - r_h / r
+        np.testing.assert_allclose(gmghs.f(r, Q=charge), lapse / conformal, rtol=1e-13)
+        np.testing.assert_allclose(gmghs.g(r, Q=charge), lapse / conformal, rtol=1e-13)
+        np.testing.assert_allclose(gmghs.h(r, Q=charge), conformal * r**2, rtol=1e-13)
+
+
 # ----------------------------------------------------------------------------- Simpson-Visser
 
 

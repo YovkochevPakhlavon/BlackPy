@@ -125,7 +125,7 @@ class BayesFactor:
     @property
     def interpretation(self) -> str:
         """Verbal scale of Kass & Raftery (1995), J. Am. Stat. Assoc. 90, 773,
-        in terms of ``2 ln B``: 0-2 not worth more than a bare mention, 2-6
+        Sec. 3.2, in terms of ``2 ln B``: 0-2 not worth more than a bare mention, 2-6
         positive, 6-10 strong, >10 very strong."""
         favoured = "full model" if self.log_bf > 0 else "null model"
         two_ln_b = 2.0 * abs(self.log_bf)

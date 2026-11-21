@@ -8,7 +8,8 @@ Source of the definitions
 -------------------------
 All definitions below are transcribed from **Table 1 of Stuchlik & Kolos
 (2016), A&A 586, A130, arXiv:1603.07366** ("Models of quasi-periodic
-oscillations related to mass and spin of the GRO J1655-40 black hole"):
+oscillations related to mass and spin of the GRO J1655-40 black hole"),
+and checked against the journal version:
 
 ===== ============================== ==============================
 model :math:`\nu_U`                  :math:`\nu_L`

@@ -249,16 +249,21 @@ With rotation \(\Omega_\theta \ne \Omega_\phi\); see section 14.
 - Reissner–Nordström: \(\Omega_r^2 = f^2 V''/(2E^2)\) with
   \(V = f(1 + L^2/r^2)\), derived independently with sympy in the test-suite.
 - Schwarzschild–de Sitter: ISCO and OSCO merge at \(\Lambda = 4/5625\)
-  (Stuchlík & Hledík 1999, Phys. Rev. D 60, 044006). **Status: derived.**
-  For \(f = 1 - 2/r - \Lambda r^2/3\) the numerator of \(N\) is
+  (Stuchlík & Hledík 1999, Phys. Rev. D 60, 044006). **Status: verified**
+  against the journal version (copy supplied by the owner, read 2026-11-21),
+  Sec. II.A: with \(y = \Lambda M^2/3\) (their Eq. 2) the marginally stable
+  orbits are \(y_{\rm ms}(r) = (r - 6)/[r^3(4r - 15)]\) (Eq. 23), whose
+  maximum is at \(r = 15/2\) with \(y_{c({\rm ms})} = 12/15^4\) (Eq. 24), i.e.
+  \(\Lambda = 36/15^4 = 4/5625\). It was also derived independently:
+  for \(f = 1 - 2/r - \Lambda r^2/3\) the numerator of \(N\) is
   \(-6\,(4\Lambda r^4 - 15\Lambda r^3 - 3r + 18)\). ISCO and OSCO merge where
   it has a double root in \(r\); solving it together with its \(r\)-derivative
   (sympy) gives two solutions. The merger is
   \(r = 15/2\), \(\Lambda = 4/5625 = 36/15^4\), with \(f = 18/25 > 0\). The
   other solution, \(r = 3\), \(\Lambda = 1/9\), has \(f = 0\): it is the
-  degenerate (Nariai) horizon, not a merger of orbits. BlackPy reproduces the
-  critical value numerically. *The original paper was not re-read; the value
-  rests on this derivation.*
+  degenerate (Nariai) horizon, not a merger of orbits. The bracket is
+  \(3\,(4yr^4 - 15yr^3 - r + 6)\), the expression of their Eq. (22). BlackPy
+  reproduces the critical value numerically.
 
 ## 7. Frequencies in physical units
 
@@ -280,8 +285,11 @@ Check: the Schwarzschild ISCO orbital frequency of a 10 M☉ black hole is
 
 ## 8. QPO models
 
-**Status: transcribed** from Table 1 of Stuchlík & Kološ (2016), A&A 586,
-A130 (arXiv:1603.07366), read from the arXiv version.
+**Status: verified** against Table 1 of Stuchlík & Kološ (2016), A&A 586,
+A130 (arXiv:1603.07366), p. 2: first transcribed from the arXiv version,
+then compared on 2026-11-21 with the journal version (copy supplied by the
+owner). All eleven rows, and the low-frequency column \(\nu_\phi - \nu_\theta\),
+agree with the table below and with `blackpy.orbits.qpo`.
 
 | Model | \(\nu_U\) | \(\nu_L\) |
 |---|---|---|
@@ -315,11 +323,10 @@ fundamental of the nodal precession \(\nu_{\rm nod} = \nu_\phi - \nu_\theta\)
 (their Eq. 5), not with \(2\nu_{\rm nod}\) as in the original neutron-star
 version; Eq. (7) writes the three as functions of \(r\), \(a\) and \(M\). This
 agrees with the RP row of the table and with the low-frequency assignment.
-**Status: verified** for the RP model: the journal version, Eq. (7), was
-compared in an earlier session with the PDF supplied by the owner; Eqs. (4),
-(5) and (7) and Sec. 3 were read again from the arXiv v2 HTML on 2026-11-21.
-The other ten rows are still transcribed from the arXiv version of Stuchlík &
-Kološ (2016).
+**Status: verified** for the RP model: Sec. 3 and Eqs. (4), (5) and (7) were
+read on 2026-11-21 in the journal version (copy supplied by the owner) and in
+the arXiv v2 HTML. In both, Eq. (7) prints the prefactor as \(v_\phi\), a
+typesetting slip for \(\nu_\phi\).
 
 Check: the 3:2 resonance radii in Schwarzschild are \(r = 27/4\) (RP) and
 \(r = 54/5\) (ER).
@@ -413,16 +420,20 @@ page does not give them (*not checked against a source*).
 from two runs. With MCMC, the Savage–Dickey density ratio for a nested null
 \(\theta = \theta_0\) and factorising priors (Dickey 1971, Ann. Math. Stat.
 42, 204; Verdinelli & Wasserman 1995, J. Am. Stat. Assoc. 90, 614; *cited
-from memory*):
+from memory, not yet checked against either paper*):
 
 \[ B_{01} = \frac{p(\theta_0 \mid D)}{\pi(\theta_0)} . \]
 
 The posterior density is a Gaussian kernel estimate; if \(\theta_0\) is on a
 prior boundary the samples are reflected about it. If no samples reach
 \(\theta_0\), only a lower limit on \(\ln B_{10}\) is reported. The verbal
-scale is that of Kass & Raftery (1995), J. Am. Stat. Assoc. 90, 773 (*cited
-from memory*): \(2\ln B\) of 0–2 "not worth more than a bare mention", 2–6
-"positive", 6–10 "strong", above 10 "very strong".
+scale is that of Kass & Raftery (1995), J. Am. Stat. Assoc. 90, 773: \(2\ln B\)
+of 0–2 "not worth more than a bare mention", 2–6 "positive", 6–10 "strong",
+above 10 "very strong". **Status: verified** against Sec. 3.2, p. 777 (second
+table; JSTOR scan supplied by the owner, read 2026-11-21). The paper states
+the scale as evidence against \(H_0\) and notes that Bayes factors can equally
+give evidence for it; BlackPy applies it to \(2|\ln B_{10}|\) and names the
+favoured model.
 
 **Prior dominance.** A parameter is flagged when the Kolmogorov–Smirnov
 distance between its marginal posterior and its prior is below 0.1; such a
@@ -702,9 +713,12 @@ verified against a published source**: Ingram & Motta (2014), MNRAS 444,
 BlackPy's general formulas reproduce them to \(10^{-13}\) (\(\nu_\phi\)) and
 \(10^{-10}\) (squared epicyclic frequencies).
 
-**Kerr ISCO** (Bardeen, Press & Teukolsky 1972, ApJ 178, 347; *the original
-was not accessible*; formula read from Motta et al. 2014, Eq. (6), and
-checked to solve \(1 - 6/r + 8a/r^{3/2} - 3a^2/r^2 = 0\)):
+**Kerr ISCO and the other circular-orbit radii.** **Status: verified**
+against Bardeen, Press & Teukolsky (1972), ApJ 178, 347 (ADS scan supplied
+by the owner, read 2026-11-21), Sec. II, Eqs. (2.12)–(2.21); upper signs
+are prograde. The ISCO was first read from Motta et al. 2014, Eq. (6), and
+checked to solve \(1 - 6/r + 8a/r^{3/2} - 3a^2/r^2 = 0\); it is BPT
+Eq. (2.21):
 
 \[
 r_{\rm ISCO} = 3 + Z_2 \mp \sqrt{(3 - Z_1)(3 + Z_1 + 2Z_2)}, \quad
@@ -712,11 +726,14 @@ Z_1 = 1 + (1 - a^2)^{1/3}\left[(1 + a)^{1/3} + (1 - a)^{1/3}\right], \quad
 Z_2 = \sqrt{3a^2 + Z_1^2} .
 \]
 
-Reproduced to \(3\times10^{-13}\) for \(a \in [-0.999, 0.999]\). *Quoted from
-memory of the same paper and reproduced numerically:*
-\(r_{\rm mb} = 2 \mp a + 2\sqrt{1 \mp a}\),
-\(r_{\rm ph} = 2\{1 + \cos[\tfrac23\arccos(\mp a)]\}\),
-\(E = (r^{3/2} - 2r^{1/2} \pm a)/[r^{3/4}(r^{3/2} - 3r^{1/2} \pm 2a)^{1/2}]\).
+Reproduced to \(3\times10^{-13}\) for \(a \in [-0.999, 0.999]\). The other
+closed forms, all reproduced numerically by the general code:
+\(r_{\rm mb} = 2 \mp a + 2\sqrt{1 \mp a}\) (BPT Eq. 2.19),
+\(r_{\rm ph} = 2\{1 + \cos[\tfrac23\arccos(\mp a)]\}\) (Eq. 2.18),
+\(E = (r^{3/2} - 2r^{1/2} \pm a)/[r^{3/4}(r^{3/2} - 3r^{1/2} \pm 2a)^{1/2}]\)
+(Eq. 2.12),
+\(L = \pm(r^2 \mp 2ar^{1/2} + a^2)/[r^{3/4}(r^{3/2} - 3r^{1/2} \pm 2a)^{1/2}]\)
+(Eq. 2.13) and \(\Omega = \pm 1/(r^{3/2} \pm a)\) (Eq. 2.16).
 
 **Nodal precession.** \(\nu_{\rm nod} = \nu_\phi - \nu_\theta\), with
 \(\nu_\phi > 0\); positive for co-rotating orbits. QPO models compare
@@ -824,7 +841,11 @@ the displaced circle (neglected terms \(O(a^2) < 2\times10^{-10}\)).
 \(E_{\rm loc} = E(1 - \omega\xi)/N\) and the direction cosines are
 \(n_{\hat\phi} = \xi/(\sqrt{C}\,E_{\rm loc}/E)\),
 \(n_{\hat\theta} = \pm\sqrt{\Theta(i)}/(\sqrt{g_{\theta\theta}}\,E_{\rm loc}/E)\).
-BlackPy returns \(\alpha = -R_On_{\hat\phi}\), \(\beta = R_On_{\hat\theta}\)
+The frame is the locally nonrotating frame of Bardeen, Press & Teukolsky
+(1972), Eq. (3.1), \(e_{(t)} = e^{-\nu}(\partial_t + \omega\partial_\phi)\),
+\(e_{(\phi)} = e^{-\psi}\partial_\phi\), with \(e^{2\nu} = N^2\),
+\(e^{2\psi} = C\) and \(\omega = -g_{t\phi}/g_{\phi\phi}\) (**verified**
+against the scan, 2026-11-21). BlackPy returns \(\alpha = -R_On_{\hat\phi}\), \(\beta = R_On_{\hat\theta}\)
 with \(R_O = \sqrt{g_{\theta\theta}(r_O, i)}\). These tend to Bardeen's
 coordinates as \(r_O \to \infty\) and reduce to
 \(\sqrt{h(r_O)}\sin\alpha_{\rm sh}\) of section 9 for a static metric. The
@@ -1611,7 +1632,14 @@ Observables for a lens at distance \(D_{OL}\) (Bozza 2002, Eqs. (85), (89),
 (90)): \(\theta_\infty = b_c/D_{OL}\),
 \(s = \theta_\infty e^{(\bar b - 2\pi)/\bar a}\), \(r = e^{2\pi/\bar a}\),
 quoted as \(r_m = 2.5\log_{10}r\). The weak-field Einstein ring is
-\(\theta_E = \sqrt{4GM D_{LS}/(c^2D_{OL}D_{OS})}\).
+\(\theta_E = \sqrt{4GM D_{LS}/(c^2D_{OL}D_{OS})}\). **Status: verified**
+against Narayan & Bartelmann (1996), *Lectures on Gravitational Lensing*,
+astro-ph/9606001v2, Sec. 2.1.4, Eq. (20) (point mass, \(M(\theta_E) = M\);
+read 2026-11-21). The distances there are angular-diameter distances, and
+in general \(D_{LS} \ne D_{OS} - D_{OL}\) (their Sec. 2.1.3);
+`einstein_ring_angle` uses the Euclidean difference, which is adequate for
+lenses and sources inside the Galaxy and nearby galaxies, not at
+cosmological distances.
 
 Checks:
 
@@ -1727,7 +1755,8 @@ Each entry is one file in `src/blackpy/metric/catalogue/`, with its
 reference and tests in `tests/test_catalogue_v03.py`.
 
 **GMGHS** (`GMGHS`, static). Gibbons & Maeda (1988) and Garfinkle, Horowitz
-& Strominger (1991) **were not accessible** (pre-arXiv). The metric is the
+& Strominger (1991) were not accessible when the metric was added (both
+predate arXiv; Gibbons & Maeda was read later, see below). The metric is the
 \(a = 0\) limit of Sen's Einstein-frame metric (Sen 1992, hep-th/9204046,
 read), which Kocherlakota et al. (2021, footnote 2) identify with this
 solution. With \(M = 1\), Sen's Eqs. (17)–(18) give \(m = 1 - Q^2/2\) and
@@ -1739,6 +1768,18 @@ the form of Rezzolla & Zhidenko (2014, section IV) with \(\mu = m\). Here
 \(h \ne \rho^2\). Checks: Schwarzschild at \(Q = 0\); horizon \(\rho = 2m\);
 photon-orbit impact parameter and ISCO frequency of RZ Eqs. (37), (43) to
 \(10^{-10}\).
+
+**Status: verified** against Gibbons & Maeda (1988), Nucl. Phys. B 298, 741
+(copy supplied by the owner, read 2026-11-21), Sec. 4.1 (electrically
+charged case), Eqs. (4.15)–(4.19), with \(D = 4\), \(g_2 = 1\) and
+\(\kappa^2 = 8\pi G\) (their Sec. 2). Eq. (4.17) then reads
+\(ds^2 = -\frac{r - r_H}{r + \alpha}dt^2 + \frac{r + \alpha}{r - r_H}dr^2 + r(r + \alpha)\,d\Omega^2\),
+the line element above with \(r = \rho\), \(r_H = 2m\), \(\alpha = 2b\).
+Eqs. (4.18)–(4.19) give \(r_H + \alpha = 2M\), i.e. \(m + b = M\), and
+Eq. (4.15) gives \(Q^2_{\rm GM} = 4\pi M\alpha\) in their rationalised units,
+i.e. \(\alpha = Q^2/M\) for the Gaussian charge used here: \(b = Q^2/2\) at
+\(M = 1\) (checked with sympy). Garfinkle, Horowitz & Strominger (1991) and
+its erratum **were not accessed**.
 
 **Simpson–Visser** (`SimpsonVisser`, static). Simpson & Visser (2019),
 JCAP 02, 042 (arXiv:1812.07114, read), Eq. (2.1):

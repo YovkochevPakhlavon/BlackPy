@@ -288,10 +288,13 @@ def einstein_ring_angle(
 
     .. math:: \theta_E = \sqrt{\frac{4GM}{c^2}\,\frac{D_{LS}}{D_{OL}D_{OS}}}
 
-    for a source exactly behind the lens, with :math:`D_{LS} = D_{OS} -
-    D_{OL}` (Euclidean distances; the standard result of the lens equation
-    with the first-order deflection :math:`4M/b`, which is the same for
-    every asymptotically flat metric of mass :math:`M`). The relativistic
+    for a source exactly behind the lens (Narayan & Bartelmann 1996,
+    astro-ph/9606001, Eq. (20) for a point mass), with :math:`D_{LS} = D_{OS}
+    - D_{OL}`. That difference holds for Euclidean distances, i.e. inside the
+    Galaxy and for nearby galaxies; at cosmological distances the formula
+    needs angular-diameter distances, for which it does not hold. The
+    first-order deflection :math:`4M/b` behind it is the same for every
+    asymptotically flat metric of mass :math:`M`. The relativistic
     Einstein rings lie at :math:`\theta_\infty(1 + e^{(\bar b - 2n\pi)/\bar
     a})` (Bozza 2002, Eq. (77)); see :func:`strong_field_observables`.
 

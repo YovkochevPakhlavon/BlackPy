@@ -134,8 +134,8 @@ def test_kerr_energy_and_angular_momentum(kerr):
                 jax.grad(lambda r, core=core, p=p, sign=sign: core(kerr, p, r, sign))(r_isco)
             )
             assert abs(slope) < 1e-9
-    # Closed forms of Bardeen, Press & Teukolsky (1972), Eqs. (2.12)-(2.13); quoted from
-    # memory (the paper was not accessible), hence only a secondary check.
+    # Closed forms of Bardeen, Press & Teukolsky (1972), Eqs. (2.12)-(2.13), prograde
+    # (checked against the paper on 2026-11-21).
     r, a = np.geomspace(4.0, 50.0, 15), 0.7
     root = np.sqrt(r**1.5 - 3 * np.sqrt(r) + 2 * a)
     np.testing.assert_allclose(
