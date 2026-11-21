@@ -8,7 +8,7 @@ the data. This example shows the two tools added in BlackPy 0.3:
 * ``result.posterior_predictive()``: replicated data and posterior
   predictive p-values (Gelman, Meng & Stern 1996).
 
-Three fits of the GRO J1655-40 QPOs (registry data, not verified by a human):
+Three fits of the GRO J1655-40 QPOs (registry data, checked by the maintainer):
 
 1. Kerr, relativistic precession model, three QPOs, dynamical mass prior:
    3 data + 1 Gaussian prior - 3 parameters = 1 degree of freedom.

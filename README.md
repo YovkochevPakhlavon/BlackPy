@@ -13,8 +13,9 @@ the EHT shadow sizes of Sgr A\* and M87\*.
 
 Status: **1.0.0rc1** (release candidate). The public API is frozen: within
 1.x no public name disappears and no public behaviour changes without a
-deprecation period. The data registry has not yet been verified by a human;
-see [`verification/`](verification/README.md).
+deprecation period. Every dataset of the data registry has been checked by the
+maintainer against its papers (`verified_by_human: true`); see
+[`verification/`](verification/README.md).
 
 ## Installation
 
@@ -51,7 +52,6 @@ print(float(bp.orbits.isco(kerr, a=0.6)))                                       
 print(float(bp.orbits.nodal_precession_frequency(kerr, r=6.0, mass=5.4, a=0.6)))  # Hz
 print(float(bp.light.shadow_observables(kerr, math.radians(60), a=0.6).mean_radius))  # 5.12...
 
-# warns: UnverifiedDataWarning
 fit = Fit(kerr, "qpo/gro_j1655_40", qpo_model="RP", nsteps=2000,
           priors={"a": Uniform(0, 0.998), "M": Uniform(2, 20), "r": Uniform(2, 20)})
 result = fit.run(seed=1)

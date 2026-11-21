@@ -14,7 +14,7 @@ Tsupko (2017) for rotating ones.
    plasma amplitude as free parameters. Both shrink the shadow, so a single
    shadow size limits only a combination of the two.
 
-The Sgr A* bound is the registry entry ``eht/sgra`` (not verified by a human).
+The Sgr A* bound is the registry entry ``eht/sgra`` (checked by the maintainer).
 For Sgr A* and M87* at 230 GHz the plasma frequency near the horizon is many
 orders of magnitude below the observing frequency, so the effect is negligible
 there; it matters at low radio frequencies.

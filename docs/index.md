@@ -62,9 +62,10 @@ and quadrature, compiled with `jax.jit` and vectorised with `jax.vmap`.
 ## Data integrity
 
 Every number in the registry was read from the cited paper, with its exact
-location recorded. Values that could not be checked are `null`. All entries
-are marked `verified_by_human: false` until the maintainer has confirmed them;
-BlackPy warns when such data are used. See [Data registry](data.md).
+location recorded. Values that could not be checked are `null`. An entry is
+marked `verified_by_human: false` until the maintainer has confirmed it, and
+BlackPy warns when such data are used; every shipped dataset has been
+confirmed. See [Data registry](data.md).
 
 ## Installation
 

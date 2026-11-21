@@ -11,8 +11,8 @@ Section III.A-C, report from the EHT shadow size of Sgr A*:
 
 This script recomputes these statements from the registry entry
 ``eht/sgra`` (bounds of Eqs. 7-8 of the same paper). The registry values
-were read from the arXiv version of the paper and are *not yet verified by
-a human*, so this is an example, not a test.
+have been checked by the maintainer (``verified_by_human: true``); a
+reproduction of a published constraint is an example, not a test.
 
 Run:  python examples/04_sgra_shadow_constraints.py
 """
@@ -69,7 +69,7 @@ for metric, name in ((bp.metric.Bardeen(), "q"), (bp.metric.Hayward(), "l")):
 
 # The same constraint as a posterior: Gaussian likelihood on r_sh/M, flat prior on Q.
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore", UnverifiedDataWarning)  # acknowledged above
+    warnings.simplefilter("ignore", UnverifiedDataWarning)  # only for datasets with the flag false
     fit = Fit(
         rn, sgra, priors={"Q": Uniform(0.0, 1.0)}, sampler="emcee", nwalkers=32, nsteps=steps(3000)
     )

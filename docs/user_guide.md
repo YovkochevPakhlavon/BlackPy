@@ -6,9 +6,9 @@ page is executed by the test-suite (`tests/test_docs.py`), and every output
 shown under "Output" is what the snippet printed when the page was last
 generated; the test checks that it still prints exactly that. Numbers are
 rounded so that they do not depend on the machine. Outputs marked "Output
-(registry data)" contain values of the [data registry](data.md), which have
-not yet been verified by a human; the test runs those snippets but does not
-compare their numbers.
+(registry data)" contain values of the [data registry](data.md), which can
+change with a new `dataset_version` when a check finds an error; the test runs
+those snippets but does not compare their numbers.
 
 The snippets build on each other: run them in order in one Python session
 (or notebook). Warnings that a snippet emits on purpose are listed in a
@@ -729,12 +729,12 @@ print(round(bp.lensing.einstein_ring_angle(10.0, 4.0, 8.0), 3))
 
 With `dataset="eht/sgra"` (or `"eht/m87"`) the mass and distance come from
 the registry; `mass_prior=` chooses which mass. These are predictions, but
-the numbers still come from the registry, so an unverified dataset emits
-`UnverifiedDataWarning`, as in fits (also `plot.shadow(band=...)` and
-`inclination_prior`):
+the numbers still come from the registry, so a dataset with
+`verified_by_human: false` would emit `UnverifiedDataWarning`, as in fits (also
+`plot.shadow(band=...)` and `inclination_prior`); the shipped datasets are
+verified:
 
 ```python
-# warns: UnverifiedDataWarning
 sgra_lens = bp.lensing.strong_field_observables(rn, dataset="eht/sgra", mass_prior="vlti", Q=0.5)
 print(round(float(sgra_lens.theta_infinity), 2), "microarcseconds")
 ```
@@ -785,10 +785,11 @@ print(np.round(profile.flux, 8), round(profile.r_max, 4))
 ## 8. Data registry (`blackpy.data`)
 
 The registry holds QPO frequencies of X-ray binaries and the shadow-size
-bounds of Sgr A\* and M87\*, each value with its paper and location. **None
-has been verified by a human yet** (`verified_by_human: false`); fits that
-use them emit `UnverifiedDataWarning`. Rules and schema:
-[Data registry](data.md).
+bounds of Sgr A\* and M87\*, each value with its paper and location. Every
+dataset has been checked by the maintainer against its papers
+(`verified_by_human: true`); a dataset with the flag `false` makes fits emit
+`UnverifiedDataWarning`. Open points stay in each dataset's `todo` and
+`open_questions`. Rules and schema: [Data registry](data.md).
 
 - `list(verbose=True)` prints the registry and returns the datasets;
   `available()` returns the ids; `load(id)` returns a `QPODataset` or
@@ -1000,7 +1001,7 @@ With registry data the guards speak up. Here a static metric is fitted to a
 source with a published spin and a low-frequency QPO:
 
 ```python
-# warns: UnverifiedDataWarning, SpinIgnoredWarning, IgnoredDataWarning
+# warns: SpinIgnoredWarning, IgnoredDataWarning
 registry_fit = Fit(
     rn, "qpo/gro_j1655_40", qpo_model="RP", priors={"Q": Uniform(0.0, 1.0), "r": Uniform(4.0, 12.0)}
 )
@@ -1015,7 +1016,6 @@ The same source with a rotating metric uses the low-frequency QPO as the
 nodal precession frequency (the relativistic precession model triplet):
 
 ```python
-# warns: UnverifiedDataWarning
 kerr_fit = Fit(
     kerr,
     "qpo/gro_j1655_40",
@@ -1070,7 +1070,6 @@ image triggers `CircularInferenceWarning`); `circularity="<definition>"`
 applies a circularity bound, naming the definition of \(\Delta C\).
 
 ```python
-# warns: UnverifiedDataWarning
 joint = build_problem(
     rn, ["eht/sgra", "eht/m87"], priors={"Q": Uniform(0.0, 1.0)}, per_source=["Q"]
 )
@@ -1087,7 +1086,7 @@ This fit combines the shadows of ['Sgr A*', 'M87*']. The sampled parameter(s) ['
 ```
 
 ```python
-# warns: UnverifiedDataWarning, CircularInferenceWarning
+# warns: CircularInferenceWarning
 circular = build_problem(
     rn, "eht/m87", priors={"Q": Uniform(0.0, 1.0)}, shadow_mass_prior="eht_ring"
 )
@@ -1309,7 +1308,7 @@ when you publish.
 
 | Warning | Triggered when | What to do |
 |---|---|---|
-| `UnverifiedDataWarning` | a fit, a forecast, `strong_field_observables(dataset=...)`, `plot.shadow(band=...)` or `inclination_prior` uses registry data with `verified_by_human: false` (all of them, for now) | check the values against the papers before publishing (the registry records where each one is printed) |
+| `UnverifiedDataWarning` | a fit, a forecast, `strong_field_observables(dataset=...)`, `plot.shadow(band=...)` or `inclination_prior` uses a dataset with `verified_by_human: false` (none of the shipped datasets, since they were checked; your own files can be) | check the values against the papers before publishing (the registry records where each one is printed) |
 | `CircularInferenceWarning` | a mass prior is not independent of the data it is combined with: a QPO mass derived from QPO modelling, or a shadow mass derived from the same image (`shadow_mass_prior="eht_ring"`) | pass an independent prior (`priors={"M_<source>": ...}`, `shadow_mass_prior=` another key) or drop the source |
 | `PriorDominatedWarning` | the posterior of a metric parameter is indistinguishable from its prior (also in forecasts) | do not call the result a constraint; get more informative data or priors |
 | `ConvergenceWarning` | an emcee chain is shorter than 50 autocorrelation times | increase `nsteps` / `max_steps`, or use dynesty |
@@ -1434,8 +1433,10 @@ defined as BlackPy computes them.
 
 ### `UnverifiedDataWarning`
 
-Every registry value was read from its paper by an automated process, with
-the location recorded, but none has been checked by a human yet. The warning
+Every registry value was read from its paper, with the location recorded,
+and every shipped dataset has since been checked by the maintainer
+(`verified_by_human: true`), so they do not emit this warning. It appears
+for a dataset whose flag is `false`, for example a file of your own, and
 reminds you to check the numbers you rely on before publishing.
 
 ### A prior-dominated result

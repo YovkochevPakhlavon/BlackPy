@@ -13,7 +13,7 @@
    metric (Kerr-Newman) with one spin and one inclination per source.
 4. The role of the mass prior, and the circular-inference guard.
 
-All registry values are unverified by a human (``verified_by_human: false``).
+All registry values have been checked by the maintainer (``verified_by_human: true``).
 
 Run:  python examples/11_m87_and_sgra_shadows.py        (about 1.5 minutes)
 """
@@ -81,7 +81,7 @@ print(
 
 # ----------------------------------------------------------------- 3. joint fits
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore", BlackPyWarning)  # unverified data, stated above
+    warnings.simplefilter("ignore", BlackPyWarning)  # warnings are not the subject of this section
     single = {
         name: Fit(rn, data, priors={"Q": Uniform(0.0, 1.0)}, nsteps=steps(3000)).run(seed=1)
         for name, data in (("M87*", m87), ("Sgr A*", sgra))

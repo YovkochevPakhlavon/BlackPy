@@ -4,7 +4,7 @@
    and against the strong deflection limit.
 2. Strong-deflection coefficients of several metrics.
 3. Predicted relativistic images for Sgr A* and M87*, with the masses and
-   distances stored in the registry (unverified by a human).
+   distances stored in the registry (checked by the maintainer).
 4. Deflection in a homogeneous plasma.
 
 These are **predictions**. Relativistic images have not been resolved for any

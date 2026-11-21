@@ -144,11 +144,9 @@ FitResult (emcee, 8192 samples)
   corr(a, beta) = -0.992 (rank -0.991)   [strongly degenerate]
 ```
 
-BlackPy also prints three warnings. Each one changes how the numbers should
-be read:
+BlackPy also flags two things. Each one changes how the numbers should be
+read:
 
-- `UnverifiedDataWarning`: the registry values have not been checked by a
-  human against the paper;
 - `DegeneracyWarning`: spin and \(\beta\) are almost perfectly correlated
   (\(-0.99\)). Three frequencies determine three numbers; with four unknowns
   the data fix one *combination* of \(a\) and \(\beta\), and the width along

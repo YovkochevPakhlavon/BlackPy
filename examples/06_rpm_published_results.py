@@ -15,8 +15,9 @@ the registry:
 It also compares with Stuchlik & Kolos (2016), who report
 M = 5.3 +- 0.1 Msun and a = 0.286 +- 0.004 for GRO J1655-40.
 
-This is an example and not a test, because the registry values have not
-been verified by a human (project rule: tests must not depend on them).
+This is an example and not a test: reproductions of published constraints
+belong in ``examples/`` (project rule), even now that the registry values
+have been checked by the maintainer.
 
 Run:  python examples/06_rpm_published_results.py        (about 20 seconds)
 """
@@ -97,7 +98,7 @@ for dataset_id in ("qpo/gro_j1655_40", "qpo/xte_j1859_226"):
 
     slug = dataset_id.split("/")[-1]
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", BlackPyWarning)  # unverified data: stated above
+        warnings.simplefilter("ignore", BlackPyWarning)  # warnings are not the subject here
         fit = Fit(
             kerr,
             data,

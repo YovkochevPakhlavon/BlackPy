@@ -13,7 +13,7 @@ Zhidenko 2014; rotating version: Konoplya, Rezzolla & Zhidenko 2016).
 4. Adding QPOs: a static RZ metric fitted to GRO J1655-40. BlackPy warns
    that the source rotates; the example shows what the warnings mean.
 
-Registry data are unverified by a human.
+Registry data have been checked by the maintainer.
 
 Run:  python examples/12_parametrised_metrics.py        (about 45 seconds)
 """

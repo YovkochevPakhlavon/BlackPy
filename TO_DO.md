@@ -187,7 +187,7 @@ TODO items of the file:
 - [x] No 2-sigma bound on r_sh/M was found in the papers read; only the 68% interval is stored, so shadow_likelihood='interval' needs shadow_level='1sigma'. *A known gap, not a value to check: it stays in the file's `todo` and does not block the flag.*
 - [x] The three distance papers combined by the EHT (Bird et al. 2010; Blakeslee et al. 2009; Cantiello et al. 2018) were not read. *Not needed (owner, 2026-11-19): BlackPy uses the EHT's combined 16.8 +- 0.8 Mpc, checked in the journal version; removed from the file's `todo`.*
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/eht/m87.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/eht/m87.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`). *Done by the owner (2026-11-19).*
 
 ### Dataset `eht/sgra` (Sgr A*, shadow_bound, dataset version 2)
 
@@ -229,7 +229,7 @@ Open questions:
 
 - [ ] Which Keck numbers are right? Do et al. (2019), as read from ar5iv, give M = 3.964 x 1e6 Msun and R_0 = 7946 pc for the fit that assumes general relativity, whereas EHT Sgr A* Paper VI (Sec. 2.1) quotes 3.951 x 1e6 Msun and 7935 pc for it, and Vagnozzi et al. (2023, Table 1) print 3.951 and 7.953 kpc. The differences (0.3% in mass) are far below the 6.5% uncertainty of the shadow bound, so the default likelihood is unaffected.
 
-- [ ] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/eht/sgra.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`).
+- [x] When every item above is confirmed: set `verified_by_human: true` in `src/blackpy/data/registry/eht/sgra.yaml` by hand and bump nothing else (a changed value bumps `dataset_version`). *Done by the owner (2026-11-19); the check of Eqs. (5)-(8) against the CQG version above is still open.*
 
 ### Dataset `qpo/gro_j1655_40` (GRO J1655-40, qpo_triplet, dataset version 3)
 
@@ -294,7 +294,7 @@ TODO items of the file:
 
 ### Dataset `qpo/h1743_322` (H1743-322, qpo_pair, dataset version 1)
 
-File: `src/blackpy/data/registry/qpo/h1743_322.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/qpo/h1743_322.yaml`. verified_by_human: **True**.
 
 How it was read: full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared
 
@@ -321,7 +321,7 @@ TODO items of the file:
 
 ### Dataset `qpo/m82_x1` (M82 X-1, qpo_pair, dataset version 1)
 
-File: `src/blackpy/data/registry/qpo/m82_x1.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/qpo/m82_x1.yaml`. verified_by_human: **True**.
 
 How it was read: full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared
 
@@ -344,7 +344,7 @@ TODO items of the file:
 
 ### Dataset `qpo/xte_j1550_564` (XTE J1550-564, qpo_pair, dataset version 1)
 
-File: `src/blackpy/data/registry/qpo/xte_j1550_564.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/qpo/xte_j1550_564.yaml`. verified_by_human: **True**.
 
 How it was read: full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared
 
@@ -370,7 +370,7 @@ TODO items of the file:
 
 ### Dataset `qpo/xte_j1859_226` (XTE J1859+226, qpo_triplet, dataset version 3)
 
-File: `src/blackpy/data/registry/qpo/xte_j1859_226.yaml`. verified_by_human: **False**.
+File: `src/blackpy/data/registry/qpo/xte_j1859_226.yaml`. verified_by_human: **True**.
 
 How it was read: full text read from the ar5iv HTML rendering of the arXiv version (ar5iv.labs.arxiv.org), title/DOI checked against the arXiv API, accessed 2026-11-14 by Claude; the journal version was not compared; spin and published_fit: read from the ar5iv HTML rendering of the arXiv version on 2026-11-15 by Claude (re-read the same day for dataset version 3, which only adds open_questions); the journal version was not compared
 

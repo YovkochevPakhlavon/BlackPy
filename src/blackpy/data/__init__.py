@@ -5,9 +5,9 @@
 >>> datasets = bp.data.list()        # prints the registry with verification status
 
 Every value in the registry was read from the cited source, with the exact
-location recorded; values that could not be verified are ``null``. All
-entries carry ``verified_by_human: false`` until the project owner has
-checked them.
+location recorded; values that could not be verified are ``null``. An
+entry carries ``verified_by_human: false`` until the project owner has
+checked it; every shipped dataset has been checked.
 """
 
 from blackpy.data.registry import available, load, load_file, parse_dataset, registry_path

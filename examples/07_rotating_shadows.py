@@ -13,7 +13,7 @@
    (Reissner-Nordstrom) bound of example 4.
 
 The Sgr A* bounds are those of Vagnozzi et al. (2023) from the registry
-entry ``eht/sgra``; they have not been verified by a human.
+entry ``eht/sgra`` (checked by the maintainer).
 
 Run:  python examples/07_rotating_shadows.py        (about 20 seconds)
 """
@@ -141,7 +141,7 @@ print(
 # ----------------------------------------------------------------- 3. Kerr-Newman charge
 kerr_newman = bp.metric.KerrNewman()
 with warnings.catch_warnings():
-    warnings.simplefilter("ignore", BlackPyWarning)  # unverified data; prior-dominated spin
+    warnings.simplefilter("ignore", BlackPyWarning)  # prior-dominated spin
     fit = Fit(
         kerr_newman,
         sgra,

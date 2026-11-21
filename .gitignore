@@ -15,3 +15,6 @@ examples/output/
 *.npz
 !tests/data/*.npz
 BLACKPY_*_PROMPT.md
+
+# Reference papers (copyrighted PDFs): kept locally, never committed or packaged
+References/

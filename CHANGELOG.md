@@ -11,11 +11,16 @@ All notable changes to this project are documented here. The format follows
   values are used: `blackpy.lensing.strong_field_observables(dataset=...)`,
   `blackpy.plot.shadow(band=...)` and `blackpy.infer.inclination_prior`
   (helper `blackpy.data.registry.warn_if_unverified`).
+- All eight registry datasets have been checked by the maintainer against their
+  papers (journal versions where available, arXiv otherwise) and carry
+  `verified_by_human: true`; using them no longer emits `UnverifiedDataWarning`.
+  Open points stay in each dataset's `todo` and `open_questions`.
 
 ### Fixed
 - The tests accept registry files whose `verified_by_human` flag the owner has
   set to `true`; documentation snippets may list `UnverifiedDataWarning` and no
-  longer emit it once their datasets are verified.
+  longer emit it once their datasets are verified. The snippets no longer list
+  it.
 
 ## [1.0.0rc1] - 2026-11-19
 

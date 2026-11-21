@@ -13,6 +13,8 @@ earlier reports stay valid for everything they cover.
 | [`v0.2.md`](v0.2.md) | 0.2.0 | Rotating metrics: horizons, curvature, orbits, nodal precession, separable shadows, triplet and rotating-shadow likelihoods |
 | [`v0.1.md`](v0.1.md) | 0.1.0 | Static metrics, numerical toolbox, QPO and shadow likelihoods, data registry, samplers |
 
-None of the registry values has been verified by a human yet
-(`verified_by_human: false` everywhere); the reports record how each value was
-read by Claude.
+The reports record how each registry value was read by Claude. The owner has
+since checked all eight datasets against their papers and set
+`verified_by_human: true` in each (2026-11-19; see `v1.0.md`, section 7). The
+statements "not verified by a human" in `v0.1.md` to `v0.3.md` describe the
+state at those releases.

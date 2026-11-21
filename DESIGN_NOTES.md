@@ -256,8 +256,9 @@ the error-message audit and the known limitations are in `verification/v1.0.md`.
   on GitHub** (nothing is pushed by Claude).
 
 **Left, all for the owner** (ordered checklist with commands: `TO_DO.md`):
-decisions to confirm (section 5 above and `TO_DO.md`, section 1), human
-verification of every registry value (all `verified_by_human: false`), pushing and
+decisions to confirm (section 5 above and `TO_DO.md`, section 1), the open
+items of `TO_DO.md`, section 3 (human verification of the registry is done: all
+eight datasets `verified_by_human: true`, 2026-11-19), pushing and
 watching CI, re-running the Windows check on the final code, GitHub Pages, PyPI
 trusted publishing, the 1.0.0 label, tag, release and Zenodo DOI.
 

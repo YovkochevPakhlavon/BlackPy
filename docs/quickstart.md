@@ -117,7 +117,6 @@ print(round(float(bp.disk.radiative_efficiency(kerr, a=0.9)), 4))
 ## Data and inference
 
 ```python
-# warns: UnverifiedDataWarning
 from blackpy.infer import Fit, Uniform
 
 print(bp.data.available())

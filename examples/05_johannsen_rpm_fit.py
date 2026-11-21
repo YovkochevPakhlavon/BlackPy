@@ -13,7 +13,7 @@ dynesty, prints the posterior correlation between spin and deformation,
 the Bayes factor of Johannsen against Kerr, and saves a corner plot to
 ``examples/output/johannsen_rpm_corner.png``.
 
-The registry values have not been verified by a human, and the mass prior
+The registry values have been checked by the maintainer, and the mass prior
 is the dynamical mass of Beer & Podsiadlowski (2002). BlackPy says so in its
 warnings; they are printed, not silenced.
 
